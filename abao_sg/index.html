@@ -1,0 +1,2914 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title></title>
+<style>*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;color:#1a1a1a;font-size:12px;background:#f0f0f0}
+.layout{display:grid;grid-template-columns:292px 1fr;min-height:680px}
+.panel{border-right:1px solid #ddd;display:flex;flex-direction:column;background:#fff}
+.sys-hdr{padding:8px 12px;background:#534AB7;color:#fff;flex-shrink:0}
+.sys-title{font-size:12px;font-weight:700}.sys-sub{font-size:9px;opacity:.8}
+.panel-scroll{flex:1;overflow-y:auto;padding:8px}
+.sec{border:1px solid #e0e0e0;border-radius:8px;margin-bottom:7px;overflow:hidden}
+.sh{display:flex;align-items:center;justify-content:space-between;padding:8px 11px;cursor:pointer;background:#f7f7f7;user-select:none}
+.st{font-size:11px;font-weight:600}
+.sb{padding:9px 11px 11px;border-top:1px solid #e0e0e0;background:#fff}
+.collapsed .sb{display:none}
+.fg{display:flex;flex-direction:column;gap:2px;margin-top:5px}
+.fg label{font-size:9px;color:#666}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:5px}
+input[type=text],input[type=number],select{border:1px solid #ccc;border-radius:5px;padding:3px 6px;font-size:10px;width:100%;background:#fff;color:#1a1a1a}
+.cbr{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:10px}
+.cbr:last-child{border-bottom:none}
+.cbr input[type=checkbox]{width:12px;height:12px;accent-color:#534AB7;cursor:pointer}
+.hint{background:#FFFBEB;border:1px solid #F5C842;border-radius:5px;padding:6px 8px;margin-top:5px;font-size:9px;color:#7A5500}
+.stab{padding:2px 7px;border:1px solid #ddd;border-radius:10px;font-size:9px;cursor:pointer;background:#f5f5f5;color:#555}
+.stab.active{font-weight:600;color:#534AB7;border-color:#534AB7;background:#EEEDFE}
+.store-tabs{display:flex;gap:3px;margin-bottom:6px;flex-wrap:wrap}
+.card{background:#f9f9f9;border-radius:6px;border:1px solid #e0e0e0;margin-bottom:4px}
+.ct{display:flex;align-items:flex-start;justify-content:space-between;padding:7px 9px}
+.sa{display:flex;gap:2px}
+.bi{background:none;border:none;cursor:pointer;color:#888;font-size:11px;padding:1px 3px}
+.bi:hover{color:#333}
+.bdg{font-size:8px;padding:1px 4px;border-radius:6px;font-weight:500;white-space:nowrap}
+.abox{background:#f9f9f9;border-radius:6px;padding:8px;margin-top:6px;border:1px solid #e0e0e0}
+.abox h4{font-size:10px;font-weight:600;margin-bottom:6px}
+.badd{background:#1a1a1a;color:#fff;border:none;padding:4px 9px;border-radius:5px;font-size:9px;cursor:pointer;width:100%;margin-top:6px}
+.badd:hover{opacity:.85}
+.bsec{background:#fff!important;color:#1a1a1a!important;border:1px solid #ccc!important}
+.ei{background:#fff;border-top:1px solid #e0e0e0;padding:7px 9px}
+.skill-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px}
+.ski{display:flex;align-items:center;gap:3px;font-size:9px;color:#666;cursor:pointer}
+.ski input[type=checkbox]{width:11px;height:11px;accent-color:#534AB7}
+.poff{background:#FAEEDA;color:#633806}.pon{background:#D4EDDA;color:#155724}
+.rtag{font-size:8px;padding:1px 4px;border-radius:5px;background:#EEEDFE;color:#3C3489;font-weight:500}
+.divider{height:1px;background:#e0e0e0;margin:5px 0}
+.ms-stores{display:none;flex-wrap:wrap;gap:4px;margin-top:4px;padding:5px 7px;background:#fff;border:1px solid #ccc;border-radius:5px}
+.ms-stores.open{display:flex}
+.ms-item{display:flex;align-items:center;gap:2px;font-size:9px;cursor:pointer}
+.ms-item input{width:auto;accent-color:#534AB7}
+.tog{position:relative;display:inline-block;width:28px;height:16px;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0}
+.tog-sl{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:16px;transition:.2s}
+.tog-sl:before{content:'';position:absolute;width:11px;height:11px;left:2px;top:2.5px;background:#fff;border-radius:50%;transition:.2s}
+.tog input:checked+.tog-sl{background:#534AB7}
+.tog input:checked+.tog-sl:before{transform:translateX(12px)}
+.spinner{display:inline-flex;flex-direction:column;border:1px solid #ccc;border-radius:3px;overflow:hidden}
+.spinner-val{padding:1px 5px;font-size:10px;font-weight:600;text-align:center;background:#fff;min-width:22px;border-top:1px solid #e0e0e0;border-bottom:1px solid #e0e0e0}
+.spin-up,.spin-dn{background:#f5f5f5;border:none;cursor:pointer;font-size:7px;padding:1px 4px;color:#555;line-height:1.4}
+.spin-up:hover,.spin-dn:hover{background:#EEEDFE;color:#534AB7}
+.spin-wrap{display:flex;align-items:center;gap:4px;margin-top:2px}
+.skill-block{background:#f9f9f9;border-radius:6px;border:1px solid #e0e0e0;padding:8px 9px;margin-bottom:5px}
+.sbt{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+.sbt span{font-size:10px;font-weight:500}
+.sbd{font-size:9px;color:#666;margin-bottom:4px}
+.sub-label{font-size:9px;font-weight:600;color:#666;margin:7px 0 3px}
+.oc-store{background:#f9f9f9;border:1px solid #e0e0e0;border-radius:7px;padding:8px;margin-bottom:7px}
+.oc-title{font-size:10px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:5px}
+.oc-sum{background:#fff;border:1px solid #F5C842;border-radius:5px;padding:5px 7px;font-size:9px;color:#7A5500;margin-bottom:5px}
+.oc-hint{font-size:9px;color:#666;margin-bottom:5px}
+.oc-group{background:#fff;border:1px solid #ddd;border-radius:6px;padding:7px;margin-bottom:4px}
+.oc-ghdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.oc-glabel{font-size:9px;font-weight:600;color:#534AB7}
+.oc-del-g{background:none;border:none;cursor:pointer;font-size:9px;color:#A32D2D}
+.oc-row{display:grid;grid-template-columns:1fr 1fr 36px 18px;gap:3px;align-items:center;margin-bottom:3px}
+.oc-row select{font-size:9px;padding:2px 3px}
+.oc-del-r{background:none;border:none;cursor:pointer;color:#A32D2D;font-size:11px;font-weight:600}
+.oc-add-m{background:none;border:1px dashed #ccc;border-radius:4px;padding:2px 7px;font-size:9px;color:#888;cursor:pointer;width:100%;margin-top:3px}
+.oc-or{text-align:center;font-size:9px;color:#A32D2D;font-weight:600;margin:3px 0}
+.oc-add-g{background:none;border:1px solid #534AB7;border-radius:5px;padding:4px 9px;font-size:9px;color:#534AB7;cursor:pointer;width:100%;margin-top:3px}
+.adj-empty{font-size:9px;color:#888;padding:3px 0 5px}
+.adj-card{background:#f9f9f9;border:1px solid #e0e0e0;border-radius:6px;padding:7px 9px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
+.btn-adj-new{background:#0F6E56;color:#fff;border:none;padding:5px 10px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;margin-bottom:6px}
+.adj-form-box{background:#f9f9f9;border:1px solid #e0e0e0;border-radius:6px;padding:8px;margin-top:4px}
+.adj-note{font-size:8px;color:#666;margin-top:4px;padding:4px 6px;background:#fff;border-radius:3px}
+.btn-adj-add{background:#0F6E56;color:#fff;border:none;padding:4px 9px;border-radius:5px;font-size:9px;cursor:pointer;width:100%;margin-top:6px}
+.main{display:flex;flex-direction:column;background:#f0f0f0}
+.main-hdr{padding:8px 12px;border-bottom:1px solid #ddd;background:#fff;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.main-body{flex:1;padding:10px;overflow-y:auto}
+.ph{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:280px;gap:7px;text-align:center;color:#999}
+.prev-sec{margin-bottom:12px;background:#fff;border-radius:8px;padding:8px;border:1px solid #e0e0e0}
+.prev-hdr{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600;margin-bottom:5px;padding:4px 7px;border-radius:5px}
+.ptbl{width:100%;border-collapse:collapse;font-size:8px;table-layout:fixed}
+.ptbl th,.ptbl td{border:1px solid #e8e8e8;padding:2px 2px;text-align:center;overflow:hidden;white-space:nowrap}
+.ptbl th{background:#f5f5f5;color:#666;font-weight:500}
+.c-off{background:#D4EDDA;color:#155724}
+.c-sup{background:#D8D3F5;color:#2D2480}
+.c-mob{background:#FFF3C4;color:#7A5500}
+.c-must{background:#F5ECD7;color:#6B4C1E}
+.c-work{background:#fff}
+.ptbl td[draggable=true]{cursor:grab}
+.ptbl td.drag-over{outline:2px dashed #534AB7}
+.legend{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.leg{display:flex;align-items:center;gap:2px;font-size:8px;color:#666}
+.leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.conf-box{background:#FCEBEB;border:1px solid #E0A0A0;border-radius:6px;padding:8px 10px;margin-bottom:8px}
+.conf-title{font-size:10px;font-weight:600;color:#A32D2D;margin-bottom:4px}
+.conf-item{font-size:9px;color:#7A1A1A;padding:2px 0;border-bottom:1px solid #F0B0B0;display:flex;gap:4px}
+.conf-item:last-child{border-bottom:none}
+.ok-box{background:#D4EDDA;border:1px solid #90C090;border-radius:6px;padding:7px 10px;margin-bottom:8px;font-size:9px;color:#155724;font-weight:500}
+.bottom-btns{padding:8px 10px;border-top:1px solid #ddd;display:flex;gap:6px;background:#fff;flex-shrink:0}
+.btn-gen{background:#534AB7;color:#fff;border:none;padding:8px 0;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;flex:1}
+.btn-gen:hover{background:#3C3489}
+.btn-dl{background:#3B6D11;color:#fff;border:none;padding:8px 0;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;flex:1}
+.btn-dl:hover{background:#27500A}
+.btn-dl:disabled{background:#aaa;cursor:not-allowed}
+.topnav{display:flex;background:#1a1a1a;flex-shrink:0}
+.tnitem{flex:1;padding:10px 6px;text-align:center;font-size:11px;font-weight:600;color:#999;cursor:pointer;border-bottom:3px solid transparent;user-select:none}
+.tnitem.active{color:#fff;border-bottom-color:#534AB7;background:#262626}
+.tnitem.locked{color:#555;cursor:not-allowed}
+.page{display:none}
+.page.active{display:block}
+#page-1.page.active{display:grid}
+.sptbl{width:100%;border-collapse:collapse;font-size:9px;table-layout:fixed}
+.sptbl th,.sptbl td{border:1px solid #e8e8e8;padding:3px 2px;text-align:center;min-width:30px}
+.sptbl th{background:#f5f5f5;color:#666;font-weight:500}
+.spcell{cursor:pointer;color:#bbb;font-weight:700}
+.spcell.filled{color:#534AB7;font-weight:600;background:#EEEDFE}
+.modal-bg{position:absolute;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:50}
+.modal-box{background:#fff;border-radius:10px;padding:16px;width:280px;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.modal-box h4{font-size:12px;font-weight:700;margin-bottom:8px}
+.modal-warn{background:#FFFBEB;border:1px solid #F5C842;border-radius:5px;padding:6px 8px;font-size:9px;color:#7A5500;margin-bottom:8px}
+.modal-row{display:flex;gap:6px;margin-bottom:6px}
+.modal-row select{font-size:10px}
+.modal-hrs{background:#E1F5EE;color:#085041;border-radius:5px;padding:5px;text-align:center;font-size:10px;font-weight:600;margin:6px 0}
+.modal-btns{display:flex;gap:5px;margin-top:8px}
+.modal-btns button{flex:1;border:none;border-radius:5px;padding:6px 0;font-size:10px;cursor:pointer;font-weight:600}
+.mb-save{background:#0F6E56;color:#fff}.mb-clear{background:#FCEBEB;color:#A32D2D}.mb-cancel{background:#f0f0f0;color:#555}
+.pk-btn{width:auto!important;padding:3px 8px!important;margin-top:0!important;flex-shrink:0}
+.pk-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.pk-nav{background:none;border:none;cursor:pointer;font-size:14px;color:#534AB7;padding:2px 6px}
+.pk-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.pk-wd{font-size:9px;color:#888;text-align:center;font-weight:600;padding:2px 0}
+.pk-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:10px;cursor:pointer;color:#1a1a1a}
+.pk-day.we{color:#A32D2D}
+.pk-day.sel{background:#534AB7;color:#fff;font-weight:600}
+.pk-week{display:flex;flex-wrap:wrap;gap:6px}
+.pk-wbtn{flex:1;min-width:40px;padding:8px 0;text-align:center;border-radius:6px;font-size:11px;cursor:pointer;background:#f9f9f9;border:1px solid #ddd;color:#1a1a1a}
+.pk-wbtn.sel{background:#534AB7;color:#fff;border-color:#534AB7;font-weight:600}
+.p5-summary{background:#fff;border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.p5-sum-label{font-size:9px;color:#666}
+.p5-sum-total{font-size:18px;font-weight:700;margin-top:2px}
+.p5-sum-stores{display:flex;gap:14px;flex-wrap:wrap}
+.p5-sum-store{text-align:right}
+.p5-sum-store div:first-child{font-size:9px;color:#888}
+.p5-sum-store div:last-child{font-size:11px;font-weight:600}
+.p5-card{background:#fff;border-radius:8px;padding:10px 12px;margin-bottom:12px}
+.p5-card-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.p5-hp-box{display:flex;align-items:center;gap:5px;background:#f5f5f5;border-radius:6px;padding:3px 6px}
+.p5-hp-box input[type=number]{width:42px;text-align:center;font-size:10px}
+.p5-hp-tag{font-size:8px;color:#534AB7;background:#EEEDFE;padding:1px 6px;border-radius:4px}
+.p5tbl{width:100%;border-collapse:collapse;font-size:9px;table-layout:fixed;margin-bottom:8px}
+.p5tbl th,.p5tbl td{border:1px solid #eee;padding:3px 2px;text-align:right;overflow:hidden}
+.p5tbl th{background:#f5f5f5;color:#666;font-weight:500}
+.p5tbl td:first-child,.p5tbl th:first-child{text-align:left;padding-left:4px}
+.p5tbl td:nth-child(2),.p5tbl th:nth-child(2){text-align:left;color:#888}
+.p5-sub-label{font-size:9px;color:#888;margin:6px 0 3px}
+.p5-subtotal{display:flex;justify-content:flex-end;gap:8px;align-items:center;border-top:1px solid #eee;padding-top:6px;font-size:10px}
+.p5-subtotal b{font-size:13px}
+.p5-ins-auto{color:#0F6E56}
+.p5-ins-manual{color:#A32D2D}
+.p5-edit-btn{background:none;border:none;cursor:pointer;color:#534AB7;font-size:9px;padding:0 2px}
+.p5-route-cat{display:flex;align-items:center;gap:8px;padding:6px 8px;background:#f9f9f9;border-radius:6px;margin-bottom:6px}
+.p5-route-cat span.lbl{font-size:9px;color:#666;width:40px;flex-shrink:0}
+.p5-route-opt{flex:1;padding:4px 0;font-size:9px;border:1px solid #ccc;border-radius:5px;background:#fff;cursor:pointer;text-align:center}
+.p5-route-opt.sel{background:#534AB7;color:#fff;border-color:#534AB7}
+.p5-route-row{display:flex;gap:4px;flex:1}
+.p5-ob-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.p5-ob-row label{font-size:9px;color:#666;flex:1}
+.p5-ob-row input{width:90px;text-align:right}
+/* v8：各店排班方式／鎖定控制列、點格子設定狀態彈窗、勾選門市下載彈窗 */
+.sctl-wrap{display:flex;flex-direction:column;gap:4px}
+.sctl{display:flex;align-items:center;gap:4px;flex-wrap:wrap;background:#fff;border:1px solid #e0e0e0;border-left:4px solid #ccc;border-radius:6px;padding:4px 6px}
+.sctl-name{font-size:10px;font-weight:700;min-width:44px}
+.sctl-b{padding:2px 7px;border:1px solid #ddd;border-radius:10px;font-size:9px;cursor:pointer;background:#f5f5f5;color:#555}
+.sctl-b.on{font-weight:600;color:#534AB7;border-color:#534AB7;background:#EEEDFE}
+.sctl-b.lock.on{color:#A32D2D;border-color:#A32D2D;background:#FCEBEB}
+.sctl-b:disabled{opacity:.45;cursor:not-allowed}
+.sctl-tag{font-size:8px;padding:1px 5px;border-radius:6px;font-weight:600;margin-left:4px}
+.ptbl td.c-frozen{opacity:.55;cursor:not-allowed}
+.ptbl td.c-edited{box-shadow:inset 0 0 0 2px #E8A33D}
+.v8-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:60}
+.v8-modal-box{background:#fff;border-radius:10px;padding:16px;width:300px;max-width:calc(100vw - 32px);box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.v8-modal-box h4{font-size:12px;font-weight:700;margin-bottom:8px}
+.ce-opts{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.ce-opt{padding:8px 0;border:1px solid #ddd;border-radius:6px;font-size:11px;cursor:pointer;background:#f9f9f9;text-align:center}
+.ce-opt.cur{border-color:#534AB7;color:#534AB7;font-weight:700;background:#EEEDFE}
+.sp-item{display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #f0f0f0;font-size:11px}
+.sp-item input{width:14px;height:14px;accent-color:#534AB7}
+</style>
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" id="hr-vp" content="width=device-width,initial-scale=1">
+<script>(function(){var m=location.pathname.match(/\/(abao_[a-z]+)\//);window.HR_PATH=m?m[1]:'';window.HR_SCOPE={abao_xh:'xh',abao_sg:'sg'}[window.HR_PATH]||'';})();</script>
+</head><body>
+<style>
+#hr-gate{position:fixed;inset:0;z-index:9999;background:#f4f3fb;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:40px 16px;font-family:-apple-system,BlinkMacSystemFont,"Microsoft JhengHei","PingFang TC",sans-serif;color:#222}
+#hr-gate .hg-card{background:#fff;border:1px solid #e0def0;border-radius:12px;max-width:420px;width:100%;padding:22px 20px;box-shadow:0 2px 10px rgba(40,30,120,.06)}
+#hr-gate h1{font-size:18px;margin:0 0 4px}
+#hr-gate .hg-sub{font-size:13px;color:#666;margin-bottom:16px}
+#hr-gate .hg-msg{font-size:13px;background:#fdf1f1;color:#a32d2d;border-radius:6px;padding:8px 10px;margin-bottom:14px;line-height:1.6}
+#hr-gate .hg-msg:empty{display:none}
+#hr-gate .hg-way{border-top:1px solid #eee;padding-top:14px;margin-top:14px}
+#hr-gate .hg-way h2{font-size:14px;margin:0 0 6px}
+#hr-gate .hg-way p{font-size:13px;line-height:1.7;margin:0;color:#444}
+#hr-gate .hg-btn{display:inline-block;margin-top:10px;background:#534AB7;color:#fff;border:0;border-radius:8px;padding:10px 16px;font-size:14px;cursor:pointer}
+#hr-gate .hg-btn.hg-ghost{background:#fff;color:#534AB7;border:1px solid #534AB7}
+#hr-gate .hg-code{font-size:40px;font-weight:700;letter-spacing:6px;color:#534AB7;margin:10px 0 2px;font-variant-numeric:tabular-nums}
+#hr-gate .hg-say{font-size:14px;background:#f4f3fb;border-radius:6px;padding:8px 10px;margin-top:6px;word-break:break-all}
+#hr-gate .hg-small{font-size:12px;color:#888;margin-top:6px}
+#hr-gate a{color:#534AB7}
+.hr-userbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10px;color:#fff}
+.hr-userbar button,.hr-userbar a{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:5px;padding:4px 8px;font-size:9px;cursor:pointer;white-space:nowrap;text-decoration:none}
+</style>
+<div id="hr-gate"><div class="hg-card"><h1 id="hg-title">BZ HR 排班薪資系統</h1><div class="hg-sub" id="hg-sub">正在確認登入…</div><div id="hg-body"></div></div></div>
+
+<div class="topnav" id="topnav"></div>
+<div class="sys-hdr" style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div><div class="sys-title" id="sys-title">🗓 排班薪資系統 v8</div><div class="sys-sub" id="sys-sub">設定規則 → 生成初假表 → 下載初假表Excel</div></div><div style="display:flex;align-items:center;gap:6px;flex-shrink:0"><span id="v7-save-warn" style="display:none;font-size:9px;background:#A32D2D;color:#fff;padding:3px 6px;border-radius:4px;white-space:nowrap"></span><button onclick="v7ClearAutoSave()" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:5px;padding:4px 8px;font-size:9px;cursor:pointer;white-space:nowrap" title="清除瀏覽器本機自動存檔，重新開始">🗑 重新開始</button></div></div>
+<div class="layout page active" id="page-1">
+<div class="panel">
+<div class="panel-scroll">
+
+<div class="sec" id="s-date"><div class="sh" onclick="tog('s-date')"><div class="st">📅 假表設定</div><span id="cv-s-date">▲</span></div><div class="sb">
+<div class="r2"><div class="fg" style="margin-top:0"><label>年</label><input type="number" id="yr" value="2026" min="2024" max="2030" onchange="checkHint()"></div><div class="fg" style="margin-top:0"><label>月</label><input type="number" id="mo" value="7" min="1" max="12" onchange="checkHint()"></div></div>
+<div style="margin-top:7px;font-size:9px;color:#666;margin-bottom:3px">假日定義</div>
+<div class="cbr"><input type="checkbox" id="sat" checked><label for="sat">週六算假日</label></div>
+<div class="cbr"><input type="checkbox" id="sun" checked><label for="sun">週日算假日</label></div>
+<div style="margin-top:7px;font-size:9px;color:#666;margin-bottom:3px">國定假日</div>
+<div id="hint" class="hint" style="display:none"><div style="display:flex;justify-content:space-between;gap:5px;align-items:flex-start"><div><strong id="hint-t"></strong><br><span id="hint-b"></span></div><button onclick="autoFill()" style="background:#534AB7;color:#fff;border:none;padding:2px 6px;border-radius:3px;font-size:8px;cursor:pointer;white-space:nowrap">自動代入</button></div></div>
+<div class="fg"><label>自訂（逗號分隔）</label><input type="text" id="hols" placeholder="例：1,2,3" oninput="renderHolList()"></div>
+<div id="hol-list"></div>
+<div style="margin-top:8px;font-size:9px;color:#666;margin-bottom:2px">農曆／特殊備註（格式 日:文字，逗號分隔）</div>
+<input type="text" id="lunar-notes" placeholder="例：1:十六,15:初一限定,16:初二">
+<div style="margin-top:8px;font-size:9px;color:#666;margin-bottom:2px">Excel 底部備註（自由輸入，可多行）</div>
+<textarea id="bottom-notes" placeholder="例：6/21-6/28夏至活動…" style="width:100%;font-size:10px;padding:5px 7px;border:1px solid #ccc;border-radius:5px;min-height:50px;font-family:inherit"></textarea>
+<div style="margin-top:8px;font-size:9px;font-weight:600;margin-bottom:2px">每天出勤人數上限</div>
+<div style="font-size:8px;color:#666;margin-bottom:5px">每天每店出勤人數必須 ≤ 上限，超過則主動排休</div>
+<div class="store-tabs" id="need-stabs"></div><div id="need-table"></div>
+</div></div>
+
+<div class="sec" id="s-open"><div class="sh" onclick="tog('s-open')"><div class="st">🏪 開店條件</div><span id="cv-s-open">▲</span></div><div class="sb"><div id="open-conditions"></div></div></div>
+
+<div class="sec" id="s-staff"><div class="sh" onclick="tog('s-staff')"><div class="st">👥 夥伴管理</div><span id="cv-s-staff">▲</span></div><div class="sb">
+<div style="font-size:8px;color:#666;margin-bottom:5px;background:#f0f0f0;padding:4px 7px;border-radius:4px">↑ = 下限（至少排幾天）・月休 = 上限（最多幾天）</div>
+<div id="staff-list"></div>
+<div class="abox"><h4>＋ 新增夥伴</h4>
+<div class="r2"><div class="fg" style="margin-top:0"><label>簡稱</label><input type="text" id="n-name" placeholder="簡稱（兩個字）"></div><div class="fg" style="margin-top:0"><label>所屬門市</label><select id="n-store"><option>平和店</option><option>忠孝店</option><option>培英店</option><option>彰水店</option><option>新港店</option><option>中興店</option><option>機動人員</option></select></div></div>
+<div class="r2"><div class="fg" style="margin-top:0"><label>職別</label><select id="n-type"><option>正職</option><option>計時</option><option>八小時全職</option><option>機動人員</option></select></div><div class="fg" style="margin-top:0"><label>月休上限</label><input type="number" id="n-days" value="6" min="0" max="31"></div></div>
+<div class="r2">
+<div class="fg" style="margin-top:0"><label>平日休下限（天）</label><div class="spin-wrap"><div class="spinner"><button class="spin-up" onclick="spin('n-wd',1,0,8)">▲</button><div class="spinner-val" id="n-wd-v">0</div><button class="spin-dn" onclick="spin('n-wd',-1,0,8)">▼</button></div><input type="hidden" id="n-wd" value="0"></div></div>
+<div class="fg" style="margin-top:0"><label>假日休下限（天）</label><div class="spin-wrap"><div class="spinner"><button class="spin-up" onclick="spin('n-hd',1,0,8)">▲</button><div class="spinner-val" id="n-hd-v">0</div><button class="spin-dn" onclick="spin('n-hd',-1,0,8)">▼</button></div><input type="hidden" id="n-hd" value="0"></div></div>
+</div>
+<div style="font-size:9px;color:#7A5500;margin-top:3px;background:#FFFBEB;padding:3px 6px;border-radius:3px">平日休下限＋假日休下限 ≤ 月休上限</div>
+<div style="margin-top:5px"><div style="font-size:9px;color:#666;margin-bottom:2px">能力分級</div>
+<div class="skill-row">
+<label class="ski"><input type="checkbox" id="sk-g"> 煎台<select id="sk-gl" style="width:auto;font-size:8px;padding:1px 2px"><option>丙</option><option>乙</option><option>甲</option></select></label>
+<label class="ski"><input type="checkbox" id="sk-c"> 櫃台<select id="sk-cl" style="width:auto;font-size:8px;padding:1px 2px"><option>丙</option><option>乙</option><option>甲</option></select></label>
+<label class="ski"><input type="checkbox" id="sk-d"> 包飲</label>
+<label class="ski"><input type="checkbox" id="sk-i"> 實習生</label>
+</div></div>
+<button class="badd" onclick="addStaff()">＋ 新增夥伴</button></div>
+</div></div>
+
+<div class="sec" id="s-pin"><div class="sh" onclick="tog('s-pin')"><div class="st">📌 必休／必上</div><span id="cv-s-pin">▲</span></div><div class="sb">
+<div id="pin-list"></div>
+<div class="abox"><h4>新增</h4>
+<div class="r2"><div class="fg" style="margin-top:0"><label>夥伴</label><select id="p-staff"></select></div><div class="fg" style="margin-top:0"><label>類型</label><select id="p-type"><option value="off">必休</option><option value="on">必上</option></select></div></div>
+<div style="height:1px;background:#e0e0e0;margin:5px 0"></div>
+<div class="fg" style="margin-top:0"><label>📆 指定日期（逗號分隔）</label><div style="display:flex;gap:4px"><input type="text" id="p-dates" placeholder="不填則略過" style="flex:1"><button class="badd bsec pk-btn" onclick="openDatePicker('p-dates')">📅</button></div></div>
+<div class="fg"><label>📅 指定星期</label><div style="display:flex;gap:4px"><input type="text" id="p-weeks" placeholder="不填則略過" style="flex:1"><button class="badd bsec pk-btn" onclick="openWeekPicker('p-weeks')">📅</button></div></div>
+<button class="badd" onclick="addPin()">＋ 新增</button></div>
+</div></div>
+
+<div class="sec" id="s-adj"><div class="sh" onclick="tog('s-adj')"><div class="st">✏️ 休假日微調</div><span id="cv-s-adj">▲</span></div><div class="sb">
+<div style="font-size:9px;color:#666;margin-bottom:5px;line-height:1.5">生成班表後，可將休假日從A日挪到B日。</div>
+<div id="adj-list"></div>
+<button class="btn-adj-new" onclick="toggleAdjForm()">新增微調</button>
+<div id="adj-form" style="display:none"><div class="adj-form-box">
+<div class="store-tabs" id="adj-type-tabs">
+<button class="stab active" onclick="switchAdjType(1)">類型一・同人</button>
+<button class="stab" onclick="switchAdjType(2)">類型二・同店</button>
+<button class="stab" onclick="switchAdjType(3)">類型三・跨店</button>
+</div>
+<div id="adj-type-1">
+<div class="r2"><div class="fg" style="margin-top:0"><label>夥伴</label><select id="adj-staff"></select></div><div></div></div>
+<div class="r2"><div class="fg" style="margin-top:0"><label>原休假日（A）</label><input type="text" id="adj-a" placeholder="例：17"></div><div class="fg" style="margin-top:0"><label>挪到（B）</label><input type="text" id="adj-b" placeholder="例：19"></div></div>
+<div class="adj-note">A日原本是休假→改為上班；B日原本是上班→改為休假</div>
+</div>
+<div id="adj-type-2" style="display:none">
+<div class="r2"><div class="fg" style="margin-top:0"><label>讓出休假（夥伴乙）</label><select id="adj2-from"></select></div><div class="fg" style="margin-top:0"><label>接受休假（夥伴甲・同店）</label><select id="adj2-to"></select></div></div>
+<div class="r2"><div class="fg" style="margin-top:0"><label>乙的休假日（A）</label><input type="text" id="adj2-a" placeholder="例：17"></div><div class="fg" style="margin-top:0"><label>甲改休（B）</label><input type="text" id="adj2-b" placeholder="例：19"></div></div>
+<div class="adj-note">夥伴乙 A日：休假→上班；夥伴甲 B日：上班→休假（同門市）</div>
+</div>
+<div id="adj-type-3" style="display:none">
+<div class="r2"><div class="fg" style="margin-top:0"><label>讓出休假（夥伴乙）</label><select id="adj3-from"></select></div><div class="fg" style="margin-top:0"><label>接受休假（夥伴甲・不同店）</label><select id="adj3-to"></select></div></div>
+<div class="r2"><div class="fg" style="margin-top:0"><label>乙的休假日（A）</label><input type="text" id="adj3-a" placeholder="例：17"></div><div class="fg" style="margin-top:0"><label>甲改休（B）</label><input type="text" id="adj3-b" placeholder="例：19"></div></div>
+<div class="adj-note">夥伴乙 A日：休假→上班；夥伴甲 B日：上班→休假（不同門市）</div>
+</div>
+<button class="btn-adj-add" onclick="addAdj()">＋ 加入微調</button>
+</div></div>
+</div></div>
+
+<div class="sec" id="s-rules"><div class="sh" onclick="tog('s-rules')"><div class="st">⚙️ 排班規則</div><span id="cv-s-rules">▲</span></div><div class="sb">
+<div class="sub-label">🎯 排班技能</div>
+<div class="skill-block"><div class="sbt"><span>假日避休（計時／機動人員）</span><label class="tog"><input type="checkbox" id="sk-holiday" checked><span class="tog-sl"></span></label></div><div class="sbd">計時和機動人員假日盡量出勤，假日休假只在必休或跨店連動時才排</div></div>
+<div class="skill-block"><div class="sbt"><span>休假間距</span><label class="tog"><input type="checkbox" id="sk-gap" checked><span class="tog-sl"></span></label></div><div class="sbd">分散排休，避免休假過密</div>
+<div style="display:flex;gap:12px;flex-wrap:wrap">
+<div><div style="font-size:9px;color:#666;margin-bottom:2px">最短間距</div><div class="spin-wrap"><div class="spinner"><button class="spin-up" onclick="spin('sk-mingap',1,0,5)">▲</button><div class="spinner-val" id="sk-mingap-v">2</div><button class="spin-dn" onclick="spin('sk-mingap',-1,0,5)">▼</button></div><input type="hidden" id="sk-mingap" value="2"><span style="font-size:9px;color:#666">天</span></div></div>
+</div></div>
+<div class="skill-block"><div class="sbt"><span>平日出勤人力保障</span><label class="tog"><input type="checkbox" id="sk-manpower" checked><span class="tog-sl"></span></label></div><div class="sbd">計算全月可排休平日總名額，等比例調整每位夥伴平日休下限（不足則減少，超出則增加）</div></div>
+
+<div class="sub-label">🏪 門市規則</div><div id="store-rule-list"></div>
+<div class="abox"><h4>新增門市規則</h4><div class="fg" style="margin-top:0"><label>門市</label><select id="r-store"><option>平和店</option><option>忠孝店</option><option>培英店</option><option>彰水店</option><option>新港店</option><option>中興店</option></select></div><div class="fg"><label>規則描述</label><input type="text" id="r-store-desc" placeholder="例：週六日2人開店"></div><button class="badd" onclick="addStoreRule()">＋ 新增</button></div>
+
+<div class="sub-label">👤 夥伴規則</div>
+<div style="font-size:8px;color:#888;margin-bottom:4px;padding:3px 6px;background:#f5f5f5;border-radius:3px">同步休假：觸發人休假→夥伴同步休假 ／ 同步出勤：觸發人出勤→夥伴同步出勤</div>
+<div id="staff-rule-list"></div>
+<div class="abox"><h4>新增夥伴規則</h4>
+<div class="r2"><div class="fg" style="margin-top:0"><label>夥伴（被連動）</label><select id="r-staff-name"></select></div><div class="fg" style="margin-top:0"><label>類型</label><select id="r-type"><option>同步休假</option><option>同步出勤</option><option>其他</option></select></div></div>
+<div class="fg"><label>觸發人</label><select id="r-staff"></select></div>
+<div class="fg"><label>描述（可選）</label><input type="text" id="r-staff-desc" placeholder="例：小美平日出勤小華同步出勤"></div>
+<button class="badd" onclick="addStaffRule()">＋ 新增</button></div>
+
+<div class="sub-label">🔄 跨店支援規則</div><div id="cross-list"></div>
+<div class="abox"><h4>新增跨店規則</h4>
+<div class="r2"><div class="fg" style="margin-top:0"><label>支援人員</label><select id="cr-staff"></select></div><div class="fg" style="margin-top:0"><label>支援門市</label><select id="cr-store"><option>平和店</option><option>忠孝店</option><option>培英店</option><option>彰水店</option><option>新港店</option><option>中興店</option></select></div></div>
+<div class="r2"><div class="fg" style="margin-top:0"><label>觸發條件</label><select id="cr-trigger" onchange="toggleNewCondPerson()"><option>固定星期</option><option>特定人休假時</option><option>人力不足時</option><option>其他</option></select></div><div class="fg" style="margin-top:0"><label>星期說明</label><input type="text" id="cr-cond" placeholder="例：週四"></div></div>
+<div id="cr-cond-person-row" style="display:none"><div class="fg" style="margin-top:0"><label>指定人（休假時觸發）</label><select id="cr-cond-person"></select></div></div>
+<div class="fg" style="margin-top:4px"><label>連動排休人員（可空白）</label><select id="cr-linked-rest"><option value="">— 無 —</option></select></div>
+<button class="badd" onclick="addCrossRule()">＋ 新增</button></div>
+
+<div class="sub-label">🗺️ 地區群組</div><div id="group-list"></div>
+<div class="abox"><button class="badd" onclick="addStoreGroup()">＋ 新增群組</button></div>
+</div></div>
+
+</div></div>
+<div class="main">
+<div class="main-hdr"><div style="font-size:11px;font-weight:600">📋 假表預覽</div><div style="font-size:9px;color:#666">必休必上→跨店支援→夥伴規則→人力上限→月休分配</div></div>
+<div class="main-body" id="main-body"><div class="ph"><div style="font-size:30px">🗓</div><div style="font-size:12px;font-weight:600">尚未生成初假表</div><div style="font-size:9px;line-height:1.6">完成左側設定後<br>按「⚡ 生成初假表」<br>修改後可重新生成</div></div></div>
+<div style="padding:0 10px 8px"><div style="font-size:9px;color:#666;margin-bottom:4px">門市範圍（決定這次要排哪個區域，設定畫面不受影響）</div><div class="store-tabs" id="scope-selector"></div>
+<div style="font-size:9px;color:#666;margin:4px 0">各店排班方式：⚡v7＝按「生成」由v7自動排｜✋手動＝保留目前結果、點格子自己改（還沒生成過就從全出勤開始）｜🔒鎖定＝完全不變動、不能點改，隨時可解開</div>
+<div class="sctl-wrap" id="store-ctl"></div></div>
+<div class="bottom-btns">
+<button class="btn-gen" onclick="genSchedule()">⚡ 生成初假表</button>
+<button class="btn-dl" id="btn-dl" onclick="downloadExcel()" disabled>⬇ 下載初假表Excel</button>
+</div>
+</div>
+</div>
+
+<div class="page" id="page-2" style="padding:16px;background:#f0f0f0;min-height:680px">
+<div id="page2-panel"></div>
+<div class="bottom-btns" style="background:#fff;border-radius:8px;margin-top:12px">
+<button class="btn-gen" onclick="genPage2()">⚡ 生成次假表</button>
+</div>
+</div>
+
+<div class="page" id="page-3" style="padding:16px;background:#f0f0f0;min-height:680px">
+<div class="main-hdr" style="background:#fff;border-radius:8px 8px 0 0;border:1px solid #e0e0e0;border-bottom:none"><div style="font-size:11px;font-weight:600">📋 次假表預覽</div><div style="font-size:9px;color:#666">完整初假表＋出勤紀錄調整＋貼班疊加＋情境連動標示</div></div>
+<div id="page3-preview" style="background:#fff;border:1px solid #e0e0e0;border-radius:0 0 8px 8px;padding:10px;min-height:200px"><div class="ph"><div style="font-size:30px">🏷️</div><div style="font-size:12px;font-weight:600">尚未生成次假表</div><div style="font-size:9px;line-height:1.6">請先到「出勤紀錄」頁<br>按「⚡ 生成次假表」</div></div></div>
+<div class="bottom-btns" style="background:#fff;border-radius:8px;margin-top:12px">
+<button class="btn-dl" id="btn-skel" onclick="exportScheduleSkeleton()" disabled style="background:#534AB7">⬇ 匯出假表骨架</button>
+<button class="btn-dl" id="btn-dl2" onclick="downloadExcel2()" disabled>⬇ 下載次假表Excel</button>
+</div>
+</div>
+
+<div class="page" id="page-4" style="padding:16px;background:#f0f0f0;min-height:680px">
+<div style="background:#fff;border-radius:8px;padding:14px;margin-bottom:12px">
+<div style="font-size:12px;font-weight:700;margin-bottom:8px">📤 上傳次假表（選用・覆蓋）</div>
+<div style="font-size:9px;color:#666;margin-bottom:6px">資料已自動由第二頁帶入。若手動微調（例如把計時人員名字改成「小美9.5」表示當天上班9.5小時），上傳「次假表Excel」並進行覆蓋。</div>
+<input type="file" id="p4-file" accept=".xlsx" onchange="handleP4Upload(event)">
+<div id="p4-upload-status" style="font-size:9px;color:#888;margin-top:6px">尚未上傳覆蓋檔案（目前使用第二頁自動帶入的資料）</div>
+</div>
+<div class="main-hdr" style="background:#fff;border-radius:8px 8px 0 0;border:1px solid #e0e0e0;border-bottom:none"><div style="font-size:11px;font-weight:600">📑 薪資假表預覽</div><div style="font-size:9px;color:#666">上傳檔案內容＋統計欄位疊加</div></div>
+<div id="page4-preview" style="background:#fff;border:1px solid #e0e0e0;border-radius:0 0 8px 8px;padding:10px;min-height:200px"><div class="ph"><div style="font-size:30px">📑</div><div style="font-size:12px;font-weight:600">尚未生成薪資假表</div><div style="font-size:9px;line-height:1.6">請先到「次假表」頁<br>按「⚡ 生成次假表」<br>（或於此頁按「⚡ 生成薪資假表」手動觸發）</div></div></div>
+<div class="bottom-btns" style="background:#fff;border-radius:8px;margin-top:12px">
+<button class="btn-gen" onclick="genPage4()">⚡ 生成薪資假表</button>
+<button class="btn-dl" id="btn-dl4" onclick="downloadExcel4()" disabled>⬇ 下載薪資假表Excel</button>
+</div>
+</div>
+
+<div class="page" id="page-5" style="padding:16px;background:#f0f0f0;min-height:680px">
+<div style="background:#fff;border-radius:8px;padding:14px;margin-bottom:12px">
+<div style="font-size:12px;font-weight:700;margin-bottom:8px">📤 上傳勞健保自付額Excel（選用）</div>
+<div style="font-size:9px;color:#666;margin-bottom:6px">依「出勤紀錄的簡稱有沒有出現在勞健保名單的全名裡」自動比對門市夥伴（例如「小明」可配對「王小明02」），只套用在本店夥伴，跨店支援／機動人員不扣保費</div>
+<input type="file" id="p5-ins-file" accept=".xlsx" onchange="handleP5InsuranceUpload(event)">
+<div id="p5-ins-status" style="font-size:9px;color:#888;margin-top:6px">尚未上傳，目前以手動輸入</div>
+</div>
+<div id="page5-panel"></div>
+<div class="bottom-btns" style="background:#fff;border-radius:8px;margin-top:12px">
+<button class="btn-gen" onclick="genPage5()">⚡ 生成薪資試算</button>
+<button class="btn-dl" id="btn-dl5" onclick="downloadExcel5()" disabled>⬇ 下載薪資表Excel</button>
+</div>
+</div>
+<div id="p5-modal-root"></div>
+<div id="pin-modal-root"></div>
+<div id="v8-modal-root"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
+<script>
+// 全公司6店固定清單，settings畫面（夥伴管理/門市規則/人力需求等設定）一律用這份，不受下面的門市範圍選擇影響
+const ALL_STORE_NAMES=['平和店','忠孝店','培英店','彰水店','新港店','中興店'];
+const SCOPE_STORES={xh:['平和店','忠孝店','培英店','彰水店'],sg:['新港店','中興店']};
+const SCOPE_LABEL={xh:'溪湖埤頭',sg:'伸港'};
+// STORES是「目前排班範圍」，由選擇的門市範圍決定（genSchedule()時重新指定），只給生成/預覽/匯出等流程用
+let STORES=SCOPE_STORES.xh;
+const ALL_STORES=[...ALL_STORE_NAMES,'機動人員'];
+const SC={平和店:'#185FA5',忠孝店:'#0F6E56',培英店:'#993C1D',彰水店:'#534AB7',新港店:'#993556',中興店:'#3B6D11',機動人員:'#7A5500'};
+const SB={平和店:'#E6F1FB',忠孝店:'#E1F5EE',培英店:'#FAECE7',彰水店:'#EEEDFE',新港店:'#FBEAF0',中興店:'#EAF3DE',機動人員:'#FFFBEB'};
+const STAFF_COLOR_ARGB={};
+const LEAVE_COVERED_FILL='FF26215C';
+const SKILL_OPTS=['不限','煎台丙','煎台乙','煎台甲','櫃台丙','櫃台乙','櫃台甲','包飲','實習生'];
+const TYPE_OPTS=['正職','計時','八小時全職','機動人員','跨店支援'];
+const WN=['一','二','三','四','五','六','日'];
+const HOL={'2026-1':['1'],'2026-2':['9','10','11','12','13'],'2026-4':['4'],'2026-5':['1'],'2026-10':['10'],'2026-12':['25'],'2027-1':['1'],'2027-2':['4','5','8','9','10'],'2027-3':['1'],'2027-4':['5','6','30'],'2027-6':['9'],'2027-9':['15','28'],'2027-10':['11','25'],'2027-12':['24','31']};
+const HOL_N={'2026-1-1':'元旦','2026-2-9':'春節','2026-2-10':'春節','2026-2-11':'春節','2026-2-12':'春節','2026-2-13':'春節','2026-4-4':'兒童節/清明','2026-5-1':'勞動節','2026-10-10':'國慶日','2026-12-25':'行憲紀念日','2027-1-1':'元旦','2027-2-4':'春節(小年夜)','2027-2-5':'春節(除夕)','2027-2-8':'春節(初三)','2027-2-9':'春節補假','2027-2-10':'春節補假','2027-3-1':'和平紀念日補假','2027-4-5':'清明節','2027-4-6':'兒童節補假','2027-4-30':'勞動節補假','2027-6-9':'端午節','2027-9-15':'中秋節','2027-9-28':'教師節','2027-10-11':'國慶日補假','2027-10-25':'光復節','2027-12-24':'行憲紀念日補假','2027-12-31':'元旦補假(117年)'};
+// 2026-10-17：拿掉單機版「2026/12/31 到期」，改成選到沒有國定假日資料的年份就擋生成（之後每年補下一年的 HOL 就好，不用再設期限）
+function holYearReady_(y){return Object.keys(HOL).some(k=>k.split('-')[0]===String(y));}
+let curNS='平和店',eSIdx=-1,ePIdx=-1,eSRIdx=-1,eStRIdx=-1,eCIdx=-1,adjOpen=false,generatedData=null;
+// 門市範圍：預設'xh'(溪湖埤頭)維持既有4店行為不變；選'sg'才切到伸港2店。生成/預覽/匯出全部依這個範圍narrow
+let curScope=window.HR_SCOPE||'xh';
+function selectScope(s){curScope=s;renderScopeBtns();}
+function scopeFileTag(){return curScope==='sg'?'伸港':'溪湖';}
+function renderScopeBtns(){
+  const el=document.getElementById('scope-selector');if(!el)return;
+  el.innerHTML=Object.keys(SCOPE_STORES).map(k=>`<button class="stab${k===curScope?' active':''}" onclick="selectScope('${k}')">${SCOPE_LABEL[k]}（${SCOPE_STORES[k].length}店）</button>`).join('');
+  renderStoreCtl();
+}
+
+// ── v8：各店排班方式（v7自動／手動）＋鎖定 ──
+// storeMode：'auto'＝按生成時由v7排；'manual'＝保留目前結果（沒有結果就從全出勤＋必休必上開始），只能點格子改。
+// storeLocks：鎖住的店整間沿用目前結果，v7不動、也不能點格子改；別店的人那幾天來支援它，也一起凍結（2026-10-16老闆定案）。
+// cellEdits：點格子手動設定的狀態。v7自動排的店會把它當成固定條件（像必休必上一樣先鎖住，v7繞開它排）。
+let storeMode={},storeLocks={},cellEdits=[];
+function modeOf(store){return storeMode[store]==='manual'?'manual':'auto';}
+function isLocked(store){return!!storeLocks[store];}
+function hasResultForScope(){return!!(generatedData&&generatedData.scope===curScope);}
+function setStoreMode(store,mode){storeMode[store]=mode;renderStoreCtl();refreshPreviewBadges();}
+function toggleStoreLock(store){
+  if(!isLocked(store)&&!hasResultForScope()){alert('請先生成初假表，再鎖定已經排好的門市');return;}
+  if(isLocked(store))delete storeLocks[store];else storeLocks[store]=true;
+  renderStoreCtl();refreshPreviewBadges();
+}
+function renderStoreCtl(){
+  const el=document.getElementById('store-ctl');if(!el)return;
+  el.innerHTML=SCOPE_STORES[curScope].map(st=>{
+    const lk=isLocked(st),md=modeOf(st);
+    return`<div class="sctl" style="border-left-color:${SC[st]}">
+      <span class="sctl-name" style="color:${SC[st]}">${st}</span>
+      <button class="sctl-b${md==='auto'?' on':''}" ${lk?'disabled':''} onclick="setStoreMode('${st}','auto')">⚡ v7自動</button>
+      <button class="sctl-b${md==='manual'?' on':''}" ${lk?'disabled':''} onclick="setStoreMode('${st}','manual')">✋ 手動</button>
+      <button class="sctl-b lock${lk?' on':''}" onclick="toggleStoreLock('${st}')">${lk?'🔒 已鎖定（點此解開）':'🔓 未鎖定'}</button>
+      ${md==='manual'&&!lk?`<button class="sctl-b" onclick="clearStoreToWork('${st}')" title="整間店改回全出勤（必休必上照設定保留），再自己點格子排">↺ 清空重排</button>`:''}
+    </div>`;
+  }).join('');
+}
+function storeBadge(store){
+  if(isLocked(store))return'<span class="sctl-tag" style="background:#FCEBEB;color:#A32D2D">🔒 已鎖定</span>';
+  return modeOf(store)==='manual'?'<span class="sctl-tag" style="background:#FFF3C4;color:#7A5500">✋ 手動</span>':'<span class="sctl-tag" style="background:#EEEDFE;color:#534AB7">⚡ v7自動</span>';
+}
+function refreshPreviewBadges(){if(hasResultForScope())rerenderPreview();}
+function homeStoreOf(name){const s=staff.find(x=>x.name===name)||allStaff.find(x=>x.name===name);return s?s.store:'';}
+// supMap的key是「門市_日期」，門市名本身不含底線，但保險起見從最後一個底線切
+function splitSupKey(k){const i=k.lastIndexOf('_');return{store:k.slice(0,i),d:+k.slice(i+1)};}
+function supTargetOf(supMap,name,d){for(const k of Object.keys(supMap||{})){const p=splitSupKey(k);if(p.d===d&&(supMap[k]||[]).includes(name))return p.store;}return'';}
+// 這格現在能不能動：本店鎖定、或這天是去支援一間鎖定的店 → 不能動
+function cellFrozenReason(name,d){
+  if(!generatedData)return'';
+  const home=homeStoreOf(name);
+  if(home&&isLocked(home))return`${home}已鎖定，要修改請先解開鎖定`;
+  const st=generatedData.sched[name]?generatedData.sched[name][d]:'';
+  if(st==='sup'){const t=supTargetOf(generatedData.supMap,name,d);if(t&&isLocked(t))return`${name}這天支援${t}（已鎖定），要修改請先解開${t}的鎖定`;}
+  return'';
+}
+// 共用：把某人某天設成指定狀態，同步維護supMap／mandatoryOff。st：work/off/mustoff(必休)/must(必上)/sup/mob
+function setCellState(sched,supMap,mandatoryOff,name,d,st,target){
+  Object.keys(supMap).forEach(k=>{if(splitSupKey(k).d!==d)return;const i=supMap[k].indexOf(name);if(i>-1)supMap[k].splice(i,1);if(!supMap[k].length)delete supMap[k];});
+  const k=name+'_'+d;
+  if(st==='mustoff'){sched[name][d]='off';mandatoryOff[k]=true;}
+  else{sched[name][d]=st;delete mandatoryOff[k];}
+  if(st==='sup'&&target){const sk=target+'_'+d;if(!supMap[sk])supMap[sk]=[];if(!supMap[sk].includes(name))supMap[sk].push(name);}
+}
+// 必休／必上設定（Step3同一套判斷），手動模式「從全出勤開始」時也照設定帶入
+function pinStateFor(name,d,wd){
+  let r=null;
+  pins.forEach(p=>{
+    if(p.name!==name)return;
+    const dm=p.dates&&p.dates.split(',').map(x=>+x.trim()).includes(d);
+    const wm=p.weeks&&WN.some((w,i)=>p.weeks.includes('週'+w)&&wd===i);
+    if(dm||wm)r=p.type==='off'?'mustoff':'must';
+  });
+  return r;
+}
+function rerenderPreview(){
+  if(!generatedData)return;
+  const{sched,cal,supMap,mandatoryOff}=generatedData;
+  renderPreview(sched,cal,supMap,computeConflicts(sched,cal,supMap),mandatoryOff);
+}
+function clearStoreToWork(store){
+  if(!hasResultForScope()){alert('請先按「⚡ 生成初假表」：手動的店第一次生成就會從全出勤開始');return;}
+  if(!confirm(`確定把${store}整間改回全出勤重新手動排嗎？\n（必休／必上照設定保留；別店的人來${store}支援的安排也會一起取消）`))return;
+  const g=generatedData;
+  g.cal.forEach(({d,wd})=>{
+    staff.filter(s=>s.store===store).forEach(s=>{setCellState(g.sched,g.supMap,g.mandatoryOff,s.name,d,pinStateFor(s.name,d,wd)||'work','');});
+    (g.supMap[store+'_'+d]||[]).slice().forEach(n=>{
+      if(cellFrozenReason(n,d))return; // 來支援的人如果本店鎖定，那天不動
+      setCellState(g.sched,g.supMap,g.mandatoryOff,n,d,'work','');
+    });
+  });
+  cellEdits=cellEdits.filter(e=>!(e.y===g.y&&e.m===g.m&&homeStoreOf(e.name)===store));
+  rerenderPreview();
+}
+
+// 點格子：跳出狀態選單
+let ceCtx=null;
+function openCellEdit(name,d){
+  if(!generatedData||!generatedData.sched[name])return;
+  const why=cellFrozenReason(name,d);if(why){alert(why);return;}
+  const g=generatedData,s=staff.find(x=>x.name===name)||{store:'',type:''};
+  const cur=g.sched[name][d],curKey=(cur==='off'&&g.mandatoryOff[name+'_'+d])?'mustoff':cur;
+  const curTarget=cur==='sup'?supTargetOf(g.supMap,name,d):'';
+  const targets=STORES.filter(t=>t!==s.store&&!isLocked(t));
+  const hasEdit=cellEdits.some(e=>e.y===g.y&&e.m===g.m&&e.name===name&&e.d===d);
+  const opts=[['work','出勤'],['off','休'],['mustoff','必休'],['must','必上']];
+  if(s.type==='機動人員')opts.push(['mob','機動']);
+  const wn=g.cal.find(c=>c.d===d).wn;
+  ceCtx={name,d};
+  document.getElementById('v8-modal-root').innerHTML=`<div class="v8-modal-bg" onclick="if(event.target===this)closeV8Modal()"><div class="v8-modal-box">
+    <h4>✏️ ${name}・${g.m}月${d}日（週${wn}）</h4>
+    <div class="ce-opts">${opts.map(([k,l])=>`<button class="ce-opt${curKey===k?' cur':''}" onclick="applyCellEdit('${k}','')">${l}</button>`).join('')}</div>
+    ${targets.length?`<div class="fg" style="margin-top:8px"><label>支援到別店</label><div style="display:flex;gap:5px"><select id="ce-target">${targets.map(t=>`<option${t===curTarget?' selected':''}>${t}</option>`).join('')}</select><button class="ce-opt${cur==='sup'?' cur':''}" style="padding:4px 10px;white-space:nowrap;flex-shrink:0" onclick="applyCellEdit('sup',document.getElementById('ce-target').value)">支援</button></div></div>`:''}
+    <div style="font-size:9px;color:#888;margin-top:8px;line-height:1.5">${modeOf(s.store)==='auto'?'這間店是 ⚡v7自動：你設定的格子會變成固定條件，下次按「生成」v7會繞開它排。':'這間店是 ✋手動：改完立即生效，按「生成」也不會被v7改掉。'}</div>
+    <div class="modal-btns">${hasEdit&&modeOf(s.store)==='auto'?`<button class="mb-clear" onclick="removeCellEdit()">移除手動設定</button>`:''}<button class="mb-cancel" onclick="closeV8Modal()">取消</button></div>
+  </div></div>`;
+}
+function closeV8Modal(){document.getElementById('v8-modal-root').innerHTML='';ceCtx=null;}
+function applyCellEdit(st,target){
+  if(!ceCtx)return;
+  const{name,d}=ceCtx,g=generatedData;
+  if(st==='sup'&&(!target||isLocked(target))){alert('請選擇一間未鎖定的門市');return;}
+  setCellState(g.sched,g.supMap,g.mandatoryOff,name,d,st,target);
+  cellEdits=cellEdits.filter(e=>!(e.y===g.y&&e.m===g.m&&e.name===name&&e.d===d));
+  cellEdits.push({y:g.y,m:g.m,name,d,st,target:st==='sup'?target:''});
+  closeV8Modal();rerenderPreview();
+}
+function removeCellEdit(){
+  if(!ceCtx)return;
+  const{name,d}=ceCtx,g=generatedData;
+  cellEdits=cellEdits.filter(e=>!(e.y===g.y&&e.m===g.m&&e.name===name&&e.d===d));
+  closeV8Modal();rerenderPreview();
+  alert('已移除這格的手動設定，下次按「⚡ 生成初假表」才會由v7重新安排這一格');
+}
+
+// ── v8：勾選門市下載（初假表Excel／次假表Excel／假表骨架共用） ──
+let spCb=null;
+function openStorePicker(title,items,note,onOk){
+  spCb=onOk;
+  document.getElementById('v8-modal-root').innerHTML=`<div class="v8-modal-bg" onclick="if(event.target===this)closeV8Modal()"><div class="v8-modal-box">
+    <h4>${title}</h4>
+    <div style="font-size:9px;color:#666;margin-bottom:6px">勾選要下載的門市（預設全選）</div>
+    <div id="sp-list">${items.map(it=>`<label class="sp-item"><input type="checkbox" value="${it}" checked>${it}</label>`).join('')}</div>
+    ${note?`<div style="font-size:9px;color:#888;margin-top:6px;line-height:1.5">${note}</div>`:''}
+    <div class="modal-btns"><button class="mb-save" onclick="confirmStorePicker()">⬇ 下載</button><button class="mb-cancel" onclick="closeV8Modal()">取消</button></div>
+  </div></div>`;
+}
+function confirmStorePicker(){
+  const sel=[...document.querySelectorAll('#sp-list input:checked')].map(i=>i.value);
+  if(!sel.length){alert('請至少勾選一間');return;}
+  const cb=spCb;closeV8Modal();spCb=null;cb(sel);
+}
+// 檔名：全選維持原本檔名；只勾部分就加上門市名（例：溪湖排班_2026年11月_平和忠孝_初假表.xlsx）
+function pickedFileTag(sel,all){return sel.length===all.length&&all.every(s=>sel.includes(s))?'':'_'+sel.map(s=>s.replace('店','')).join('');}
+
+let needsData={平和店:[2,3,2,2,2,3,3],忠孝店:[2,3,2,3,2,3,3],培英店:[3,3,3,3,3,2,2],彰水店:[2,2,2,2,2,2,3],新港店:[3,4,3,4,3,4,5],中興店:[2,2,2,2,2,2,3]};
+
+let openConds={
+  平和店:[{rows:[{type:'正職',skill:'不限',count:2}]}],
+  忠孝店:[
+    {rows:[{type:'正職',skill:'不限',count:1},{type:'計時',skill:'不限',count:1}]},
+    {rows:[{type:'正職',skill:'不限',count:2}]}
+  ],
+  培英店:[
+    {rows:[{type:'正職',skill:'不限',count:2},{type:'八小時全職',skill:'不限',count:1}]},
+    {rows:[{type:'正職',skill:'不限',count:2}]}
+  ],
+  彰水店:[
+    {rows:[{type:'正職',skill:'不限',count:1},{type:'計時',skill:'不限',count:1}]},
+    {rows:[{type:'正職',skill:'不限',count:1},{type:'機動人員',skill:'不限',count:1}]},
+    {rows:[{type:'正職',skill:'不限',count:1},{type:'跨店支援',skill:'不限',count:1}]},
+    {rows:[{type:'計時',skill:'不限',count:1},{type:'機動人員',skill:'不限',count:1}]},
+    {rows:[{type:'計時',skill:'不限',count:1},{type:'跨店支援',skill:'不限',count:1}]}
+  ],
+  新港店:[{rows:[{type:'正職',skill:'不限',count:2}]}],
+  中興店:[{rows:[{type:'正職',skill:'不限',count:2}]}]
+};
+
+// allStaff是全公司真正的名單來源（settings畫面新增/編輯/刪除都動這份），STORES範圍只影響
+// genSchedule()當下narrow出來給生成流程用的staff working copy，不影響allStaff本身
+let allStaff=[];
+let staff=allStaff;
+
+let pins=[];
+
+let adjustments=[];
+
+let storeRules=[];
+
+let staffRules=[
+];
+
+let crossRules=[];
+
+let storeGroups=[
+  {name:'溪湖區',stores:['平和店','忠孝店','培英店']},
+  {name:'伸港區',stores:['新港店','中興店']},
+  {name:'埤頭區',stores:['彰水店']},
+];
+function sameGroup(storeA,storeB){
+  if(!storeA||!storeB)return false;
+  if(storeA===storeB)return true;
+  return storeGroups.some(g=>g.stores.includes(storeA)&&g.stores.includes(storeB));
+}
+function renderStoreGroups(){
+  const el=document.getElementById('group-list');if(!el)return;
+  el.innerHTML=storeGroups.map((g,gi)=>`<div class="adj-card" style="flex-direction:column;align-items:stretch">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <input type="text" value="${g.name}" oninput="storeGroups[${gi}].name=this.value" style="font-size:10px;font-weight:600;border:none;background:transparent;width:60%;color:#1a1a1a">
+      <button class="bi" onclick="storeGroups.splice(${gi},1);renderStoreGroups()">🗑</button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0">
+      ${g.stores.map((s,si)=>`<span class="bdg" style="background:#EEEDFE;color:#333">${s}<span style="cursor:pointer;margin-left:4px" onclick="storeGroups[${gi}].stores.splice(${si},1);renderStoreGroups()">×</span></span>`).join('')}
+    </div>
+    <div style="display:flex;gap:4px">
+      <input type="text" id="group-add-${gi}" placeholder="新增門市名稱" style="font-size:10px;flex:1;color:#1a1a1a;background:#fff;width:auto">
+      <button class="badd" style="padding:2px 8px" onclick="const v=document.getElementById('group-add-${gi}').value.trim();if(v){storeGroups[${gi}].stores.push(v);renderStoreGroups();}">＋</button>
+    </div>
+  </div>`).join('');
+}
+function addStoreGroup(){storeGroups.push({name:'新群組',stores:[]});renderStoreGroups();}
+
+function spin(id,dir,mn,mx){const el=document.getElementById(id);let v=parseInt(el.value||0)+dir;v=Math.max(mn,Math.min(mx,v));el.value=v;const vEl=document.getElementById(id+'-v');if(vEl)vEl.textContent=v;}
+function tog(id){const s=document.getElementById(id),c=document.getElementById('cv-'+id);s.classList.toggle('collapsed');c.textContent=s.classList.contains('collapsed')?'▼':'▲';}
+function lvOpts(c){return['丙','乙','甲'].map(l=>`<option${l===c?' selected':''}>${l}</option>`).join('');}
+function skillStr(sk){let p=[];if(sk.g)p.push('煎'+sk.gl);if(sk.c)p.push('櫃'+sk.cl);if(sk.d)p.push('包飲');if(sk.intern)p.push('實習');return p.length?p.join('・'):'—';}
+function checkHint(){const y=+document.getElementById('yr').value,m=+document.getElementById('mo').value;const dates=HOL[`${y}-${m}`]||[];const box=document.getElementById('hint');if(dates.length){document.getElementById('hint-t').textContent=`${y}年${m}月 國定假日`;document.getElementById('hint-b').textContent=`建議代入：${dates.map(d=>`${m}/${d}`).join('、')}`;box.style.display='block';}else box.style.display='none';renderHolList();}
+function autoFill(){const y=+document.getElementById('yr').value,m=+document.getElementById('mo').value;document.getElementById('hols').value=(HOL[`${y}-${m}`]||[]).join(',');renderHolList();}
+function renderHolList(){const y=+document.getElementById('yr').value,m=+document.getElementById('mo').value;const dates=document.getElementById('hols').value.split(',').map(s=>s.trim()).filter(s=>s&&!isNaN(+s));const el=document.getElementById('hol-list');if(!dates.length){el.innerHTML='';return;}el.innerHTML=`<div style="background:#f9f9f9;border-radius:4px;padding:5px 7px;margin-top:4px;border:1px solid #e0e0e0">${dates.map(d=>`<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0"><span>${m}/${d}</span><span style="color:#888">${HOL_N[`${y}-${m}-${d}`]||''}</span></div>`).join('')}</div>`;}
+function renderNeedTabs(){document.getElementById('need-stabs').innerHTML=ALL_STORE_NAMES.map(s=>`<button class="stab${s===curNS?' active':''}" onclick="switchNS('${s}')">${s}</button>`).join('');}
+function switchNS(s){curNS=s;renderNeedTabs();renderNeedTable();}
+function renderNeedTable(){const d=needsData[curNS];document.getElementById('need-table').innerHTML=`<div style="background:#f9f9f9;border-radius:6px;padding:7px;border:1px solid #e0e0e0"><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center">${WN.map((day,i)=>`<div><div style="font-size:8px;font-weight:500;color:${i>=5?'#A32D2D':'#666'};margin-bottom:3px">週${day}</div><select onchange="needsData['${curNS}'][${i}]=+this.value" style="font-size:10px;padding:2px 1px;text-align:center;width:100%">${[0,1,2,3,4].map(n=>`<option${d[i]===n?' selected':''}>${n}</option>`).join('')}</select></div>`).join('')}</div><div style="margin-top:4px;font-size:8px;color:#888;text-align:center">人（每日出勤上限）</div></div>`;}
+function genSummary(store){const c=openConds[store];if(!c||!c.length)return'尚未設定';return c.map(g=>g.rows.map(r=>`${r.count}位${r.type}${r.skill!=='不限'?'('+r.skill+')':''}`).join('＋')).join(' 或 ');}
+function renderOpenConds(){document.getElementById('open-conditions').innerHTML=ALL_STORE_NAMES.map(store=>{const conds=openConds[store];const groups=conds.map((g,gi)=>`<div class="oc-group"><div class="oc-ghdr"><span class="oc-glabel">第${gi+1}組</span><button class="oc-del-g" onclick="delGroup('${store}',${gi})">刪除整組</button></div>${g.rows.map((r,ri)=>`<div class="oc-row"><select onchange="updateOC('${store}',${gi},${ri},'type',this.value)" style="font-size:9px;padding:2px 3px">${TYPE_OPTS.map(t=>`<option${t===r.type?' selected':''}>${t}</option>`).join('')}</select><select onchange="updateOC('${store}',${gi},${ri},'skill',this.value)" style="font-size:9px;padding:2px 3px">${SKILL_OPTS.map(s=>`<option${s===r.skill?' selected':''}>${s}</option>`).join('')}</select><div style="display:flex;align-items:center;gap:1px;font-size:9px">×<input type="number" value="${r.count}" min="1" max="9" style="width:24px;padding:1px 2px;font-size:9px;text-align:center" onchange="updateOC('${store}',${gi},${ri},'count',+this.value)"></div><button class="oc-del-r" onclick="delRow('${store}',${gi},${ri})">×</button></div>`).join('')}<button class="oc-add-m" onclick="addRow('${store}',${gi})">＋ 加夥伴要求</button></div>${gi<conds.length-1?'<div class="oc-or">── 或 ──</div>':''}`).join('');return`<div class="oc-store"><div class="oc-title"><div style="width:7px;height:7px;border-radius:50%;background:${SC[store]}"></div>${store} 開店條件</div><div class="oc-sum">🔑 ${genSummary(store)}</div><div class="oc-hint">滿足以下任何一組就能開店</div>${groups}<button class="oc-add-g" onclick="addGroup('${store}')">＋ 新增條件組</button></div>`;}).join('');}
+function updateOC(store,gi,ri,f,v){openConds[store][gi].rows[ri][f]=v;renderOpenConds();}
+function addRow(store,gi){openConds[store][gi].rows.push({type:'正職',skill:'不限',count:1});renderOpenConds();}
+function delRow(store,gi,ri){openConds[store][gi].rows.splice(ri,1);if(!openConds[store][gi].rows.length)openConds[store].splice(gi,1);renderOpenConds();}
+function addGroup(store){openConds[store].push({rows:[{type:'正職',skill:'不限',count:1}]});renderOpenConds();}
+function delGroup(store,gi){openConds[store].splice(gi,1);renderOpenConds();}
+function renderStaff(){document.getElementById('staff-list').innerHTML=allStaff.map((s,i)=>`<div class="card"><div class="ct"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap"><span style="font-size:10px;font-weight:600">${s.name}</span><span class="bdg" style="background:${SB[s.store]||'#FFFBEB'};color:${SC[s.store]||'#7A5500'}">${s.store==='機動人員'?'機動':s.store.replace('店','')}</span><span class="bdg" style="background:#f0f0f0;color:#555">${s.type}</span><span class="bdg" style="background:#E8F4FD;color:#0C447C">平${s.wd}↑ 假${s.hd}↑ 月${s.days}↑</span></div><div style="font-size:8px;color:#888;margin-top:1px">${skillStr(s.sk)}</div></div><div class="sa"><button class="bi" onclick="editS(${i})">✏️</button><button class="bi" onclick="delS(${i})">🗑</button></div></div>${eSIdx===i?renderES(i):''}</div>`).join('');}
+function spES(id,val,mn,mx){return`<div class="spin-wrap"><div class="spinner"><button class="spin-up" onclick="spin('${id}',1,${mn},${mx})">▲</button><div class="spinner-val" id="${id}-v">${val}</div><button class="spin-dn" onclick="spin('${id}',-1,${mn},${mx})">▼</button></div><input type="hidden" id="${id}" value="${val}"></div>`;}
+function renderES(i){const s=allStaff[i];return`<div class="ei"><div class="r2"><div class="fg" style="margin-top:0"><label>簡稱</label><input id="es-n" type="text" value="${s.name}"></div><div class="fg" style="margin-top:0"><label>所屬門市</label><select id="es-s">${ALL_STORES.map(st=>`<option${st===s.store?' selected':''}>${st}</option>`).join('')}</select></div></div><div class="r2"><div class="fg" style="margin-top:0"><label>職別</label><select id="es-t"><option${s.type==='正職'?' selected':''}>正職</option><option${s.type==='計時'?' selected':''}>計時</option><option${s.type==='八小時全職'?' selected':''}>八小時全職</option><option${s.type==='機動人員'?' selected':''}>機動人員</option></select></div><div class="fg" style="margin-top:0"><label>月休上限</label><input id="es-d" type="number" value="${s.days}" min="0" max="31"></div></div><div class="r2"><div class="fg" style="margin-top:0"><label>平日休下限</label>${spES('es-wd',s.wd,0,8)}</div><div class="fg" style="margin-top:0"><label>假日休下限</label>${spES('es-hd',s.hd,0,8)}</div></div><div style="font-size:9px;color:#7A5500;margin-top:3px;background:#FFFBEB;padding:3px 6px;border-radius:3px">平日休下限＋假日休下限 ≤ 月休上限</div><div style="margin-top:5px"><div style="font-size:9px;color:#666;margin-bottom:2px">能力分級</div><div class="skill-row"><label class="ski"><input type="checkbox" id="es-g"${s.sk.g?' checked':''}> 煎台<select id="es-gl" style="width:auto;font-size:8px;padding:1px 2px">${lvOpts(s.sk.gl)}</select></label><label class="ski"><input type="checkbox" id="es-c"${s.sk.c?' checked':''}> 櫃台<select id="es-cl" style="width:auto;font-size:8px;padding:1px 2px">${lvOpts(s.sk.cl)}</select></label><label class="ski"><input type="checkbox" id="es-dr"${s.sk.d?' checked':''}> 包飲</label><label class="ski"><input type="checkbox" id="es-in"${s.sk.intern?' checked':''}> 實習生</label></div></div><div style="display:flex;gap:4px;margin-top:7px"><button class="badd" style="flex:2" onclick="saveS(${i})">儲存</button><button class="badd bsec" style="flex:1" onclick="cancelES()">取消</button></div></div>`;}
+function editS(i){eSIdx=(eSIdx===i?-1:i);renderStaff();}
+function cancelES(){eSIdx=-1;renderStaff();}
+function saveS(i){
+  const wd=+document.getElementById('es-wd').value||0,hd=+document.getElementById('es-hd').value||0,days=+document.getElementById('es-d').value||0;
+  if(wd+hd>days){alert(`平日休下限(${wd})+假日休下限(${hd})超過月休上限(${days}天)`);return;}
+  allStaff[i]={name:document.getElementById('es-n').value,store:document.getElementById('es-s').value,type:document.getElementById('es-t').value,days,wd,hd,sk:{g:document.getElementById('es-g').checked,gl:document.getElementById('es-gl').value,c:document.getElementById('es-c').checked,cl:document.getElementById('es-cl').value,d:document.getElementById('es-dr').checked,intern:document.getElementById('es-in').checked}};eSIdx=-1;renderStaff();renderSelects();
+}
+function delS(i){if(eSIdx===i)eSIdx=-1;allStaff.splice(i,1);renderStaff();renderSelects();}
+function addStaff(){
+  const name=document.getElementById('n-name').value.trim();if(!name)return;
+  const wd=+document.getElementById('n-wd').value||0,hd=+document.getElementById('n-hd').value||0,days=+document.getElementById('n-days').value||0;
+  if(wd+hd>days){alert(`平日休下限(${wd})+假日休下限(${hd})超過月休上限(${days}天)`);return;}
+  allStaff.push({name,store:document.getElementById('n-store').value,type:document.getElementById('n-type').value,days,wd,hd,sk:{g:document.getElementById('sk-g').checked,gl:document.getElementById('sk-gl').value,c:document.getElementById('sk-c').checked,cl:document.getElementById('sk-cl').value,d:document.getElementById('sk-d').checked,intern:document.getElementById('sk-i').checked}});
+  document.getElementById('n-name').value='';['n-wd','n-hd'].forEach(id=>{document.getElementById(id).value=0;document.getElementById(id+'-v').textContent=0;});renderStaff();renderSelects();
+}
+function renderPins(){document.getElementById('pin-list').innerHTML=pins.length?pins.map((p,i)=>`<div class="card"><div class="ct"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:3px;margin-bottom:2px"><span class="bdg ${p.type==='off'?'poff':'pon'}">${p.type==='off'?'必休':'必上'}</span><span style="font-size:10px;font-weight:600">${p.name}</span></div><div style="font-size:8px;color:#888;line-height:1.5">${p.dates?`<div>📆 ${p.dates}</div>`:''}${p.weeks?`<div>📅 ${p.weeks}</div>`:''}</div></div><div class="sa"><button class="bi" onclick="editP(${i})">✏️</button><button class="bi" onclick="delP(${i})">🗑</button></div></div>${ePIdx===i?renderEP(i):''}</div>`).join(''):`<div style="font-size:9px;color:#888;padding:2px 0 5px">尚無設定</div>`;}
+function renderEP(i){const p=pins[i];return`<div class="ei"><div class="r2"><div class="fg" style="margin-top:0"><label>夥伴</label><select id="ep-s">${allStaff.map(s=>`<option${s.name===p.name?' selected':''}>${s.name}</option>`).join('')}</select></div><div class="fg" style="margin-top:0"><label>類型</label><select id="ep-t"><option value="off"${p.type==='off'?' selected':''}>必休</option><option value="on"${p.type==='on'?' selected':''}>必上</option></select></div></div><div style="height:1px;background:#e0e0e0;margin:5px 0"></div><div class="fg" style="margin-top:0"><label>📆 指定日期</label><div style="display:flex;gap:4px"><input id="ep-d" type="text" value="${p.dates||''}" placeholder="不填則略過" style="flex:1"><button class="badd bsec pk-btn" onclick="openDatePicker('ep-d')">📅</button></div></div><div class="fg"><label>📅 指定星期</label><div style="display:flex;gap:4px"><input id="ep-w" type="text" value="${p.weeks||''}" placeholder="不填則略過" style="flex:1"><button class="badd bsec pk-btn" onclick="openWeekPicker('ep-w')">📅</button></div></div><div style="display:flex;gap:4px;margin-top:7px"><button class="badd" style="flex:2" onclick="saveP(${i})">儲存</button><button class="badd bsec" style="flex:1" onclick="cancelEP()">取消</button></div></div>`;}
+function editP(i){ePIdx=(ePIdx===i?-1:i);renderPins();}
+function cancelEP(){ePIdx=-1;renderPins();}
+function saveP(i){pins[i]={name:document.getElementById('ep-s').value,type:document.getElementById('ep-t').value,dates:document.getElementById('ep-d').value.trim(),weeks:document.getElementById('ep-w').value.trim()};ePIdx=-1;renderPins();}
+function delP(i){if(ePIdx===i)ePIdx=-1;pins.splice(i,1);renderPins();}
+function addPin(){const dates=document.getElementById('p-dates').value.trim(),weeks=document.getElementById('p-weeks').value.trim();if(!dates&&!weeks)return;pins.push({name:document.getElementById('p-staff').value,type:document.getElementById('p-type').value,dates,weeks});document.getElementById('p-dates').value='';document.getElementById('p-weeks').value='';renderPins();}
+let pkState=null;
+const PK_WN=['一','二','三','四','五','六','日'];
+function openDatePicker(targetId){
+  const yr=+document.getElementById('yr').value||2026,mo=+document.getElementById('mo').value||1;
+  const cur=(document.getElementById(targetId).value||'').split(',').map(x=>x.trim()).filter(Boolean).map(Number).filter(n=>!isNaN(n));
+  pkState={targetId,mode:'date',yr,mo,selected:new Set(cur)};
+  renderPkModal();
+}
+function openWeekPicker(targetId){
+  const val=document.getElementById(targetId).value||'';
+  const cur=PK_WN.filter(w=>val.includes('週'+w));
+  pkState={targetId,mode:'week',selected:new Set(cur)};
+  renderPkModal();
+}
+function renderPkModal(){document.getElementById('pin-modal-root').innerHTML=pkState.mode==='date'?renderPkDateHtml():renderPkWeekHtml();}
+function renderPkDateHtml(){
+  const{yr,mo,selected}=pkState;
+  const days=new Date(yr,mo,0).getDate();
+  const first=new Date(yr,mo-1,1).getDay();
+  const wns=['日','一','二','三','四','五','六'];
+  let cells=wns.map(w=>`<div class="pk-wd">${w}</div>`).join('');
+  for(let i=0;i<first;i++)cells+='<div></div>';
+  for(let d=1;d<=days;d++){
+    const wd=new Date(yr,mo-1,d).getDay();
+    cells+=`<div class="pk-day${selected.has(d)?' sel':''}${wd===0||wd===6?' we':''}" onclick="togglePkDate(${d})">${d}</div>`;
+  }
+  return`<div class="modal-bg" style="position:fixed"><div class="modal-box" style="width:280px">
+<h4>📆 選擇日期</h4>
+<div class="pk-hdr"><button class="pk-nav" onclick="shiftPkMonth(-1)">‹</button><span style="font-size:11px;font-weight:600">${yr}年${mo}月</span><button class="pk-nav" onclick="shiftPkMonth(1)">›</button></div>
+<div style="font-size:9px;color:#888;margin-bottom:6px">點擊可複選多天</div>
+<div class="pk-cal">${cells}</div>
+<div class="modal-btns"><button class="mb-clear" onclick="clearPk()">重置</button><button class="mb-cancel" onclick="closePk()">取消</button><button class="mb-save" onclick="savePk()">完成</button></div>
+</div></div>`;
+}
+function renderPkWeekHtml(){
+  const{selected}=pkState;
+  return`<div class="modal-bg" style="position:fixed"><div class="modal-box" style="width:280px">
+<h4>📅 選擇星期</h4>
+<div style="font-size:9px;color:#888;margin-bottom:8px">點擊可複選多天</div>
+<div class="pk-week">${PK_WN.map(w=>`<div class="pk-wbtn${selected.has(w)?' sel':''}" onclick="togglePkWeek('${w}')">週${w}</div>`).join('')}</div>
+<div class="modal-btns"><button class="mb-clear" onclick="clearPk()">重置</button><button class="mb-cancel" onclick="closePk()">取消</button><button class="mb-save" onclick="savePk()">完成</button></div>
+</div></div>`;
+}
+function togglePkDate(d){if(pkState.selected.has(d))pkState.selected.delete(d);else pkState.selected.add(d);renderPkModal();}
+function togglePkWeek(w){if(pkState.selected.has(w))pkState.selected.delete(w);else pkState.selected.add(w);renderPkModal();}
+function shiftPkMonth(delta){pkState.mo+=delta;if(pkState.mo<1){pkState.mo=12;pkState.yr--;}else if(pkState.mo>12){pkState.mo=1;pkState.yr++;}renderPkModal();}
+function clearPk(){pkState.selected.clear();renderPkModal();}
+function closePk(){document.getElementById('pin-modal-root').innerHTML='';pkState=null;}
+function savePk(){
+  const{targetId,mode,selected}=pkState;
+  const el=document.getElementById(targetId);
+  if(mode==='date')el.value=[...selected].sort((a,b)=>a-b).join(',');
+  else el.value=PK_WN.filter(w=>selected.has(w)).map(w=>'週'+w).join(',');
+  closePk();
+}
+let curAdjType=1;
+function switchAdjType(t){curAdjType=t;document.querySelectorAll('#adj-type-tabs .stab').forEach((b,i)=>b.classList.toggle('active',i+1===t));[1,2,3].forEach(i=>document.getElementById('adj-type-'+i).style.display=i===t?'block':'none');}
+function toggleAdjForm(){
+  adjOpen=!adjOpen;document.getElementById('adj-form').style.display=adjOpen?'block':'none';
+  const opts=staff.map(s=>`<option>${s.name}</option>`).join('');
+  ['adj-staff','adj2-from','adj2-to','adj3-from','adj3-to'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+}
+function renderAdj(){
+  const el=document.getElementById('adj-list');
+  if(!adjustments.length){el.innerHTML=`<div style="font-size:9px;color:#888;padding:2px 0 5px">尚無微調項目</div>`;return;}
+  const tagCls={1:'#EEEDFE',2:'#E1F5EE',3:'#FAEEDA'},tagTxt={1:'同人',2:'同店',3:'跨店'};
+  el.innerHTML=adjustments.map((a,i)=>{
+    const desc=a.type===1?`${a.name}　第${a.a}日→第${a.b}日`:`${a.from}（讓）→ ${a.to}（接）　第${a.a}日→第${a.b}日`;
+    return `<div class="adj-card"><div><span class="bdg" style="background:${tagCls[a.type]};color:#333">${tagTxt[a.type]}</span><div style="font-size:9px;margin-top:2px">${desc}</div></div><button class="bi" onclick="delAdj(${i})">🗑</button></div>`;
+  }).join('');
+}
+function addAdj(){
+  if(curAdjType===1){
+    const name=document.getElementById('adj-staff').value,a=document.getElementById('adj-a').value.trim(),b=document.getElementById('adj-b').value.trim();
+    if(!a||!b)return;
+    adjustments.push({type:1,name,a,b});
+    document.getElementById('adj-a').value='';document.getElementById('adj-b').value='';
+  }else if(curAdjType===2){
+    const from=document.getElementById('adj2-from').value,to=document.getElementById('adj2-to').value;
+    const a=document.getElementById('adj2-a').value.trim(),b=document.getElementById('adj2-b').value.trim();
+    if(!a||!b||from===to)return;
+    adjustments.push({type:2,from,to,a,b});
+    document.getElementById('adj2-a').value='';document.getElementById('adj2-b').value='';
+  }else{
+    const from=document.getElementById('adj3-from').value,to=document.getElementById('adj3-to').value;
+    const a=document.getElementById('adj3-a').value.trim(),b=document.getElementById('adj3-b').value.trim();
+    if(!a||!b||from===to)return;
+    adjustments.push({type:3,from,to,a,b});
+    document.getElementById('adj3-a').value='';document.getElementById('adj3-b').value='';
+  }
+  renderAdj();
+}
+function delAdj(i){adjustments.splice(i,1);renderAdj();}
+function renderStoreRules(){document.getElementById('store-rule-list').innerHTML=storeRules.length?storeRules.map((r,i)=>`<div class="card"><div class="ct"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:3px;margin-bottom:2px"><span class="bdg" style="background:${SB[r.store]||'#eee'};color:${SC[r.store]||'#333'}">${r.store}</span><span class="rtag" style="background:#FEF3E2;color:#7A4500">門市</span></div><div style="font-size:9px;line-height:1.4">${r.desc}</div></div><div class="sa"><button class="bi" onclick="editSR(${i})">✏️</button><button class="bi" onclick="delSR(${i})">🗑</button></div></div>${eSRIdx===i?renderESR(i):''}</div>`).join(''):`<div style="font-size:9px;color:#888;padding:2px 0 4px">尚無門市規則</div>`;}
+function renderESR(i){const r=storeRules[i];return`<div class="ei"><div class="fg" style="margin-top:0"><label>門市</label><select id="esr-s">${ALL_STORE_NAMES.map(st=>`<option${st===r.store?' selected':''}>${st}</option>`).join('')}</select></div><div class="fg"><label>規則描述</label><input id="esr-d" type="text" value="${r.desc}"></div><div style="display:flex;gap:4px;margin-top:7px"><button class="badd" style="flex:2" onclick="saveSR(${i})">儲存</button><button class="badd bsec" style="flex:1" onclick="cancelSR()">取消</button></div></div>`;}
+function editSR(i){eSRIdx=(eSRIdx===i?-1:i);renderStoreRules();}
+function cancelSR(){eSRIdx=-1;renderStoreRules();}
+function saveSR(i){storeRules[i]={store:document.getElementById('esr-s').value,desc:document.getElementById('esr-d').value};eSRIdx=-1;renderStoreRules();}
+function delSR(i){if(eSRIdx===i)eSRIdx=-1;storeRules.splice(i,1);renderStoreRules();}
+function addStoreRule(){const desc=document.getElementById('r-store-desc').value.trim();if(!desc)return;storeRules.push({store:document.getElementById('r-store').value,desc});document.getElementById('r-store-desc').value='';renderStoreRules();}
+function renderSelects(){
+  ['p-staff','r-staff','r-staff-name','cr-staff'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=allStaff.map(s=>`<option>${s.name}</option>`).join('');});
+  const crCp=document.getElementById('cr-cond-person');if(crCp)crCp.innerHTML=allStaff.map(s=>`<option>${s.name}</option>`).join('');
+  const crLr=document.getElementById('cr-linked-rest');if(crLr)crLr.innerHTML='<option value="">— 無 —</option>'+allStaff.map(s=>`<option>${s.name}</option>`).join('');
+}
+renderNeedTabs();renderNeedTable();renderOpenConds();renderStaff();renderPins();renderAdj();
+renderStoreRules();renderSelects();checkHint();renderStoreGroups();renderScopeBtns();
+renderStaffRules();renderCross();
+
+// 覆蓋夥伴規則相關函式
+const RULE_TYPE_DESC={'同步休假':'觸發人休假→夥伴同步休假','同步出勤':'觸發人出勤→夥伴同步出勤','其他':'自訂規則'};
+
+function renderStaffRules(){
+  document.getElementById('staff-rule-list').innerHTML=staffRules.length?staffRules.map((r,i)=>`<div class="card"><div class="ct"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:3px;margin-bottom:2px"><span style="font-size:10px;font-weight:600">${r.name}</span><span class="rtag">${r.type}</span>${r.triggerPerson?`<span style="font-size:8px;color:#888">← ${r.triggerPerson}</span>`:''}</div><div style="font-size:9px;color:#555">${r.desc}</div></div><div class="sa"><button class="bi" onclick="editStR(${i})">✏️</button><button class="bi" onclick="delStR(${i})">🗑</button></div></div>${eStRIdx===i?renderEStR(i):''}</div>`).join(''):`<div style="font-size:9px;color:#888;padding:2px 0 4px">尚無夥伴規則</div>`;
+}
+function renderEStR(i){
+  const r=staffRules[i];
+  const typeOpts=['同步休假','同步出勤','其他'].map(t=>`<option value="${t}"${t===r.type?' selected':''}>${t}</option>`).join('');
+  const stateOpts=[['off','休假'],['work','出勤'],['must','必上'],['mob','機動出勤']].map(([v,l])=>`<option value="${v}"${v===r.triggerState?' selected':''}>${l}</option>`).join('');
+  return`<div class="ei"><div class="r2"><div class="fg" style="margin-top:0"><label>夥伴（被連動）</label><select id="ef-n">${allStaff.map(s=>`<option${s.name===r.name?' selected':''}>${s.name}</option>`).join('')}</select></div><div class="fg" style="margin-top:0"><label>類型</label><select id="ef-t">${typeOpts}</select></div></div><div class="r2"><div class="fg" style="margin-top:0"><label>觸發人</label><select id="ef-tp">${allStaff.map(s=>`<option${s.name===r.triggerPerson?' selected':''}>${s.name}</option>`).join('')}</select></div><div class="fg" style="margin-top:0"><label>觸發狀態</label><select id="ef-ts">${stateOpts}</select></div></div><div class="fg"><label>描述</label><input id="ef-d" type="text" value="${r.desc}"></div><div style="display:flex;gap:4px;margin-top:7px"><button class="badd" style="flex:2" onclick="saveStR(${i})">儲存</button><button class="badd bsec" style="flex:1" onclick="cancelStR()">取消</button></div></div>`;
+}
+function editStR(i){eStRIdx=(eStRIdx===i?-1:i);renderStaffRules();}
+function cancelStR(){eStRIdx=-1;renderStaffRules();}
+function saveStR(i){staffRules[i]={name:document.getElementById('ef-n').value,type:document.getElementById('ef-t').value,triggerPerson:document.getElementById('ef-tp').value,triggerState:document.getElementById('ef-ts').value,desc:document.getElementById('ef-d').value};eStRIdx=-1;renderStaffRules();}
+function delStR(i){if(eStRIdx===i)eStRIdx=-1;staffRules.splice(i,1);renderStaffRules();}
+function addStaffRule(){
+  const t=document.getElementById('r-type').value;
+  const stateMap={'同步休假':'off','同步出勤':'work','其他':'off'};
+  staffRules.push({name:document.getElementById('r-staff-name').value,type:t,triggerPerson:document.getElementById('r-staff').value,triggerState:stateMap[t]||'off',desc:document.getElementById('r-staff-desc').value.trim()||RULE_TYPE_DESC[t]||''});
+  document.getElementById('r-staff-desc').value='';renderStaffRules();
+}
+
+// 覆蓋跨店支援規則相關函式（新增 linkedRest 欄位）
+function renderCross(){
+  document.getElementById('cross-list').innerHTML=crossRules.map((r,i)=>`<div class="card"><div class="ct"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin-bottom:2px"><span style="font-size:10px;font-weight:600">${r.staff}</span><span style="font-size:9px;color:#888">→</span><span class="bdg" style="background:${SB[r.store]||'#eee'};color:${SC[r.store]||'#333'}">${r.store}</span><span class="rtag">${r.trigger}</span>${r.linkedRest?`<span style="font-size:8px;color:#A32D2D">連動休:${r.linkedRest}</span>`:''}</div><div style="font-size:9px;line-height:1.4">${r.cond}${r.condPerson?` (${r.condPerson}休假時)`:''}</div></div><div class="sa"><button class="bi" onclick="editC(${i})">✏️</button><button class="bi" onclick="delC(${i})">🗑</button></div></div>${eCIdx===i?renderEC(i):''}</div>`).join('');
+}
+function renderEC(i){
+  const r=crossRules[i];
+  const isSpec=r.trigger==='特定人休假時';
+  return`<div class="ei"><div class="r2"><div class="fg" style="margin-top:0"><label>支援人員</label><select id="ec-s">${allStaff.map(s=>`<option${s.name===r.staff?' selected':''}>${s.name}</option>`).join('')}</select></div><div class="fg" style="margin-top:0"><label>支援門市</label><select id="ec-st">${ALL_STORE_NAMES.map(st=>`<option${st===r.store?' selected':''}>${st}</option>`).join('')}</select></div></div><div class="r2"><div class="fg" style="margin-top:0"><label>觸發條件</label><select id="ec-tr" onchange="toggleCondPerson(this.value)"><option${r.trigger==='固定星期'?' selected':''}>固定星期</option><option${isSpec?' selected':''}>特定人休假時</option><option${r.trigger==='人力不足時'?' selected':''}>人力不足時</option><option${r.trigger==='其他'?' selected':''}>其他</option></select></div><div class="fg" style="margin-top:0"><label>星期說明</label><input id="ec-c" type="text" value="${r.cond}"></div></div><div id="ec-cond-person-row" style="display:${isSpec?'block':'none'}"><div class="fg" style="margin-top:0"><label>指定人（休假時觸發）</label><select id="ec-cp">${allStaff.map(s=>`<option${s.name===r.condPerson?' selected':''}>${s.name}</option>`).join('')}</select></div></div><div class="fg" style="margin-top:4px"><label>連動排休人員（可空白）</label><select id="ec-lr"><option value="">— 無 —</option>${allStaff.map(s=>`<option value="${s.name}"${s.name===r.linkedRest?' selected':''}>${s.name}</option>`).join('')}</select></div><div style="display:flex;gap:4px;margin-top:7px"><button class="badd" style="flex:2" onclick="saveC(${i})">儲存</button><button class="badd bsec" style="flex:1" onclick="cancelEC()">取消</button></div></div>`;
+}
+function toggleCondPerson(v){const el=document.getElementById('ec-cond-person-row');if(el)el.style.display=v==='特定人休假時'?'block':'none';}
+function editC(i){eCIdx=(eCIdx===i?-1:i);renderCross();}
+function cancelEC(){eCIdx=-1;renderCross();}
+function saveC(i){
+  const trigger=document.getElementById('ec-tr').value;
+  crossRules[i]={
+    staff:document.getElementById('ec-s').value,
+    store:document.getElementById('ec-st').value,
+    trigger,
+    cond:document.getElementById('ec-c').value,
+    condPerson:trigger==='特定人休假時'?(document.getElementById('ec-cp')?document.getElementById('ec-cp').value:''):'',
+    linkedRest:document.getElementById('ec-lr').value||'',
+  };
+  eCIdx=-1;renderCross();
+}
+function delC(i){if(eCIdx===i)eCIdx=-1;crossRules.splice(i,1);renderCross();}
+function addCrossRule(){
+  const trigger=document.getElementById('cr-trigger').value;
+  crossRules.push({
+    staff:document.getElementById('cr-staff').value,
+    store:document.getElementById('cr-store').value,
+    trigger,
+    cond:document.getElementById('cr-cond').value.trim(),
+    condPerson:trigger==='特定人休假時'?(document.getElementById('cr-cond-person')?document.getElementById('cr-cond-person').value:''):'',
+    linkedRest:document.getElementById('cr-linked-rest')?document.getElementById('cr-linked-rest').value:'',
+  });
+  document.getElementById('cr-cond').value='';renderCross();
+}
+function toggleNewCondPerson(){
+  const v=document.getElementById('cr-trigger').value;
+  const el=document.getElementById('cr-cond-person-row');
+  if(el)el.style.display=v==='特定人休假時'?'block':'none';
+}
+
+// ── 核心生成邏輯 v26 ── 同 v24，修正預覽+Excel格式
+const RANK={'丙':0,'乙':1,'甲':2};
+
+function matchReq(s,req,supInStore){
+  if(req.type==='正職'&&s.type!=='正職')return false;
+  if(req.type==='計時'&&s.type!=='計時')return false;
+  if(req.type==='八小時全職'&&s.type!=='八小時全職')return false;
+  if(req.type==='機動人員'&&s.type!=='機動人員')return false;
+  if(req.type==='跨店支援'&&!supInStore.includes(s.name))return false;
+  if(req.skill&&req.skill!=='不限'){
+    const sk=s.sk;
+    if(req.skill==='包飲'&&!sk.d)return false;
+    if(req.skill==='實習生'&&!sk.intern)return false;
+    if(req.skill.startsWith('煎台')){if(!sk.g||(RANK[sk.gl]||0)<(RANK[req.skill.slice(2)]||0))return false;}
+    if(req.skill.startsWith('櫃台')){if(!sk.c||(RANK[sk.cl]||0)<(RANK[req.skill.slice(2)]||0))return false;}
+  }
+  return true;
+}
+
+function checkOpen(store,d,sched,supMap){
+  const conds=openConds[store]||[];
+  if(!conds.length)return true;
+  const supInStore=supMap[store+'_'+d]||[];
+  const storeOnDuty=staff.filter(s=>s.store===store&&sched[s.name][d]!=='off'&&sched[s.name][d]!=='sup');
+  const supInPeople=supInStore.map(n=>staff.find(s=>s.name===n)).filter(Boolean);
+  const all=[...new Map([...storeOnDuty,...supInPeople].map(s=>[s.name,s])).values()];
+  return conds.some(g=>g.rows.every(req=>all.filter(s=>matchReq(s,req,supInStore)).length>=req.count));
+}
+
+function getOnDuty(store,d,sched){
+  return staff.filter(s=>s.store===store&&sched[s.name][d]!=='off'&&sched[s.name][d]!=='sup').length;
+}
+
+function usedDays(name,sched,cal){
+  return cal.filter(({d})=>sched[name][d]==='off').length;
+}
+
+function genSchedule(){
+  if(!holYearReady_(+document.getElementById('yr').value)){alert('系統還沒有 '+document.getElementById('yr').value+' 年的國定假日資料，請聯繫小保補上後再排班');return;}
+  if(!curScope){alert('請先選擇門市範圍（溪湖埤頭／伸港）');return;}
+  const prevGen=generatedData; // v8：上一次的結果，手動／鎖定的店要沿用
+  // 依選定範圍narrow出STORES跟這次生成要用的staff working copy；allStaff（settings畫面用的完整名單）不受影響
+  STORES=SCOPE_STORES[curScope];
+  // 家店不在這次範圍內、但crossRules有指定要來範圍內某店支援的人（如阿傑家在中興店、固定支援彰水店），
+  // 仍要納入這次生成的staff working copy，否則他的跨區支援規則會silently no-op，連帶影響其他人的排休分配
+  staff=allStaff.filter(s=>STORES.includes(s.store)||s.type==='機動人員'||crossRules.some(cr=>cr.staff===s.name&&STORES.includes(cr.store)));
+  generatedData=null;
+  document.getElementById('btn-dl').disabled=true;
+  document.getElementById('main-body').innerHTML='<div class="ph"><div style="font-size:20px">⏳</div><div style="font-size:11px;font-weight:600">生成中...</div></div>';
+  try{
+  const y=+document.getElementById('yr').value,m=+document.getElementById('mo').value;
+  const useSat=document.getElementById('sat').checked,useSun=document.getElementById('sun').checked;
+  const holDates=document.getElementById('hols').value.split(',').map(s=>+s.trim()).filter(n=>n>0);
+  const dim=new Date(y,m,0).getDate();
+  const wdMap=[6,0,1,2,3,4,5];
+  const cal=[];
+  for(let d=1;d<=dim;d++){
+    const wd=wdMap[new Date(y,m-1,d).getDay()];
+    const isHol=holDates.includes(d)||(wd===5&&useSat)||(wd===6&&useSun);
+    cal.push({d,wd,isHol,wn:WN[wd]});
+  }
+  const sched={};const locked={};const mandatoryOff={};
+  staff.forEach(s=>{sched[s.name]={};cal.forEach(({d})=>{sched[s.name][d]='work';});});
+  const supMap={};
+  // Step0（v8）：手動／鎖定的店沿用上次結果。只有「同年月＋同區域」的上次結果才能沿用；
+  // 換月或換區就沒有東西可沿用，鎖定自動解除，手動的店從全出勤（＋必休必上）開始。
+  const prev=(prevGen&&prevGen.y===y&&prevGen.m===m&&prevGen.scope===curScope)?prevGen:null;
+  const notices=[];
+  if(!prev){
+    const dropped=STORES.filter(st=>isLocked(st));
+    if(dropped.length){dropped.forEach(st=>delete storeLocks[st]);notices.push({type:'warn',msg:`換了月份／區域，沒有可沿用的班表，${dropped.join('、')}的鎖定已自動解除`});renderStoreCtl();}
+  }
+  cellEdits=cellEdits.filter(e=>e.y===y&&e.m===m);
+  const frozenSet=new Set(),frozen={}; // frozenSet：這次v7不排的店；frozen：完全沿用上次結果、不准動的格子
+  const freezeCell=(n,d)=>{frozen[n+'_'+d]=true;locked[n+'_'+d]=true;};
+  if(prev){
+    STORES.forEach(st=>{if(isLocked(st)||modeOf(st)==='manual')frozenSet.add(st);});
+    staff.forEach(s=>{
+      if(!frozenSet.has(s.store))return;
+      cal.forEach(({d})=>{
+        const v=(prev.sched[s.name]&&prev.sched[s.name][d])||'work';
+        sched[s.name][d]=v;freezeCell(s.name,d);
+        if(prev.mandatoryOff[s.name+'_'+d])mandatoryOff[s.name+'_'+d]=true;
+        if(v==='sup'){const t=supTargetOf(prev.supMap,s.name,d);if(t){const k=t+'_'+d;if(!supMap[k])supMap[k]=[];if(!supMap[k].includes(s.name))supMap[k].push(s.name);}}
+      });
+    });
+    // 別店的人來支援「v7不排的店」那幾天一起凍結（鎖定的店人力完全不變；手動的店也不會被v7偷改）
+    Object.keys(prev.supMap||{}).forEach(k=>{
+      const{store:st,d}=splitSupKey(k);
+      if(!frozenSet.has(st))return;
+      (prev.supMap[k]||[]).forEach(n=>{
+        if(!sched[n])return;
+        sched[n][d]='sup';freezeCell(n,d);
+        if(!supMap[k])supMap[k]=[];if(!supMap[k].includes(n))supMap[k].push(n);
+      });
+    });
+  }
+  // Step3: 必休／必上（沿用上次結果的格子不再套，避免蓋掉手動改過的內容）
+  pins.forEach(p=>{
+    cal.forEach(({d,wd})=>{
+      const dm=p.dates&&p.dates.split(',').map(x=>+x.trim()).includes(d);
+      const wm=p.weeks&&WN.some((w,i)=>p.weeks.includes('週'+w)&&wd===i);
+      if(frozen[p.name+'_'+d])return;
+      if((dm||wm)&&sched[p.name]){sched[p.name][d]=p.type==='off'?'off':'must';locked[p.name+'_'+d]=true;if(p.type==='off')mandatoryOff[p.name+'_'+d]=true;}
+    });
+  });
+  // Step3.5（v8）：點格子手動設定的狀態當成固定條件（支援到v7不排的店的設定不採用，那間店的人力要維持原樣）
+  cellEdits.forEach(e=>{
+    if(!sched[e.name]||frozen[e.name+'_'+e.d])return;
+    if(e.st==='sup'&&(!e.target||frozenSet.has(e.target)))return;
+    setCellState(sched,supMap,mandatoryOff,e.name,e.d,e.st,e.target);
+    locked[e.name+'_'+e.d]=true;
+  });
+  // 還沒有結果可沿用的手動店：全出勤＋必休必上＋手動格子就是它的班表，整間鎖住不給v7排
+  if(!prev)STORES.forEach(st=>{
+    if(modeOf(st)!=='manual')return;
+    frozenSet.add(st);
+    staff.filter(s=>s.store===st).forEach(s=>cal.forEach(({d})=>{locked[s.name+'_'+d]=true;}));
+  });
+  // Step4: 跨店支援
+  crossRules.forEach(cr=>{
+    if(cr.trigger==='人力不足時')return; // 改在Step8D（排休結算後）才判斷，這裡先略過
+    if(frozenSet.has(cr.store))return; // v8：v7不排的店，不再塞新的支援進去
+    cal.forEach(({d,wd,wn})=>{
+      if(cr.cond&&!cr.cond.split('、').some(c=>c.includes('週'+wn)))return;
+      if(cr.trigger==='特定人休假時'){if(!cr.condPerson||!sched[cr.condPerson]||sched[cr.condPerson][d]!=='off'||!mandatoryOff[cr.condPerson+'_'+d])return;}
+      if(!sched[cr.staff]||locked[cr.staff+'_'+d]||sched[cr.staff][d]!=='work')return;
+      sched[cr.staff][d]='sup';
+      const k=cr.store+'_'+d;if(!supMap[k])supMap[k]=[];if(!supMap[k].includes(cr.staff))supMap[k].push(cr.staff);
+      if(cr.linkedRest&&sched[cr.linkedRest]&&!locked[cr.linkedRest+'_'+d]&&sched[cr.linkedRest][d]==='work'){
+        const lr=staff.find(s=>s.name===cr.linkedRest);
+        if(lr&&usedDays(cr.linkedRest,sched,cal)<lr.days){sched[cr.linkedRest][d]='off';locked[cr.linkedRest+'_'+d]=true;}
+      }
+    });
+  });
+  // Step5: 機動人員
+  staff.filter(s=>s.type==='機動人員').forEach(s=>{cal.forEach(({d})=>{if(sched[s.name][d]==='work')sched[s.name][d]='mob';});});
+  // Step6: 夥伴規則
+  staffRules.forEach(sr=>{
+    if(!sr.triggerPerson||!sched[sr.name]||!sched[sr.triggerPerson])return;
+    cal.forEach(({d})=>{
+      if(locked[sr.name+'_'+d])return;
+      const ts=sched[sr.triggerPerson][d];
+      if(sr.type==='同步休假'&&ts==='off'){
+        const s=staff.find(x=>x.name===sr.name);
+        if(s&&usedDays(sr.name,sched,cal)<s.days){sched[sr.name][d]='off';locked[sr.name+'_'+d]=true;}
+      } else if(sr.type==='同步出勤'&&(ts==='work'||ts==='must')){
+        const cur=sched[sr.name][d];if(cur==='work'||cur==='mob'){sched[sr.name][d]='must';locked[sr.name+'_'+d]=true;}
+      }
+    });
+  });
+  // Step7: 計算每天各店可排休名額
+  const slotMap={};
+  cal.forEach(({d,wd})=>{
+    STORES.forEach(store=>{
+      if(frozenSet.has(store))return; // v8：v7不排的店不算排休名額
+      let lim=needsData[store]?needsData[store][wd]:0;
+      if(store==='忠孝店'&&(wd===1||wd===3)){
+        const hasLockedOff=staff.filter(s=>s.store==='忠孝店'&&locked[s.name+'_'+d]&&sched[s.name][d]==='off').length>0;
+        if(hasLockedOff)lim=Math.min(lim,2);
+      }
+      if(!lim)return;
+      const slots=Math.max(0,getOnDuty(store,d,sched)-lim);
+      if(slots>0)slotMap[store+'_'+d]=slots;
+    });
+  });
+  // Step8A: 平日出勤人力保障
+  const adjWd={};
+  STORES.forEach(store=>{
+    const ss=staff.filter(s=>s.store===store&&s.type!=='機動人員');
+    if(!ss.length)return;
+    const totalSlots=cal.filter(({d,isHol})=>!isHol&&slotMap[store+'_'+d]>0).reduce((sum,{d})=>sum+(slotMap[store+'_'+d]||0),0);
+    const wdNeeds=ss.map(s=>{
+      const alreadyWd=cal.filter(({d,isHol})=>!isHol&&sched[s.name][d]==='off').length;
+      const alreadyHd=cal.filter(({d,isHol})=>isHol&&sched[s.name][d]==='off').length;
+      const budget=Math.max(0,s.days-alreadyWd-alreadyHd);
+      return Math.min(Math.max(0,s.wd-alreadyWd),budget);
+    });
+    const totalNeed=wdNeeds.reduce((a,b)=>a+b,0);
+    let adjusted=[...wdNeeds];
+    if(totalNeed>0&&totalSlots!==totalNeed){
+      const ratio=totalSlots/totalNeed;
+      adjusted=wdNeeds.map(n=>Math.max(0,Math.round(n*ratio)));
+      let diff=totalSlots-adjusted.reduce((a,b)=>a+b,0);
+      for(let i=0;i<adjusted.length&&diff!==0;i++){if(diff>0){adjusted[i]++;diff--;}else if(diff<0&&adjusted[i]>0){adjusted[i]--;diff++;}}
+    }
+    ss.forEach((s,i)=>{adjWd[s.name]=adjusted[i];});
+  });
+  // Step8B: 假日休
+  staff.forEach(s=>{
+    if(!STORES.includes(s.store))return;
+    if(s.type==='計時'||s.type==='機動人員')return;
+    const alreadyHd=cal.filter(({d,isHol})=>isHol&&sched[s.name][d]==='off').length;
+    let needHd=Math.max(0,s.hd-alreadyHd);if(needHd<=0)return;
+    const avail=cal.filter(({d,isHol})=>isHol&&sched[s.name][d]==='work'&&!locked[s.name+'_'+d]);
+    const step=avail.length>needHd?Math.floor(avail.length/needHd):1;
+    let lastIdx=-1;
+    for(let i=0;i<avail.length&&needHd>0;i++){
+      if(lastIdx>=0&&i-lastIdx<Math.max(1,step-1))continue;
+      const {d}=avail[i];if(usedDays(s.name,sched,cal)>=s.days)break;
+      sched[s.name][d]='off';if(!checkOpen(s.store,d,sched,supMap)){sched[s.name][d]='work';continue;}needHd--;lastIdx=i;
+    }
+    for(let i=0;i<avail.length&&needHd>0;i++){
+      const {d}=avail[i];if(sched[s.name][d]!=='work')continue;if(usedDays(s.name,sched,cal)>=s.days)break;
+      sched[s.name][d]='off';if(!checkOpen(s.store,d,sched,supMap)){sched[s.name][d]='work';continue;}needHd--;
+    }
+  });
+  // Step8C: 平日休交錯分配
+  STORES.forEach(store=>{
+    const ss=staff.filter(s=>s.store===store&&s.type!=='機動人員');
+    if(!ss.length)return;
+    const needs={};ss.forEach(s=>{needs[s.name]=adjWd[s.name]||0;});
+    const wdSlotDays=cal.filter(({d,isHol})=>!isHol&&slotMap[store+'_'+d]>0);
+    for(const {d} of wdSlotDays){
+      let daySlots=slotMap[store+'_'+d]||0;
+      while(daySlots>0){
+        const eligible=ss.filter(s=>sched[s.name][d]==='work'&&!locked[s.name+'_'+d]&&needs[s.name]>0&&usedDays(s.name,sched,cal)<s.days);
+        if(!eligible.length)break;
+        eligible.sort((a,b)=>needs[b.name]!==needs[a.name]?needs[b.name]-needs[a.name]:usedDays(a.name,sched,cal)-usedDays(b.name,sched,cal));
+        let assigned=false;
+        for(const s of eligible){
+          sched[s.name][d]='off';
+          if(checkOpen(store,d,sched,supMap)){needs[s.name]--;daySlots--;assigned=true;break;}
+          sched[s.name][d]='work';
+        }
+        if(!assigned)break;
+      }
+    }
+    ss.forEach(s=>{
+      let rem=needs[s.name]||0;if(rem<=0)return;
+      const avail=cal.filter(({d,isHol})=>!isHol&&sched[s.name][d]==='work'&&!locked[s.name+'_'+d]);
+      for(const {d} of avail){
+        if(rem<=0)break;if(usedDays(s.name,sched,cal)>=s.days)break;
+        sched[s.name][d]='off';if(!checkOpen(store,d,sched,supMap)){sched[s.name][d]='work';continue;}rem--;needs[s.name]--;
+      }
+    });
+  });
+  // 機動人員月休
+  staff.filter(s=>s.type==='機動人員'&&s.days>0).forEach(s=>{
+    let rem=Math.max(0,s.days-usedDays(s.name,sched,cal));if(rem<=0)return;
+    const wdAvail=cal.filter(({d,isHol})=>!isHol&&sched[s.name][d]==='mob'&&!locked[s.name+'_'+d]);
+    const wdStep=wdAvail.length>rem?Math.floor(wdAvail.length/rem):1;
+    for(let i=0;i<wdAvail.length&&rem>0;i+=wdStep){if(usedDays(s.name,sched,cal)>=s.days)break;sched[s.name][wdAvail[i].d]='off';rem--;}
+    if(rem>0){
+      const hdAvail=cal.filter(({d,isHol})=>isHol&&sched[s.name][d]==='mob'&&!locked[s.name+'_'+d]);
+      const hdStep=hdAvail.length>rem?Math.floor(hdAvail.length/rem):1;
+      for(let i=0;i<hdAvail.length&&rem>0;i+=hdStep){if(usedDays(s.name,sched,cal)>=s.days)break;sched[s.name][hdAvail[i].d]='off';rem--;}
+    }
+  });
+  // Step8E: 最終人力檢查補強——避免多人各自被批准休假，疊加後仍導致人力不足卻沒被擋下
+  STORES.forEach(store=>{
+    cal.forEach(({d})=>{
+      if(checkOpen(store,d,sched,supMap))return;
+      const offToday=staff.filter(s=>s.store===store&&sched[s.name][d]==='off'&&!locked[s.name+'_'+d]);
+      if(!offToday.length)return;
+      offToday.sort((a,b)=>usedDays(b.name,sched,cal)-usedDays(a.name,sched,cal));
+      for(const s of offToday){
+        sched[s.name][d]='work';
+        if(checkOpen(store,d,sched,supMap))break;
+      }
+    });
+  });
+  // Step8D: 人力不足時跨店支援（排休結算後，依實際出勤人數跟開店條件最低人力比較）
+  crossRules.filter(cr=>cr.trigger==='人力不足時').forEach(cr=>{
+    if(frozenSet.has(cr.store))return; // v8：v7不排的店，不再塞新的支援進去
+    cal.forEach(({d,wd,wn})=>{
+      if(cr.cond&&!cr.cond.split('、').some(c=>c.includes('週'+wn)))return;
+      const minNeed=needsData[cr.store]?needsData[cr.store][wd]:0;
+      if(!minNeed||getOnDuty(cr.store,d,sched)>=minNeed)return;
+      if(!sched[cr.staff]||locked[cr.staff+'_'+d]||sched[cr.staff][d]!=='work')return;
+      sched[cr.staff][d]='sup';
+      const k=cr.store+'_'+d;if(!supMap[k])supMap[k]=[];if(!supMap[k].includes(cr.staff))supMap[k].push(cr.staff);
+      if(cr.linkedRest&&sched[cr.linkedRest]&&!locked[cr.linkedRest+'_'+d]&&sched[cr.linkedRest][d]==='work'){
+        const lr=staff.find(s=>s.name===cr.linkedRest);
+        if(lr&&usedDays(cr.linkedRest,sched,cal)<lr.days){sched[cr.linkedRest][d]='off';locked[cr.linkedRest+'_'+d]=true;}
+      }
+    });
+  });
+  // Step9: 微調
+  adjustments.forEach(a=>{
+    const da=+a.a,db=+a.b;if(!da||!db)return;
+    // v8：微調若碰到「沿用上次結果」的格子就略過（那些格子當初生成時已經套用過這筆微調，再套一次會換回去）
+    if([a.name,a.from,a.to].some(n=>n&&(frozen[n+'_'+da]||frozen[n+'_'+db])))return;
+    if(a.type===3&&frozenSet.has((staff.find(s=>s.name===a.to)||{}).store))return;
+    if(a.type===1){
+      if(sched[a.name]){const tmp=sched[a.name][da];sched[a.name][da]=sched[a.name][db];sched[a.name][db]=tmp;}
+    }else if(a.type===3){
+      if(sched[a.from]&&sched[a.to]){
+        sched[a.from][da]='sup';sched[a.to][db]='off';
+        const toStaff=staff.find(s=>s.name===a.to);
+        if(toStaff){const k=toStaff.store+'_'+da;if(!supMap[k])supMap[k]=[];if(!supMap[k].includes(a.from))supMap[k].push(a.from);}
+      }
+    }else{
+      if(sched[a.from]&&sched[a.to]){sched[a.from][da]='work';sched[a.to][db]='off';}
+    }
+  });
+
+  generatedData={sched,cal,y,m,supMap,mandatoryOff,scope:curScope,frozen};
+  reapplyManualAdjustments();
+  document.getElementById('btn-dl').disabled=false;
+  if(maxUnlocked<2){maxUnlocked=2;renderTopnav();}
+
+  renderPreview(sched,cal,supMap,notices.concat(computeConflicts(sched,cal,supMap)),mandatoryOff);
+  }catch(e){
+    document.getElementById('main-body').innerHTML=`<div class="conf-box"><div class="conf-title">❌ 生成失敗</div><div class="conf-item"><span>⚠️</span><span>${e.message||'未知錯誤'}</span></div></div>`;
+    console.error(e);
+  }
+}
+
+// 衝突偵測（v8從genSchedule抽出來，點格子手動改完也重新檢查一次）
+function computeConflicts(sched,cal,supMap){
+  const conflicts=[];
+  staff.forEach(s=>{
+    if(s.days>0&&(s.wd+s.hd)>s.days)conflicts.push({type:'error',msg:`${s.name}：平日休下限(${s.wd})+假日休下限(${s.hd})超過月休上限(${s.days}天)`});
+    const used=usedDays(s.name,sched,cal);
+    if(used>s.days&&s.days>0)conflicts.push({type:'error',msg:`${s.name}：實際休假${used}天超過月休上限${s.days}天`});
+    if(!STORES.includes(s.store))return;
+    const actHd=cal.filter(({d,isHol})=>isHol&&sched[s.name][d]==='off').length;
+    const actWd=cal.filter(({d,isHol})=>!isHol&&sched[s.name][d]==='off').length;
+    if(actHd<s.hd)conflicts.push({type:'warn',msg:`${s.name}：假日休下限${s.hd}天，實際排到${actHd}天`});
+    if(actWd<s.wd)conflicts.push({type:'warn',msg:`${s.name}：平日休下限${s.wd}天，實際排到${actWd}天`});
+  });
+  const pinNames=[...new Set(pins.map(p=>p.name))];
+  pinNames.forEach(name=>{
+    const offs=pins.filter(p=>p.name===name&&p.type==='off'&&p.weeks);
+    const ons=pins.filter(p=>p.name===name&&p.type==='on'&&p.weeks);
+    offs.forEach(o=>ons.forEach(n=>{WN.forEach(w=>{if(o.weeks&&n.weeks&&o.weeks.includes('週'+w)&&n.weeks.includes('週'+w))conflicts.push({type:'error',msg:`${name}：必休/必上在週${w}衝突`});});}));
+  });
+  STORES.forEach(store=>{
+    const failDays=cal.filter(({d})=>!checkOpen(store,d,sched,supMap));
+    if(failDays.length)conflicts.push({type:'warn',msg:`${store}：${failDays.slice(0,4).map(({d,wn})=>`${d}(${wn})`).join('、')}${failDays.length>4?`…等共${failDays.length}天`:''}無法滿足開店條件`});
+    cal.forEach(({d,wd})=>{
+      const lim=needsData[store]?needsData[store][wd]:0;if(!lim)return;
+      const onCnt=getOnDuty(store,d,sched);
+      if(onCnt>lim)conflicts.push({type:'warn',msg:`${store} ${d}日(週${WN[wd]})：出勤${onCnt}人超過上限${lim}人`});
+    });
+  });
+  return conflicts;
+}
+
+let manualAdjustments=[];
+let dragSrc=null;
+function dragCellStart(ev,name,d){dragSrc={name,d};ev.dataTransfer.setData('text/plain',name+'_'+d);}
+function allowDrop(ev){ev.preventDefault();ev.currentTarget.classList.add('drag-over');}
+function dragLeaveCell(ev){ev.currentTarget.classList.remove('drag-over');}
+function dropStatus(ev,name,d){
+  ev.preventDefault();
+  ev.currentTarget.classList.remove('drag-over');
+  if(!dragSrc||!generatedData||!generatedData.sched[name])return;
+  const{name:fromName,d:fromD}=dragSrc;dragSrc=null;
+  if(fromName===name&&fromD===d)return;
+  if(!generatedData.sched[fromName])return;
+  const why=cellFrozenReason(fromName,fromD)||cellFrozenReason(name,d);if(why){alert(why);return;}
+  if(!confirm(`此調整會將「${fromName}」第${fromD}日 與「${name}」第${d}日 的班表狀態互換，可能影響相關統計，是否確定套用？`))return;
+  applyManualSwap(fromName,fromD,name,d,true);
+}
+function applyManualSwap(name1,d1,name2,d2,record){
+  const{sched,supMap,mandatoryOff}=generatedData;
+  if(!sched[name1]||!sched[name2])return;
+  const tmpSt=sched[name1][d1];sched[name1][d1]=sched[name2][d2];sched[name2][d2]=tmpSt;
+  const k1a=name1+'_'+d1,k1b=name2+'_'+d2;
+  const tmpMust=!!mandatoryOff[k1a];
+  if(mandatoryOff[k1b])mandatoryOff[k1a]=true;else delete mandatoryOff[k1a];
+  if(tmpMust)mandatoryOff[k1b]=true;else delete mandatoryOff[k1b];
+  STORES.forEach(store=>{
+    const ka=store+'_'+d1,kb=store+'_'+d2;
+    if(supMap[ka]){const idx=supMap[ka].indexOf(name1);if(idx>-1)supMap[ka].splice(idx,1);}
+    if(supMap[kb]){const idx=supMap[kb].indexOf(name2);if(idx>-1)supMap[kb].splice(idx,1);}
+  });
+  if(record){
+    const{y,m}=generatedData;
+    manualAdjustments.push({y,m,name1,d1,name2,d2});
+  }
+  renderPreview(sched,generatedData.cal,supMap,record?computeConflicts(sched,generatedData.cal,supMap):[],mandatoryOff);
+}
+function reapplyManualAdjustments(){
+  if(!generatedData||!manualAdjustments.length)return;
+  const{y,m}=generatedData;
+  const toApply=manualAdjustments.filter(a=>a.y===y&&a.m===m);
+  if(toApply.length!==manualAdjustments.length){manualAdjustments=[];return;}
+  // v8：沿用上次結果的格子本來就已經含這筆互換，再換一次會換回去，跳過
+  const fz=generatedData.frozen||{};
+  toApply.forEach(a=>{if(fz[a.name1+'_'+a.d1]||fz[a.name2+'_'+a.d2])return;applyManualSwap(a.name1,a.d1,a.name2,a.d2,false);});
+}
+// 共用：取得某店某日的跨店支援人員清單／顯示字串。Page1（renderPreview）與 Page2（renderPage2）
+// 的「支援↑」列都呼叫這個函式，避免重複實作支援人員的計算邏輯。
+const STATUS_TXT={off:'休',sup:'支',mob:'機',must:'上'};
+const STATUS_BG={off:'#D4EDDA',sup:'#D8D3F5',mob:'#FFF3C4',must:'#F5ECD7'};
+const STATUS_FG={off:'#155724',sup:'#2D2480',mob:'#7A5500',must:'#6B4C1E'};
+function supportNamesFor(store,d,supMap){return(supMap&&supMap[store+'_'+d])||[];}
+function supportLabelFor(store,d,supMap){return supportNamesFor(store,d,supMap).join(',');}
+function renderPreview(sched,cal,supMap,conflicts,mandatoryOff){
+  const CLS={off:'c-off',sup:'c-sup',mob:'c-mob',must:'c-must',work:'c-work'};
+  const TXT={off:'休',sup:'支',mob:'機',must:'上',work:''};
+  // 週六=綠色背景，週日=粉紅色背景
+  function thStyle(wd){
+    if(wd===5)return'background:#D4EDDA;color:#155724;'; // 週六綠
+    if(wd===6)return'background:#FADDE1;color:#8B0000;'; // 週日粉紅
+    return'background:#f5f5f5;color:#333;';
+  }
+  const buildTable=(members,storeName)=>{
+    const cols=cal.map(({d,wn,wd})=>`<th style="min-width:26px;padding:3px 2px;font-size:9px;${thStyle(wd)}">${d}<br>週${wn}</th>`).join('');
+    const rows=members.map(s=>{
+      const cells=cal.map(({d,wd})=>{
+        const st=sched[s.name]?sched[s.name][d]:'work';
+        let bg='';
+        if(wd===5)bg='background:#E8F5E9;'; // 週六淡綠底
+        if(wd===6)bg='background:#FFF0F3;'; // 週日淡粉底
+        const isMust=st==='off'&&mandatoryOff&&mandatoryOff[s.name+'_'+d];
+        // v8：鎖定的格子變淡、不能拖；手動設定過的格子加橘框；點一下跳出狀態選單
+        const fz=!!cellFrozenReason(s.name,d);
+        const edited=!fz&&generatedData&&cellEdits.some(e=>e.y===generatedData.y&&e.m===generatedData.m&&e.name===s.name&&e.d===d);
+        return`<td class="${CLS[st]||'c-work'}${fz?' c-frozen':''}${edited?' c-edited':''}" style="${bg}padding:3px 2px;font-size:9px;text-align:center;${isMust?'font-weight:700;':''}" ${fz?'':`draggable="true" ondragstart="dragCellStart(event,'${s.name}',${d})"`} ondragover="allowDrop(event)" ondragleave="dragLeaveCell(event)" ondrop="dropStatus(event,'${s.name}',${d})" onclick="openCellEdit('${s.name}',${d})">${TXT[st]||''}</td>`;
+      }).join('');
+      return`<tr><td style="font-size:9px;font-weight:600;white-space:nowrap;text-align:left;padding:3px 5px;min-width:32px;border-right:2px solid #ccc;position:sticky;left:0;background:#fff;z-index:1">${s.name}</td>${cells}</tr>`;
+    }).join('');
+    let supRow='';
+    if(storeName&&cal.some(({d})=>supportNamesFor(storeName,d,supMap).length>0)){
+      const cells=cal.map(({d,wd})=>{
+        const ns=supportLabelFor(storeName,d,supMap);
+        let bg=wd===5?'background:#E8F5E9;':wd===6?'background:#FFF0F3;':'';
+        return`<td style="background:#EDE8FF;color:#3C3489;font-size:7px;font-style:italic;padding:2px;text-align:center;${bg}">${ns}</td>`;
+      }).join('');
+      supRow=`<tr><td style="font-size:7px;color:#3C3489;padding:2px 5px;font-weight:600;white-space:nowrap;border-right:2px solid #ccc;position:sticky;left:0;background:#EDE8FF;z-index:1">支援↑</td>${cells}</tr>`;
+    }
+    return`<div style="overflow-x:auto;border:1px solid #e0e0e0;border-radius:6px"><table class="ptbl" style="border-collapse:collapse;width:100%"><thead><tr><th style="text-align:left;min-width:32px;padding:3px 5px;position:sticky;left:0;background:#f5f5f5;z-index:2;border-right:2px solid #ccc">簡稱</th>${cols}</tr></thead><tbody>${rows}${supRow}</tbody></table></div>`;
+  };
+  const mobStaff=staff.filter(s=>s.type==='機動人員');
+  const storeGroups=STORES.map(store=>({store,members:staff.filter(s=>s.store===store)}));
+  document.getElementById('main-body').innerHTML=`
+    <div class="legend">
+      <div class="leg"><div class="leg-dot" style="background:#D4EDDA"></div>休</div>
+      <div class="leg"><div class="leg-dot" style="background:#D4EDDA;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:7px;color:#155724">休</div>必休</div>
+      <div class="leg"><div class="leg-dot" style="background:#D8D3F5"></div>支（跨店）</div>
+      <div class="leg"><div class="leg-dot" style="background:#FFF3C4"></div>機（機動）</div>
+      <div class="leg"><div class="leg-dot" style="background:#F5ECD7"></div>上（必上）</div>
+      <div class="leg"><div class="leg-dot" style="background:#fff;border:1px solid #ddd"></div>出勤</div>
+      <div class="leg"><div class="leg-dot" style="background:#D4EDDA;border:1px solid #90C090"></div>週六</div>
+      <div class="leg"><div class="leg-dot" style="background:#FADDE1;border:1px solid #E0A0A8"></div>週日</div>
+    </div>
+    <div style="margin:4px 0 8px;padding:6px 8px;background:#FAFAFC;border:1px dashed #ccc;border-radius:6px">
+      <div style="font-size:8px;color:#888">✏️ 點格子可直接設定出勤／休／必休／必上／支援（橘框＝手動設定過；⚡v7自動的店重新生成時會繞開它排）</div>
+      <div style="font-size:8px;color:#888">🖐️ 拖曳格子到另一格可互換兩天的班表狀態（重新生成同年月會自動保留此調整，年月變更則清空）｜🔒 鎖定門市的格子變淡、不能改</div>
+    </div>
+    ${conflicts.length?`<div class="conf-box"><div class="conf-title">⚠ 發現 ${conflicts.length} 項需注意</div>${conflicts.map(c=>`<div class="conf-item"><span>${c.type==='error'?'❌':'⚠️'}</span><span>${c.msg}</span></div>`).join('')}</div>`:`<div class="ok-box">✅ 設定無明顯衝突，班表已生成</div>`}
+    ${mobStaff.length?`<div class="prev-sec"><div class="prev-hdr" style="background:#FFFBEB;border:1px solid #F5C842">🔄 機動人員</div>${buildTable(mobStaff,'')}</div>`:''}
+    ${storeGroups.map(({store,members})=>`<div class="prev-sec"><div class="prev-hdr" style="background:${SB[store]}"><div style="width:7px;height:7px;border-radius:50%;background:${SC[store]}"></div>${store}${storeBadge(store)}</div>${buildTable(members,store)}</div>`).join('')}
+    <div style="font-size:9px;color:#888;text-align:center;margin-top:7px">顯示整月・修改設定後可重新生成</div>`;
+}
+
+function buildWeeks(cal){
+  const weeks=[];let cur=new Array(7).fill(null);
+  cal.forEach(day=>{cur[day.wd]=day;if(day.wd===6){weeks.push(cur);cur=new Array(7).fill(null);}});
+  if(cur.some(x=>x))weeks.push(cur);
+  return weeks;
+}
+function parseLunarNotes(){
+  const raw=(document.getElementById('lunar-notes')&&document.getElementById('lunar-notes').value)||'';
+  const map={};
+  raw.split(',').forEach(pair=>{
+    const idx=pair.indexOf(':');if(idx<0)return;
+    const dd=pair.slice(0,idx).trim(),txt=pair.slice(idx+1).trim();
+    if(dd&&txt)map[+dd]=txt;
+  });
+  return map;
+}
+function offFillFor(name){return STAFF_COLOR_ARGB[name]||'FFD4EDDA';}
+function findSupTargetStore(supMap,name,d){for(const st of STORES){if((supMap[st+'_'+d]||[]).includes(name))return st;}return'';}
+function weekdayHeaderFill(wd){if(wd===3||wd===5)return'FF90EE90';if(wd===6)return'FFFFB6C1';return'FFF0F0F0';}
+function weekdayAccentColor(wd){if(wd===3)return'FFBA7517';if(wd===5)return'FF3B6D11';if(wd===6)return'FFA32D2D';return'FF2C2C2A';}
+function weekdayBorderColor(wd){if(wd===3)return'FFBA7517';if(wd===5)return'FF97C459';if(wd===6)return'FFF09595';return'FFE5E2DA';}
+function exlFill(argb){return argb?{type:'pattern',pattern:'solid',fgColor:{argb}}:undefined;}
+function downloadWorkbook(wb,filename){
+  wb.xlsx.writeBuffer().then(buf=>{
+    const blob=new Blob([buf],{type:'application/octet-stream'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+}
+// 讀取某本店夥伴在某天是否有 attendanceAdjustments 紀錄（出勤紀錄頁登記的出勤異動／貼班時段）。
+// 供 buildCalendarWorkbookSheet 寫入 Excel 時，依紀錄覆寫該日文字/底色，讓 page4 的 parseStoreSheet 能正確歸類統計。
+function findAttendanceAdj(staffName,d){return findAttendanceAdjFor('home',staffName,d);}
+// 通用版：依 personType 查 attendanceAdjustments（'home'＝本店夥伴／'support'＝跨店支援者）。
+function findAttendanceAdjFor(personType,staffName,d){
+  if(!generatedData)return null;
+  const{y,m}=generatedData;
+  return attendanceAdjustments.find(a=>a.y===y&&a.m===m&&a.d===d&&a.staffName===staffName&&a.personType===personType)||null;
+}
+// 找出「本店夥伴」（personType==='home'）當天是否有連動請假對象指向 staffName 的貼班紀錄，回傳該貼班人姓名。
+// 明確排除 personType==='support'（跨店支援，走「跨店時數」獨立統計與顯示，不可混入此處）。
+// 自我連動（連動對象＝貼班人自己）時 source===staffName，回傳值仍是 staffName 本身，呼叫端統一格式處理，不特殊化。
+function findHomeLinkSource(staffName,d){
+  if(!generatedData)return null;
+  const{y,m}=generatedData;
+  const adj=attendanceAdjustments.find(a=>a.y===y&&a.m===m&&a.d===d&&a.personType==='home'&&a.link===staffName&&a.statEffect==='shift');
+  return adj?adj.staffName:null;
+}
+function buildCalendarWorkbookSheet(wb,sheetName,home,cal,sched,supMap,lunarMap,bottomNotes,linkFn,includeOverlay,mandatoryOff){
+  const isStore=STORES.includes(sheetName);
+  let visitors=[];
+  if(isStore){
+    const set=new Set();
+    cal.forEach(({d})=>{(supMap[sheetName+'_'+d]||[]).forEach(n=>{if(!home.some(h=>h.name===n))set.add(n);});});
+    visitors=[...set];
+  }
+  const tempRows=isStore&&includeOverlay?supportStaff.filter(s=>Object.values(supportSchedule[s.name]||{}).some(e=>(e.targetStore||s.store)===sheetName)):[];
+  const weeks=buildWeeks(cal);
+  const ws=wb.addWorksheet(sheetName.replace('店',''));
+  ws.columns=Array.from({length:7},()=>({width:16}));
+  ws.views=[{state:'frozen',ySplit:1}];
+  ws.pageSetup={orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:0.3,right:0.3,top:0.4,bottom:0.4,header:0.3,footer:0.3},printTitlesRow:'1:1'};
+  const THIN_BORDER={style:'thin',color:{argb:'FFF0F0F0'}};
+  function setCell(r,c,v,fill,fontColor,bold){
+    const cell=ws.getCell(r+1,c+1);
+    cell.value=v||'';
+    cell.alignment={horizontal:'center',vertical:'middle',wrapText:true};
+    if(fill)cell.fill=exlFill(fill);
+    cell.font={name:'微軟正黑體',bold:!!bold,color:fontColor?{argb:fontColor}:undefined};
+    cell.border={top:THIN_BORDER,left:THIN_BORDER,bottom:THIN_BORDER,right:THIN_BORDER};
+  }
+  const WDN=['一','二','三','四定食日','五','六','日'];
+  let r=0;
+  WDN.forEach((t,c)=>{
+    const cell=ws.getCell(r+1,c+1);
+    cell.value=t;
+    cell.alignment={horizontal:'center',vertical:'middle'};
+    cell.font={name:'微軟正黑體',bold:true,color:{argb:weekdayAccentColor(c)}};
+    cell.border={bottom:{style:'medium',color:{argb:weekdayBorderColor(c)}}};
+  });
+  r++;
+  weeks.forEach(week=>{
+    week.forEach((day,c)=>{
+      if(!day){setCell(r,c,'',undefined);return;}
+      const cell=ws.getCell(r+1,c+1);
+      const note=lunarMap[day.d];
+      const accent=weekdayAccentColor(day.wd);
+      cell.value=note?{richText:[{font:{name:'微軟正黑體',bold:true,size:11,color:{argb:accent}},text:String(day.d)+' '},{font:{name:'微軟正黑體',size:8,color:{argb:'FF888780'}},text:note}]}:String(day.d);
+      cell.alignment={horizontal:'center',vertical:'middle',wrapText:true};
+      if(!note)cell.font={name:'微軟正黑體',bold:true,color:{argb:accent}};
+      cell.border={top:THIN_BORDER,left:THIN_BORDER,right:THIN_BORDER,bottom:{style:'thin',color:{argb:weekdayBorderColor(day.wd)}}};
+    });
+    r++;
+    home.forEach(s=>{
+      week.forEach((day,c)=>{
+        if(!day){setCell(r,c,'',undefined);return;}
+        const st=sched[s.name]?sched[s.name][day.d]:'work';
+        // 出勤紀錄頁（attendanceAdjustments）的紀錄優先於單純依 sched 狀態判斷的預設文字，
+        // 確保「貼班時數」（真實時段或休→出勤9.5h）正確覆寫，不被預設的「計時時數」寫法蓋過。
+        const adj=includeOverlay?findAttendanceAdj(s.name,day.d):null;
+        if(adj&&adj.statEffect==='shift'){
+          // Rule 3：modal 真實時段，工時一律計入貼班時數，不分職別。
+          // 若該筆貼班紀錄有設定連動請假對象（含連動對象＝自己），套用與貼班人員（暫班/temp）一致的「補YY」顯示慣例。
+          setCell(r,c,`${s.name}貼班${adj.hours.toFixed(1)}h${adj.link?`\n補${adj.link}`:''}`,'FFFAEEDA','FF633806',false);
+        }else if(adj&&adj.statEffect==='work_plus'&&s.type==='計時'){
+          // Rule 2：計時人員休→出勤，純狀態覆寫（無真實時段），固定9.5h且計入貼班時數，不計入計時時數。
+          setCell(r,c,`${s.name}貼班9.5h`,'FFFAEEDA','FF633806',false);
+        }else if(st==='off'){
+          // 連動請假來源：先看貼班人員（temp staff，跨店支援的「跨店時數」不在此 linkFn 範圍內），
+          // 再看本店夥伴互相連動（含連動對象＝自己）的貼班紀錄，兩者皆用同一套「休→XX補」顯示慣例。
+          const linked=(linkFn&&linkFn(s.name,day.d))||(includeOverlay?findHomeLinkSource(s.name,day.d):null);
+          const isMust=mandatoryOff&&mandatoryOff[s.name+'_'+day.d];setCell(r,c,linked?`${s.name}休\n→${linked}補`:`${s.name}休`,linked?LEAVE_COVERED_FILL:offFillFor(s.name),'FFFFFFFF',!!linked||!!isMust);
+        }
+        else if(st==='sup'){const target=findSupTargetStore(supMap,s.name,day.d);setCell(r,c,`${s.name}支援${target}`,'FFFAEEDA','FF633806',false);}
+        else if(st==='must')setCell(r,c,s.name,'FFF5ECD7',undefined,false);
+        else if(st==='mob')setCell(r,c,s.name,undefined,'FF185FA5',false);
+        else setCell(r,c,s.type==='計時'?`${s.name}9.5h`:s.name,undefined,undefined,false);
+      });
+      r++;
+    });
+    visitors.forEach(vname=>{
+      const vstaff=staff.find(x=>x.name===vname);
+      const isExternal=vstaff&&!sameGroup(vstaff.store,sheetName);
+      week.forEach((day,c)=>{
+        if(!day){setCell(r,c,'',undefined);return;}
+        const isHere=(supMap[sheetName+'_'+day.d]||[]).includes(vname);
+        setCell(r,c,isHere?(isExternal?`${vname}9.5h`:vname):'',undefined,isHere?'FF185FA5':undefined,false);
+      });
+      r++;
+    });
+    tempRows.forEach(s=>{
+      week.forEach((day,c)=>{
+        if(!day){setCell(r,c,'',undefined);return;}
+        const e=supportSchedule[s.name]&&supportSchedule[s.name][day.d];
+        if(!e||(e.targetStore||s.store)!==sheetName){setCell(r,c,'',undefined);return;}
+        setCell(r,c,`${s.name}貼班${e.hours.toFixed(1)}h${e.link?`\n補${e.link}`:''}`,'FFFAEEDA','FF633806',false);
+      });
+      r++;
+    });
+    r++;
+  });
+  if(bottomNotes.length){
+    r++;
+    bottomNotes.forEach(line=>{
+      setCell(r,0,line,undefined,undefined,false);
+      ws.mergeCells(r+1,1,r+1,7);
+      const c=ws.getCell(r+1,1);
+      c.alignment={horizontal:'left',vertical:'middle',wrapText:false};
+      r++;
+    });
+  }
+}
+// v8：Excel可勾選門市（每間店本來就是一個分頁，只輸出勾到的分頁）；機動人員有人才列出來
+function excelSheetChoices(){
+  const list=STORES.filter(st=>staff.some(s=>s.store===st));
+  if(staff.some(s=>s.type==='機動人員'))list.push('機動人員');
+  return list;
+}
+function excelSheetsFor(sel){
+  return[...STORES.map(store=>({name:store,home:staff.filter(s=>s.store===store)})),{name:'機動人員',home:staff.filter(s=>s.type==='機動人員')}].filter(x=>x.home.length&&sel.includes(x.name));
+}
+function downloadExcel(){
+  if(!generatedData){alert('請先生成假表');return;}
+  const all=excelSheetChoices();
+  openStorePicker('⬇ 下載初假表Excel',all,'每間門市一個分頁',sel=>{
+    const {sched,cal,y,m,supMap,mandatoryOff}=generatedData;
+    const lunarMap=parseLunarNotes();
+    const bottomNotes=((document.getElementById('bottom-notes')&&document.getElementById('bottom-notes').value)||'').split('\n').filter(Boolean);
+    const wb=new ExcelJS.Workbook();
+    excelSheetsFor(sel).forEach(({name,home})=>{
+      buildCalendarWorkbookSheet(wb,name,home,cal,sched,supMap,lunarMap,bottomNotes,null,false,mandatoryOff);
+    });
+    downloadWorkbook(wb,`${scopeFileTag()}排班_${y}年${m}月${pickedFileTag(sel,all)}_初假表.xlsx`);
+  });
+}
+
+// ── 第二頁：出勤紀錄（本店夥伴出勤偏差＋臨時貼班人員，輸出到第三頁次假表） ──
+let supportStaff=[]; // {name,store,wage}
+let supportSchedule={}; // supportSchedule[name][d]={start,end,break,hours}
+let attendanceAdjustments=[]; // {y,m,d,staffName,personType:'home'|'support',targetStore,statEffect,hours,link,isHol}
+let modalCtx=null; // {personType:'home'|'support'|'temp',name,d}
+let page2Generated=false;
+
+function shiftCellText(entry){
+  if(!entry)return'＋';
+  if(entry.targetStore==='出勤')return'出勤';
+  if(entry.targetStore==='休')return'休';
+  if(entry.hours)return entry.hours.toFixed(1)+'h';
+  return'已調整';
+}
+function homeAttendanceRow(members,store){
+  if(!members.length)return'';
+  const {cal,y,m,sched,mandatoryOff}=generatedData;
+  const cols=cal.map(({d,wn})=>`<th>${d}<br>週${wn}</th>`).join('');
+  const rows=members.map(s=>{
+    const cells=cal.map(({d})=>{
+      const adj=attendanceAdjustments.find(a=>a.y===y&&a.m===m&&a.d===d&&a.staffName===s.name&&a.personType==='home');
+      if(adj)return `<td class="spcell filled" onclick="openShiftModal('home','${s.name}',${d},'${store||s.store}')">${shiftCellText(adj)}</td>`;
+      const st=sched[s.name]?sched[s.name][d]:'work';
+      if(st==='work'||!STATUS_TXT[st])return `<td class="spcell" onclick="openShiftModal('home','${s.name}',${d},'${store||s.store}')">＋</td>`;
+      const isMust=st==='off'&&mandatoryOff&&mandatoryOff[s.name+'_'+d];
+      return `<td class="spcell" style="background:${STATUS_BG[st]};color:${STATUS_FG[st]};${isMust?'font-weight:700;':''}" onclick="openShiftModal('home','${s.name}',${d},'${store||s.store}')">${STATUS_TXT[st]}</td>`;
+    }).join('');
+    return `<tr><td style="font-size:10px;font-weight:600;text-align:left;padding:3px 5px;min-width:60px;border-right:2px solid #ccc;position:sticky;left:0;background:#fff">${s.name}</td>${cells}</tr>`;
+  }).join('');
+  return `<div style="overflow-x:auto"><table class="sptbl"><thead><tr><th style="width:60px">簡稱</th>${cols}</tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+// 支援↑列：與 page1（renderPreview/buildTable）共用 supportNamesFor/supportLabelFor，不重新計算跨店支援邏輯。
+// 每個有支援人員的格子都可點擊，開啟與本店夥伴／貼班人員相同的共用彈窗（personType:'support'）。
+function supportAttendanceRow(store){
+  if(!generatedData||!generatedData.supMap)return'';
+  const {cal}=generatedData;
+  const supMap=generatedData.supMap;
+  if(!cal.some(({d})=>supportNamesFor(store,d,supMap).length>0))return'';
+  const cols=cal.map(({d,wn})=>`<th>${d}<br>週${wn}</th>`).join('');
+  const cells=cal.map(({d})=>{
+    const names=supportNamesFor(store,d,supMap);
+    if(!names.length)return'<td></td>';
+    const adj=names.length===1?findAttendanceAdjFor('support',names[0],d):null;
+    const txt=(adj&&adj.statEffect==='shift')?adj.hours.toFixed(1)+'h貼班':names.join(',');
+    return `<td class="spcell filled" style="color:#3C3489" onclick="openShiftModal('support','${names[0]}',${d},'${store}')">${txt}</td>`;
+  }).join('');
+  return `<div class="sub-label">支援↑</div><div style="overflow-x:auto"><table class="sptbl"><thead><tr><th style="width:60px">日期</th>${cols}</tr></thead><tbody><tr><td style="font-size:10px;font-weight:600;text-align:left;padding:3px 5px;min-width:60px;border-right:2px solid #ccc;position:sticky;left:0;background:#fff">支援↑</td>${cells}</tr></tbody></table></div>`;
+}
+// 健檢補強：「貼班人員」(supportStaff) 跟「跨店支援者改貼班」(personType:'support') 兩個來源
+// 共用同一個 tempEntries[name] 累加，若剛好同名會把時數混在一起算錯且無提示，故在此檢查並回報重名清單。
+function findDuplicateTempNames(){
+  if(!generatedData)return[];
+  const {y,m,cal}=generatedData;
+  const supportAdjNames=new Set(attendanceAdjustments.filter(a=>a.y===y&&a.m===m&&a.personType==='support'&&a.statEffect==='shift').map(a=>a.staffName));
+  return supportStaff.map(s=>s.name).filter(n=>supportAdjNames.has(n));
+}
+function renderPage2(){
+  if(!generatedData){document.getElementById('page2-panel').innerHTML='<div style="padding:20px;color:#999;font-size:10px">請先完成第一頁初假表</div>';return;}
+  const storeBlocks=STORES.map(store=>{
+    const homeMembers=staff.filter(s=>s.store===store);
+    const tempMembers=supportStaff.filter(s=>s.store===store);
+    if(!homeMembers.length&&!tempMembers.length)return'';
+    const homeGrid=homeAttendanceRow(homeMembers,store);
+    const supRow=supportAttendanceRow(store);
+    const tempCards=tempMembers.map(s=>{
+      const realIdx=supportStaff.indexOf(s);
+      const cal=generatedData.cal;
+      const cols=cal.map(({d,wn})=>`<th>${d}<br>週${wn}</th>`).join('');
+      const cells=cal.map(({d})=>{
+        const e=supportSchedule[s.name]&&supportSchedule[s.name][d];
+        const txt=e?e.hours.toFixed(1)+'h':'＋';
+        return `<td class="spcell${e?' filled':''}" onclick="openShiftModal('temp','${s.name}',${d},'${s.store}')">${txt}</td>`;
+      }).join('');
+      return `<div class="card" style="margin-bottom:8px;padding:8px"><div class="ct" style="padding:0 0 6px"><div><span style="font-size:11px;font-weight:600">${s.name}</span><span style="font-size:9px;color:#888;margin-left:6px">${s.store}</span></div><button class="bi" onclick="delSupStaff(${realIdx})">🗑</button></div><div style="overflow-x:auto"><table class="sptbl"><thead><tr><th style="width:50px">日期</th>${cols}</tr></thead><tbody><tr><td>時段</td>${cells}</tr></tbody></table></div></div>`;
+    }).join('');
+    return `<div class="prev-sec"><div class="prev-hdr" style="background:${SB[store]}"><div style="width:7px;height:7px;border-radius:50%;background:${SC[store]}"></div>${store}</div>
+      ${homeGrid?`<div class="sub-label">本店夥伴出勤紀錄</div>${homeGrid}`:''}
+      ${supRow}
+      <div class="sub-label">貼班人員</div>
+      ${tempCards||'<div style="font-size:9px;color:#888;padding:2px 0 6px">尚無貼班人員</div>'}
+      <div class="abox"><h4>＋ 新增貼班人員（${store}）</h4>
+        <div class="fg" style="margin-top:0"><label>簡稱</label><input type="text" id="sp-name-${store}" placeholder="簡稱（兩個字）"></div>
+        <button class="badd" onclick="addSupStaff('${store}')">確認新增</button>
+      </div>
+    </div>`;
+  }).join('');
+  const mobMembers=staff.filter(s=>s.type==='機動人員');
+  const mobTemp=supportStaff.filter(s=>s.store==='機動人員');
+  const mobHomeGrid=homeAttendanceRow(mobMembers,'');
+  const mobBlock=(mobMembers.length||mobTemp.length)?`<div class="prev-sec"><div class="prev-hdr" style="background:#FFFBEB">🔄 機動人員</div>
+    ${mobHomeGrid?`<div class="sub-label">本店夥伴出勤紀錄</div>${mobHomeGrid}`:''}
+  </div>`:'';
+  const dupNames=findDuplicateTempNames();
+  const dupWarn=dupNames.length?`<div style="font-size:9px;color:#c00;background:#FFF0F0;border:1px solid #f5b5b5;border-radius:6px;padding:8px;margin-bottom:10px">⚠️ 「${dupNames.join('、')}」同時是「貼班人員」也有「跨店支援改貼班」紀錄，兩邊的貼班時數會被疊加混算，請確認是否為同一人重複登記</div>`:'';
+  document.getElementById('page2-panel').innerHTML=`<div style="font-size:9px;color:#666;margin-bottom:10px;background:#fff;border-radius:6px;padding:8px">點各夥伴格子上的「＋」可登記出勤異動或貼班時段；完成後按下方「生成次假表」</div>${dupWarn}${mobBlock}${storeBlocks}`;
+}
+function addSupStaff(store){
+  const nameEl=document.getElementById('sp-name-'+store);
+  const name=nameEl.value.trim();
+  if(!name){alert('請填寫簡稱');return;}
+  supportStaff.push({name,store,wage:null}); // wage=null 表示連動全公司「基本時薪」設定，可在卡片上用步進器調整覆寫
+  supportSchedule[name]={};
+  renderPage2();
+}
+function delSupStaff(i){
+  const name=supportStaff[i].name;
+  delete supportSchedule[name];
+  supportStaff.splice(i,1);
+  renderPage2();
+}
+// ── 共用：貼班時段子表單（時段＋休息＋實際工時＋連動請假對象＋貼班門市） ──
+// 供 home／support／temp 三種人員類型的共用彈窗（openShiftModal）使用，避免重複維護同一份 markup。
+// prefix：欄位 id 前綴（彈窗統一用 'sm'）
+// 貼班門市的選項除了 4 間門市，還多了「出勤」「休」兩個特殊值（見 SHIFT_TARGET_SPECIAL）。
+const SHIFT_TARGET_SPECIAL=['出勤','休'];
+function shiftSubTemplate(prefix,e,defaultStore,selfName){
+  e=e||{};
+  const hourOpts=h=>Array.from({length:24},(_,i)=>`<option${e[h+'H']==i?' selected':''}>${String(i).padStart(2,'0')}</option>`).join('');
+  const minOpts=h=>['00','15','30','45'].map(mm=>`<option${e[h+'M']==mm?' selected':''}>${mm}</option>`).join('');
+  const targetVal=e.targetStore||defaultStore||STORES[0];
+  const targetOpts=[...STORES,...SHIFT_TARGET_SPECIAL].map(st=>`<option${targetVal===st?' selected':''}>${st}</option>`).join('');
+  return `
+    <div class="fg" style="margin-top:0"><label>貼班門市（選「出勤」或「休」則不需填時段）</label><select id="${prefix}-target-store" onchange="toggleShiftTimeFields('${prefix}')">${targetOpts}</select></div>
+    <div id="${prefix}-time-fields">
+      <div class="fg"><label>上班時間（24小時制）</label></div>
+      <div class="modal-row"><select id="${prefix}-sh">${hourOpts('s')}</select>:<select id="${prefix}-sm">${minOpts('s')}</select></div>
+      <div class="fg"><label>下班時間（跨日就填隔天的時，例 02:00）</label></div>
+      <div class="modal-row"><select id="${prefix}-eh">${hourOpts('e')}</select>:<select id="${prefix}-em">${minOpts('e')}</select></div>
+      <div class="fg"><label>休息時間（分鐘）</label><input type="number" id="${prefix}-break" value="${e.break||0}" min="0" step="5"></div>
+      <div class="modal-hrs" id="${prefix}-hrs">實際工時：— 小時</div>
+    </div>
+    <div class="fg"><label>連動請假對象（可空白）</label><select id="${prefix}-link"><option value="">— 無 —</option>${staff.map(s=>`<option${e.link===s.name?' selected':''}>${s.name}</option>`).join('')}</select></div>`;
+}
+function toggleShiftTimeFields(prefix){
+  const sel=document.getElementById(`${prefix}-target-store`);
+  const box=document.getElementById(`${prefix}-time-fields`);
+  if(!sel||!box)return;
+  const isSpecial=SHIFT_TARGET_SPECIAL.includes(sel.value);
+  box.style.display=isSpecial?'none':'block';
+  updateShiftWarn(prefix);
+}
+function updateShiftWarn(prefix){
+  const warnEl=document.getElementById(`${prefix}-warn`);
+  if(!warnEl||!modalCtx)return;
+  const sel=document.getElementById(`${prefix}-target-store`);
+  const v=sel?sel.value:'';
+  const {name,d}=modalCtx;
+  let txt;
+  if(v==='出勤')txt=`此調整會影響「${name}」第${d}日的統計（休假−1／出勤天數＋1），是否確定套用？`;
+  else if(v==='休'){
+    const holTxt=haIsHoliday(d)?'假日休＋1':'平日休＋1';
+    txt=`此調整會影響「${name}」第${d}日的統計（出勤天數−1／${holTxt}），是否確定套用？`;
+  }else txt=`此調整會記錄「${name}」第${d}日貼班於「${v}」的時段（依時數計算），是否確定套用？`;
+  warnEl.textContent=`⚠️ ${txt}`;
+}
+function bindShiftSubEvents(prefix,calcFn){
+  [`${prefix}-sh`,`${prefix}-sm`,`${prefix}-eh`,`${prefix}-em`,`${prefix}-break`].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',calcFn);});
+}
+function calcShiftHrs(prefix){
+  const sh=document.getElementById(`${prefix}-sh`),sm=document.getElementById(`${prefix}-sm`),eh=document.getElementById(`${prefix}-eh`),em=document.getElementById(`${prefix}-em`),brkEl=document.getElementById(`${prefix}-break`);
+  if(!sh)return 0;
+  let startMin=(+sh.value)*60+(+sm.value),endMin=(+eh.value)*60+(+em.value);
+  if(endMin<=startMin)endMin+=24*60;
+  const brk=+brkEl.value||0;
+  const hrs=Math.max(0,(endMin-startMin-brk)/60);
+  const hrsEl=document.getElementById(`${prefix}-hrs`);if(hrsEl)hrsEl.textContent=`實際工時：${hrs.toFixed(1)} 小時`;
+  return hrs;
+}
+// ── 共用出勤異動／貼班彈窗 ──
+// personType: 'home'（本店夥伴，含機動人員）／'support'（跨店支援者，來自 crossRules 的支援人員）／'temp'（貼班人員，來自 supportStaff）
+// 三種類型共用同一個彈窗 UI 與儲存邏輯，欄位：上班/下班時間、休息時間、實際工時（自動算）、連動請假對象、貼班門市（含「出勤」「休」兩個特殊值）。
+function haIsHoliday(d){
+  if(!generatedData||!generatedData.cal)return false;
+  const day=generatedData.cal.find(c=>c.d===d);
+  return day?day.isHol:false;
+}
+function shiftEntryFor(personType,name,d){
+  if(personType==='temp')return(supportSchedule[name]&&supportSchedule[name][d])||null;
+  const {y,m}=generatedData;
+  return attendanceAdjustments.find(a=>a.y===y&&a.m===m&&a.d===d&&a.staffName===name&&a.personType===personType)||null;
+}
+function openShiftModal(personType,name,d,store){
+  modalCtx={personType,name,d};
+  const existing=shiftEntryFor(personType,name,d)||{};
+  const defaultStore=store||(personType==='temp'?(supportStaff.find(s=>s.name===name)||{}).store:(staff.find(s=>s.name===name)||{}).store);
+  const titlePrefix=personType==='temp'?'貼班時段':'出勤異動';
+  document.body.insertAdjacentHTML('beforeend',`
+    <div class="modal-bg" id="shift-modal" style="position:fixed">
+      <div class="modal-box">
+        <h4>${titlePrefix} — ${name} ${generatedData.m}月${d}日</h4>
+        <div class="modal-warn" id="sm-warn">⚠️ </div>
+        ${shiftSubTemplate('sm',existing,STORES.includes(defaultStore)?defaultStore:STORES[0],name)}
+        <div class="modal-btns">
+          <button class="mb-save" onclick="saveShiftModal()">儲存</button>
+          <button class="mb-clear" onclick="clearShiftModal()">清除</button>
+          <button class="mb-cancel" onclick="closeShiftModal()">取消</button>
+        </div>
+      </div>
+    </div>`);
+  bindShiftSubEvents('sm',calcShiftModalHrs);
+  calcShiftModalHrs();
+  toggleShiftTimeFields('sm');
+  updateShiftWarn('sm');
+}
+function calcShiftModalHrs(){const h=calcShiftHrs('sm');updateShiftWarn('sm');return h;}
+function shiftModalLink(){const el=document.getElementById('sm-link');return el?el.value||'':'';}
+function applyLinkChange(oldLink,newLink,d,selfName){
+  if(!generatedData||!generatedData.sched)return;
+  // 連動請假對象可以是自己（本人實際只到班部分時段，其餘以本人名義請假抵充），
+  // 此時仍需照常把該天狀態標記為「休」；呼叫方已確保先寫入本人真實貼班時數紀錄，
+  // 故此處的狀態覆寫不會清掉時數資料（時數存於 attendanceAdjustments / supportSchedule，
+  // 與 generatedData.sched 的狀態欄位分屬不同資料結構）。
+  if(oldLink&&oldLink!==newLink&&generatedData.sched[oldLink]&&generatedData.sched[oldLink][d]==='off'){
+    generatedData.sched[oldLink][d]='work';
+  }
+  if(newLink&&generatedData.sched[newLink]){
+    generatedData.sched[newLink][d]='off';
+  }
+}
+function saveShiftModal(){
+  const {personType,name,d}=modalCtx;
+  const target=document.getElementById('sm-target-store').value;
+  const newLink=shiftModalLink();
+  if(personType==='temp'){
+    const oldEntry=supportSchedule[name]&&supportSchedule[name][d];
+    const oldLink=oldEntry?oldEntry.link:'';
+    const hrs=calcShiftHrs('sm');
+    if(!supportSchedule[name])supportSchedule[name]={};
+    supportSchedule[name][d]={
+      sH:document.getElementById('sm-sh').value,sM:document.getElementById('sm-sm').value,
+      eH:document.getElementById('sm-eh').value,eM:document.getElementById('sm-em').value,
+      break:+document.getElementById('sm-break').value||0,
+      hours:hrs,link:newLink,targetStore:target
+    };
+    applyLinkChange(oldLink,newLink,d,name);
+    closeShiftModal();renderPage2();
+    return;
+  }
+  // personType: home 或 support（皆透過 attendanceAdjustments 紀錄，供 page2/page3 顯示用）
+  const {y,m}=generatedData;
+  const oldEntry=attendanceAdjustments.find(a=>a.y===y&&a.m===m&&a.d===d&&a.staffName===name&&a.personType===personType);
+  const oldLink=oldEntry?oldEntry.link:'';
+  attendanceAdjustments=attendanceAdjustments.filter(a=>!(a.y===y&&a.m===m&&a.d===d&&a.staffName===name&&a.personType===personType));
+  const entry={y,m,d,staffName:name,personType,targetStore:target,link:newLink};
+  if(target==='出勤'){
+    // 原本休息→變成出勤：休假−1／出勤天數＋1
+    entry.statEffect='work_plus';
+  }else if(target==='休'){
+    // 原本出勤→變成休：出勤天數−1，依假日/平日歸類 假日休＋1 或 平日休＋1
+    entry.isHol=haIsHoliday(d);
+    entry.statEffect='off_plus';
+  }else{
+    entry.hours=calcShiftHrs('sm');
+    entry.sH=document.getElementById('sm-sh').value;entry.sM=document.getElementById('sm-sm').value;
+    entry.eH=document.getElementById('sm-eh').value;entry.eM=document.getElementById('sm-em').value;
+    entry.brk=+document.getElementById('sm-break').value||0;
+    entry.statEffect='shift';
+  }
+  attendanceAdjustments.push(entry);
+  // 先寫入自己當天的真實貼班時數紀錄（attendanceAdjustments，已於上方 push），再呼叫 applyLinkChange 處理連動請假對象的狀態寫入。
+  // 連動對象可以是自己（本人僅到班部分時段，其餘以本人名義請假抵充）：此時 applyLinkChange 會把
+  // generatedData.sched[name][d] 標記為 off，但時數資料存在 attendanceAdjustments，不會被這個狀態覆寫清掉。
+  if(generatedData&&generatedData.sched&&generatedData.sched[name]){
+    if(target==='出勤')generatedData.sched[name][d]='work';
+    else if(target==='休')generatedData.sched[name][d]='off';
+    else if(oldEntry&&(oldEntry.targetStore==='出勤'||oldEntry.targetStore==='休')){
+      // 由出勤/休 改回貼一般門市時段：還原為原本排班結果不易追溯，保守作法是維持目前狀態，交由使用者確認
+    }
+  }
+  applyLinkChange(oldLink,newLink,d,name);
+  closeShiftModal();renderPage2();
+}
+function clearShiftModal(){
+  const {personType,name,d}=modalCtx;
+  if(personType==='temp'){
+    const oldEntry=supportSchedule[name]&&supportSchedule[name][d];
+    if(oldEntry&&oldEntry.link&&generatedData&&generatedData.sched&&generatedData.sched[oldEntry.link]&&generatedData.sched[oldEntry.link][d]==='off'){
+      generatedData.sched[oldEntry.link][d]='work';
+    }
+    if(supportSchedule[name])delete supportSchedule[name][d];
+    closeShiftModal();renderPage2();
+    return;
+  }
+  const {y,m}=generatedData;
+  const oldEntry=attendanceAdjustments.find(a=>a.y===y&&a.m===m&&a.d===d&&a.staffName===name&&a.personType===personType);
+  if(oldEntry&&oldEntry.link&&generatedData&&generatedData.sched&&generatedData.sched[oldEntry.link]&&generatedData.sched[oldEntry.link][d]==='off'){
+    generatedData.sched[oldEntry.link][d]='work';
+  }
+  if(oldEntry&&generatedData&&generatedData.sched&&generatedData.sched[name]){
+    if(oldEntry.targetStore==='出勤')generatedData.sched[name][d]='work';
+    else if(oldEntry.targetStore==='休')generatedData.sched[name][d]='work';
+  }
+  attendanceAdjustments=attendanceAdjustments.filter(a=>!(a.y===y&&a.m===m&&a.d===d&&a.staffName===name&&a.personType===personType));
+  closeShiftModal();renderPage2();
+}
+function closeShiftModal(){
+  const m=document.getElementById('shift-modal');if(m)m.remove();
+  modalCtx=null;
+}
+function findLinkSupport(staffName,d){
+  for(const s of supportStaff){
+    const e=supportSchedule[s.name]&&supportSchedule[s.name][d];
+    if(e&&e.link===staffName)return s.name;
+  }
+  return null;
+}
+function exportScheduleSkeleton(){
+  if(!page2Generated||!generatedData){alert('請先生成次假表');return;}
+  openStorePicker('⬇ 匯出假表骨架',STORES.slice(),'只勾部分門市時，骨架只帶這幾間店的夥伴（加上來支援它們的人）。匯入生命值骨架時可選擇只更新這幾間，其他店保留不動。',sel=>{
+    // 跨店支援牽涉到沒勾的店時提醒：那間店的骨架也要一起更新，生命值骨架兩邊才對得上
+    const{supMap}=generatedData,cross=new Set();
+    Object.keys(supMap||{}).forEach(k=>{
+      const{store:st}=splitSupKey(k);
+      (supMap[k]||[]).forEach(n=>{
+        const home=homeStoreOf(n);
+        if(!STORES.includes(home))return; // 跨區支援（例：伸港的人來溪湖）不在這次範圍，本來就各自匯入
+        if(sel.includes(st)&&!sel.includes(home))cross.add(`${n}（${home}→${st}）`);
+        if(!sel.includes(st)&&sel.includes(home))cross.add(`${n}（${home}→${st}）`);
+      });
+    });
+    if(cross.size&&!confirm(`以下跨店支援牽涉到沒勾選的門市：\n${[...cross].join('、')}\n\n如果這次有重新排過，建議把相關門市一起勾選匯出，生命值骨架兩邊的支援安排才對得上。\n\n仍要只匯出勾選的門市嗎？`))return;
+    exportScheduleSkeletonFor(sel);
+  });
+}
+function exportScheduleSkeletonFor(sel){
+  const{sched,cal,y,m,supMap}=generatedData;
+  const full=sel.length===STORES.length;
+  // 全選：跟v7完全一樣（全部staff）；只勾部分：勾到門市的本店夥伴＋來支援這幾間的人
+  const supKeys=Object.keys(supMap||{}).filter(k=>sel.includes(splitSupKey(k).store));
+  const visitors=new Set();supKeys.forEach(k=>(supMap[k]||[]).forEach(n=>visitors.add(n)));
+  const outStaff=full?staff:staff.filter(s=>sel.includes(s.store)||visitors.has(s.name));
+  const outSup={};(full?Object.keys(supMap||{}):supKeys).forEach(k=>{outSup[k]=supMap[k];});
+  const schedule=cal.map(({d})=>{
+    const dayObj={d};
+    outStaff.forEach(s=>{dayObj[s.name]=sched[s.name]?sched[s.name][d]:'work';});
+    return dayObj;
+  });
+  const data={
+    year:y,month:m,
+    stores:STORES.filter(st=>sel.includes(st)),
+    staff:outStaff.map(s=>({name:s.name,store:s.store,type:s.type})),
+    schedule,
+    // 跨店支援指派（誰哪天支援哪門市），key格式："門市_日期"→[姓名,...]，給下游程式（生命值骨架）讀取
+    supMap:outSup,
+    // 門市分區設定（同區算「天」日薪制，跨區算「小時」9.5h/天＋跨店費率），給下游程式判斷isExternal用
+    storeGroups:storeGroups||[],
+    // 每天是否算假日（週六/週日設定＋自訂假日），給下游程式（生命值骨架）判斷平日休/假日休分類用
+    holidays:cal.map(({d,isHol})=>({d,isHol}))
+  };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`${scopeFileTag()}排班_${y}年${m}月${pickedFileTag(sel,STORES)}_假表骨架.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function genPage2(){
+  page2Generated=true;
+  if(maxUnlocked<4){maxUnlocked=4;renderTopnav();}
+  document.getElementById('btn-dl2').disabled=false;
+  document.getElementById('btn-skel').disabled=false;
+  curPage=3;
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-3').classList.add('active');
+  renderTopnav();updateHeader(3);
+  linkPage2DataToPage4();
+  const {sched,cal,supMap,mandatoryOff}=generatedData;
+  const CLS={off:'c-off',sup:'c-sup',mob:'c-mob',must:'c-must',work:'c-work'};
+  const TXT={off:'休',sup:'支',mob:'機',must:'上',work:''};
+  const cols=cal.map(({d,wn,wd})=>`<th style="min-width:30px;padding:3px 2px;font-size:9px;${wd===5?'background:#D4EDDA;color:#155724;':wd===6?'background:#FADDE1;color:#8B0000;':'background:#f5f5f5;color:#333;'}">${d}<br>週${wn}</th>`).join('');
+  const buildRows=members=>members.map(s=>{
+    const cells=cal.map(({d})=>{
+      const st=sched[s.name]?sched[s.name][d]:'work';
+      const adj=findAttendanceAdj(s.name,d);
+      if(adj&&adj.statEffect==='shift'){
+        return `<td class="" style="background:#FAEEDA;color:#633806;font-weight:600;padding:3px 2px;font-size:9px;text-align:center">貼班${adj.hours.toFixed(1)}h${adj.link?`<br><span style="font-size:8px">補${adj.link}</span>`:''}</td>`;
+      }
+      const linkSup=st==='off'?findLinkSupport(s.name,d):null;
+      const homeLinked=(!linkSup&&st==='off')?findHomeLinkSource(s.name,d):null;
+      const linked=linkSup||homeLinked;
+      const cls=linked?'':(CLS[st]||'c-work');
+      const isMust=st==='off'&&!linked&&mandatoryOff&&mandatoryOff[s.name+'_'+d];
+      const styleOverride=linked?'background:#26215C;color:#fff;font-weight:600;':(isMust?'font-weight:700;':'');
+      return `<td class="${cls}" style="${styleOverride}padding:3px 2px;font-size:9px;text-align:center">${TXT[st]||''}${linked?`<br><span style="font-size:8px;color:#D6D4F0">→${linked}補</span>`:''}</td>`;
+    }).join('');
+    return `<tr><td style="font-size:9px;font-weight:600;text-align:left;padding:3px 5px;min-width:70px;border-right:2px solid #ccc;position:sticky;left:0;background:#fff">${s.name}</td>${cells}</tr>`;
+  }).join('');
+  const buildSupVisitorRow=store=>{
+    if(!cal.some(({d})=>supportNamesFor(store,d,supMap).length>0))return'';
+    const cells=cal.map(({d})=>{
+      const ns=supportLabelFor(store,d,supMap);
+      return `<td style="background:#EDE8FF;color:#3C3489;font-size:7px;font-style:italic;padding:2px;text-align:center">${ns}</td>`;
+    }).join('');
+    return `<tr><td style="font-size:7px;color:#3C3489;padding:2px 5px;font-weight:600;white-space:nowrap;border-right:2px solid #ccc;position:sticky;left:0;background:#EDE8FF">支援↑</td>${cells}</tr>`;
+  };
+  const buildTempStaffRows=store=>supportStaff.filter(s=>Object.values(supportSchedule[s.name]||{}).some(e=>(e.targetStore||s.store)===store)).map(s=>{
+    const cells=cal.map(({d})=>{
+      const e=supportSchedule[s.name]&&supportSchedule[s.name][d];
+      if(!e||(e.targetStore||s.store)!==store)return'<td></td>';
+      return `<td style="background:#FAEEDA;color:#633806;font-size:8px;padding:2px;text-align:center">貼班${e.hours.toFixed(1)}h${e.link?`<br>補${e.link}`:''}</td>`;
+    }).join('');
+    return `<tr><td style="font-size:8px;color:#633806;font-weight:600;text-align:left;padding:3px 5px;min-width:70px;border-right:2px solid #ccc;position:sticky;left:0;background:#FAEEDA">${s.name}(貼班)</td>${cells}</tr>`;
+  }).join('');
+  const storeBlocks=STORES.map(store=>{
+    const members=staff.filter(s=>s.store===store);
+    if(!members.length)return'';
+    return `<div class="prev-sec"><div class="prev-hdr" style="background:${SB[store]}"><div style="width:7px;height:7px;border-radius:50%;background:${SC[store]}"></div>${store}</div><div style="overflow-x:auto"><table class="ptbl"><thead><tr><th style="text-align:left;min-width:70px;position:sticky;left:0;background:#f5f5f5">簡稱</th>${cols}</tr></thead><tbody>${buildRows(members)}${buildSupVisitorRow(store)}${buildTempStaffRows(store)}</tbody></table></div></div>`;
+  }).join('');
+  const mobMembers=staff.filter(s=>s.type==='機動人員');
+  const mobBlock=mobMembers.length?`<div class="prev-sec"><div class="prev-hdr" style="background:#FFFBEB">🔄 機動人員</div><div style="overflow-x:auto"><table class="ptbl"><thead><tr><th style="text-align:left;min-width:70px;position:sticky;left:0;background:#f5f5f5">簡稱</th>${cols}</tr></thead><tbody>${buildRows(mobMembers)}</tbody></table></div></div>`:'';
+  const supRows=supportStaff.map(s=>{
+    const days=cal.map(({d})=>{
+      const e=supportSchedule[s.name]&&supportSchedule[s.name][d];
+      if(!e)return'<td></td>';
+      return `<td style="background:#FAEEDA;color:#633806;font-size:9px;padding:2px">貼班<br>${e.hours.toFixed(1)}h${e.link?`<div style="font-size:7px">補${e.link}</div>`:''}</td>`;
+    }).join('');
+    return `<tr><td style="font-weight:600;font-size:9px;text-align:left;padding:3px 5px;border-right:2px solid #ccc;position:sticky;left:0;background:#fff">${s.name}</td>${days}</tr>`;
+  }).join('');
+  const supBlock=supportStaff.length?`<div class="prev-sec"><div class="prev-hdr" style="background:#FAEEDA">🏷️ 貼班人員（疊加）</div><div style="overflow-x:auto"><table class="ptbl"><thead><tr><th style="text-align:left;min-width:70px;position:sticky;left:0;background:#f5f5f5">簡稱</th>${cols}</tr></thead><tbody>${supRows}</tbody></table></div></div>`:'';
+  const totalCost=supportStaff.reduce((sum,s)=>{
+    const days=Object.values(supportSchedule[s.name]||{});
+    return sum+days.reduce((a,e)=>a+e.hours*(s.wage!=null?s.wage:p5BaseHourly),0);
+  },0);
+  document.getElementById('page3-preview').innerHTML=`
+    ${mobBlock}${storeBlocks}${supBlock}
+    <div style="background:#fff;border-radius:8px;padding:10px;font-size:10px;color:#666">貼班總工資估算：<strong>$${totalCost.toFixed(0)}</strong>（工時×時薪，貼班當天不佔用其原職別排休配額；「→OOO補」表示該請假由貼班人員補上）</div>`;
+}
+function downloadExcel2(){
+  if(!page2Generated){alert('請先生成次假表');return;}
+  const all=excelSheetChoices();
+  openStorePicker('⬇ 下載次假表Excel',all,'每間門市一個分頁；有貼班人員時另附「貼班人員」分頁',sel=>downloadExcel2For(sel,all));
+}
+function downloadExcel2For(sel,all){
+  const {sched,cal,y,m,supMap,mandatoryOff}=generatedData;
+  const lunarMap=parseLunarNotes();
+  const bottomNotes=((document.getElementById('bottom-notes')&&document.getElementById('bottom-notes').value)||'').split('\n').filter(Boolean);
+  const wb=new ExcelJS.Workbook();
+  excelSheetsFor(sel).forEach(({name,home})=>{
+    buildCalendarWorkbookSheet(wb,name,home,cal,sched,supMap,lunarMap,bottomNotes,findLinkSupport,true,mandatoryOff);
+  });
+  // 只附有貼到勾選門市的貼班人員
+  const tmpList=supportStaff.filter(s=>Object.values(supportSchedule[s.name]||{}).some(e=>sel.includes(e.targetStore||s.store)));
+  if(tmpList.length){
+    const ws=wb.addWorksheet('貼班人員');
+    ws.columns=[{width:18},...cal.map(()=>({width:11}))];
+    ws.views=[{state:'frozen',xSplit:1,ySplit:1}];
+    ws.pageSetup={orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0};
+    const TS_BORDER={style:'thin',color:{argb:'FFF0F0F0'}};
+    ws.getCell(1,1).value='簡稱';ws.getCell(1,1).font={name:'微軟正黑體',bold:true};ws.getCell(1,1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEFEFEF'}};ws.getCell(1,1).border={top:TS_BORDER,left:TS_BORDER,bottom:TS_BORDER,right:TS_BORDER};
+    cal.forEach(({d,wn},ci)=>{const c=ws.getCell(1,ci+2);c.value=`${d}週${wn}`;c.font={name:'微軟正黑體',bold:true};c.alignment={horizontal:'center'};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEFEFEF'}};c.border={top:TS_BORDER,left:TS_BORDER,bottom:TS_BORDER,right:TS_BORDER};});
+    tmpList.forEach((s,ri)=>{
+      const labelCell=ws.getCell(ri+2,1);
+      labelCell.value=`${s.name}($${s.wage!=null?s.wage:p5BaseHourly}/hr)`;labelCell.font={name:'微軟正黑體',bold:true};labelCell.border={top:TS_BORDER,left:TS_BORDER,bottom:TS_BORDER,right:TS_BORDER};
+      cal.forEach(({d},ci)=>{
+        const e=supportSchedule[s.name]&&supportSchedule[s.name][d];
+        const cell=ws.getCell(ri+2,ci+2);
+        cell.value=e?`${e.targetStore||s.store}\n貼班${e.hours.toFixed(1)}h${e.link?`補${e.link}`:''}`:'';
+        cell.font={name:'微軟正黑體'};
+        cell.alignment={horizontal:'center',wrapText:true};
+        cell.border={top:TS_BORDER,left:TS_BORDER,bottom:TS_BORDER,right:TS_BORDER};
+      });
+    });
+  }
+  downloadWorkbook(wb,`${scopeFileTag()}排班_${y}年${m}月${pickedFileTag(sel,all)}_次假表.xlsx`);
+}
+
+// ── 第四頁：薪資假表（上傳次假表 Excel II → 解析底色／文字 → 統計） ──
+let p4Workbook=null,p4Generated=false,p4Results=null;
+function handleP4Upload(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=async function(ev){
+    const wb=new ExcelJS.Workbook();
+    await wb.xlsx.load(ev.target.result);
+    p4Workbook=wb;
+    document.getElementById('p4-upload-status').textContent=`已上傳：${file.name}（按「⚡ 生成薪資假表」套用覆蓋）`;
+  };
+  reader.readAsArrayBuffer(file);
+}
+// 直接從記憶體（generatedData.sched + attendanceAdjustments + supportStaff/supportSchedule）計算第四頁統計，
+// 不經過 Excel II 上傳/解析。回傳格式與 parseStoreSheet() 完全一致，讓 renderPage4Preview()/downloadExcel4() 兩條路徑共用。
+// 對應 buildCalendarWorkbookSheet() 寫入儲存格文字/底色的同一套規則，只是改成直接讀記憶體狀態而非讀 Excel 文字/顏色。
+function computeStoreStatsFromMemory(store,home,mobileMode){
+  const {sched,cal,supMap}=generatedData;
+  const stats={};home.forEach(s=>stats[s.name]={wdOff:0,hdOff:0,selfSup:0,coveredLeave:0,hourEntries:[],tempHrs:0});
+  const visitorEntries={};const tempEntries={};
+  const isStore=STORES.includes(store);
+  home.forEach(s=>{
+    cal.forEach(({d,isHol})=>{
+      const st=sched[s.name]?sched[s.name][d]:'work';
+      const adj=findAttendanceAdj(s.name,d);
+      if(adj&&adj.statEffect==='shift'){
+        // 機動人員不屬於任何門市，貼班一律算「跨店時數」（跟parseStoreSheet的Excel解析規則一致），
+        // 不可落入「貼班時數」（貼班時數是給有固定所屬門市的本店夥伴用的欄位）。
+        if(s.type==='機動人員')stats[s.name].hourEntries.push({d,hours:adj.hours,cross:true});
+        else stats[s.name].tempHrs+=adj.hours;
+        if(adj.link===s.name)stats[s.name].coveredLeave++;
+        return;
+      }
+      if(adj&&adj.statEffect==='work_plus'&&s.type==='計時'){
+        stats[s.name].tempHrs+=9.5;
+        return;
+      }
+      if(st==='off'){
+        const linked=findLinkSupport(s.name,d)||findHomeLinkSource(s.name,d);
+        if(linked){stats[s.name].coveredLeave++;}
+        else{if(isHol)stats[s.name].hdOff++;else stats[s.name].wdOff++;}
+      }else if(st==='sup'){
+        stats[s.name].selfSup++;
+      }else if(st==='work'||st==='must'||st==='mob'){
+        if(s.type==='計時'){
+          stats[s.name].hourEntries.push({d,hours:9.5,cross:false});
+        }
+      }
+    });
+  });
+  if(isStore){
+    const visitorNames=new Set();
+    cal.forEach(({d})=>{(supMap[store+'_'+d]||[]).forEach(n=>{if(!home.some(h=>h.name===n))visitorNames.add(n);});});
+    visitorNames.forEach(vname=>{
+      const vstaff=staff.find(x=>x.name===vname);
+      const isExternal=vstaff&&!sameGroup(vstaff.store,store);
+      if(!visitorEntries[vname])visitorEntries[vname]={days:new Set(),hours:0};
+      cal.forEach(({d})=>{
+        const isHere=(supMap[store+'_'+d]||[]).includes(vname);
+        if(!isHere)return;
+        // 出勤紀錄頁把這天的「來店支援」改登記為「貼班」（personType:'support'）：
+        // 當天不再計入來店支援天數/跨店時數，改計入貼班時數（走tempEntries，跟既有貼班人員同一套發薪邏輯）。
+        const adj=findAttendanceAdjFor('support',vname,d);
+        if(adj&&adj.statEffect==='shift'){
+          tempEntries[vname]=(tempEntries[vname]||0)+adj.hours;
+          return;
+        }
+        // 2026-10-17修正：支援表排了，但當天已改成休／出勤（sched不再是sup）就不算支援薪資，
+        // 否則本店記休、被支援的店又照付一天（多付）。跟生命值骨架stillSupporting同一條規則。
+        if(sched[vname]&&sched[vname][d]!=='sup')return;
+        if(isExternal)visitorEntries[vname].hours+=9.5;
+        else visitorEntries[vname].days.add(d);
+      });
+    });
+  }
+  if(isStore){
+    supportStaff.filter(s=>Object.values(supportSchedule[s.name]||{}).some(e=>(e.targetStore||s.store)===store)).forEach(s=>{
+      cal.forEach(({d})=>{
+        const e=supportSchedule[s.name]&&supportSchedule[s.name][d];
+        if(!e||(e.targetStore||s.store)!==store)return;
+        tempEntries[s.name]=(tempEntries[s.name]||0)+e.hours;
+      });
+    });
+  }
+  return{stats,visitorEntries,tempEntries};
+}
+function linkPage2DataToPage4(){
+  if(!generatedData)return;
+  const results=[];
+  [...STORES.map(s=>({store:s,home:staff.filter(x=>x.store===s)})),{store:'機動人員',home:staff.filter(x=>x.type==='機動人員')}].forEach(({store,home})=>{
+    if(!home.length)return;
+    const homeNames=home.map(s=>s.name);
+    const parsed=computeStoreStatsFromMemory(store,home,store==='機動人員');
+    results.push({store,homeNames,parsed,dim:generatedData.cal.length});
+  });
+  p4Results=results;
+  p4Generated=true;
+  const dlBtn=document.getElementById('btn-dl4');if(dlBtn)dlBtn.disabled=false;
+  renderPage4Preview();
+  if(maxUnlocked<5){maxUnlocked=5;renderTopnav();}
+  genPage5();
+}
+function parseStoreSheet(ws,homeNames,mobileMode){
+  const stats={};homeNames.forEach(n=>stats[n]={wdOff:0,hdOff:0,selfSup:0,coveredLeave:0,hourEntries:[],tempHrs:0});
+  const visitorEntries={};const tempEntries={};
+  const maxRow=ws.rowCount;
+  let r=1;
+  while(r<=maxRow){
+    const rowVals=[];for(let c=1;c<=7;c++)rowVals.push(ws.getCell(r,c).text);
+    const isDateRow=rowVals.some(v=>typeof v==='string'&&/^\d{1,2}(\s|$)/.test(v.trim()));
+    if(!isDateRow){r++;continue;}
+    const dates={};rowVals.forEach((v,i)=>{if(typeof v==='string'){const dm=v.trim().match(/^(\d{1,2})(\s|$)/);if(dm)dates[i+1]=+dm[1];}});
+    r++;
+    homeNames.forEach(name=>{
+      for(let c=1;c<=7;c++){
+        if(!dates[c]){continue;}
+        const cell=ws.getCell(r,c);
+        const v=cell.value;if(!v)continue;
+        const text=String(v).replace(/\n/g,'');
+        const d=dates[c];
+        const wd=c-1;const isHol=wd===5||wd===6;
+        if(text.includes('貼班')){
+          // 出勤紀錄頁登記的真實貼班時段／休→出勤9.5h覆寫：一律計入貼班時數，不進計時時數。
+          // 但機動人員（mobileMode）例外——機動人員不屬於任何門市，貼班一律算「跨店時數」(cross:true，跨店費率)，
+          // 不能落入tempHrs(HP費率)，跟computeStoreStatsFromMemory()的同一條規則保持一致（2026-06-30補修，
+          // 之前這裡沒判斷mobileMode，機動人員上傳Excel覆蓋這條路徑會把貼班算錯費率）。
+          const hm=text.split('貼班')[1]&&text.split('貼班')[1].match(/(\d+(\.\d+)?)/);
+          if(hm){
+            if(mobileMode)stats[name].hourEntries.push({d,hours:+hm[1],cross:true});
+            else stats[name].tempHrs+=+hm[1];
+          }
+          // 原本上班→只是來貼班→連動休假（連動請假對象＝自己）：本人當天「貼班」文字後會帶「補{自己姓名}」，
+          // 代表 generatedData.sched 已把這天狀態覆寫為 off（buildCalendarWorkbookSheet 的 adj.statEffect==='shift'
+          // 分支會先攔截這天的顯示，永遠不會落入下方的 st==='off'/LEAVE_COVERED_FILL 分支），
+          // 故此處需額外把請假計入，與貼班時數並存（不互斥），且不影響支援人員/暫班人員（他們不在 homeNames 迴圈內）。
+          if(text.endsWith('補'+name))stats[name].coveredLeave++;
+          continue;
+        }
+        const m=text.match(/(\d+(\.\d+)?)h$/i);
+        if(m&&text!==name){
+          // 機動人員：有數字一律算跨店時數；本店員工：靠文字是否含「支援」分計時/跨店
+          stats[name].hourEntries.push({d,hours:+m[1],cross:mobileMode?true:text.includes('支援')});
+          continue;
+        }
+        const fillArgb=cell.fill&&cell.fill.fgColor&&cell.fill.fgColor.argb;
+        const personal=offFillFor(name);
+        if(fillArgb===LEAVE_COVERED_FILL){stats[name].coveredLeave++;}
+        else if(fillArgb===personal){if(isHol)stats[name].hdOff++;else stats[name].wdOff++;}
+        else if(fillArgb==='FFFAEEDA'){stats[name].selfSup++;}
+      }
+      r++;
+    });
+    let blankStreak=0;
+    while(r<=maxRow){
+      const rv=[];for(let c=1;c<=7;c++)rv.push(ws.getCell(r,c).value);
+      const rvText=[];for(let c=1;c<=7;c++)rvText.push(ws.getCell(r,c).text);
+      const looksLikeDateRow=rvText.some(v=>typeof v==='string'&&/^\d+$/.test(v.trim()));
+      if(looksLikeDateRow)break; // 下一週標題列，本週的訪客/貼班掃描結束
+      if(rv.every(v=>!v)){
+        blankStreak++;
+        if(blankStreak>=2)break; // 連續兩個空白列才視為真正結束（避開誤吃底部備註）
+        r++;continue;
+      }
+      blankStreak=0;
+      for(let c=1;c<=7;c++){
+        if(!dates[c])continue;
+        const v=ws.getCell(r,c).value;if(!v)continue;
+        const text=String(v).replace(/\n/g,'');
+        const d=dates[c];
+        if(text.includes('貼班')){
+          const nameMatch=text.split('貼班')[0];
+          const hm=text.split('貼班')[1].match(/(\d+(\.\d+)?)/);
+          tempEntries[nameMatch]=(tempEntries[nameMatch]||0)+(hm?+hm[1]:0);
+        }else{
+          const nm=text.split('\n')[0];
+          // 「OOO支援XX店」格式：本來是本店員工自己「他店支援」的標記，不是訪客姓名
+          const supMatch=nm.match(/^(.+?)支援.+?店$/);
+          if(supMatch&&stats[supMatch[1]]){stats[supMatch[1]].selfSup++;continue;}
+          // 來店支援／機動人員訪客row：名字後有數字→跨店時數(時薪)；無數字→來店支援/出勤天數(日薪)，兩者互斥
+          const hm=nm.match(/^(.*?)(\d+(\.\d+)?)h$/i);
+          let baseName,hours=null;
+          if(hm){baseName=hm[1].trim();hours=+hm[2];}else{baseName=nm.trim();}
+          if(!baseName)continue;
+          if(homeNames.includes(baseName)){
+            // 本店員工本身不該算訪客；若有數字就算進他自己的工時
+            if(hours!==null)stats[baseName].hourEntries.push({d,hours,cross:mobileMode?true:nm.includes('支援')});
+            continue;
+          }
+          if(!visitorEntries[baseName])visitorEntries[baseName]={days:new Set(),hours:0};
+          if(hours!==null)visitorEntries[baseName].hours+=hours;
+          else visitorEntries[baseName].days.add(d);
+        }
+      }
+      r++;
+    }
+  }
+  return{stats,visitorEntries,tempEntries};
+}
+function genPage4(){
+  if(!generatedData){alert('請先完成第一頁初假表');return;}
+  if(!p4Workbook){
+    // 尚未上傳覆蓋檔：沿用第二頁自動帶入的記憶體資料重新計算一次（手動重新觸發）。
+    linkPage2DataToPage4();
+    return;
+  }
+  const dim=generatedData.cal.length;
+  const results=[];
+  [...STORES.map(s=>({store:s,home:staff.filter(x=>x.store===s)})),{store:'機動人員',home:staff.filter(x=>x.type==='機動人員')}].forEach(({store,home})=>{
+    if(!home.length)return;
+    const sheetName=store.replace('店','');
+    const ws=p4Workbook.worksheets.find(w=>w.name===sheetName);
+    if(!ws)return;
+    const homeNames=home.map(s=>s.name);
+    const parsed=parseStoreSheet(ws,homeNames,store==='機動人員');
+    results.push({store,homeNames,parsed,dim});
+  });
+  p4Results=results;
+  p4Generated=true;
+  document.getElementById('btn-dl4').disabled=false;
+  renderPage4Preview();
+  if(maxUnlocked<5){maxUnlocked=5;renderTopnav();}
+  genPage5();
+}
+function renderPage4Preview(){
+  const blocks=p4Results.map(({store,homeNames,parsed,dim})=>{
+    const rows=homeNames.map(name=>{
+      const s=parsed.stats[name];
+      const selfHrs=s.hourEntries.filter(e=>!e.cross).reduce((a,e)=>a+e.hours,0);
+      const crossHrs=s.hourEntries.filter(e=>e.cross).reduce((a,e)=>a+e.hours,0);
+      const st=staff.find(x=>x.name===name);
+      const noAttendance=store==='機動人員'||(st&&st.type==='計時');
+      const outDays=noAttendance?'—':dim-s.wdOff-s.hdOff-s.coveredLeave-s.selfSup;
+      return `<tr><td style="text-align:left;padding:3px 6px">${name}</td><td>${s.wdOff}</td><td>${s.hdOff}</td><td>${s.coveredLeave}</td><td>${s.selfSup}</td><td>—</td><td>${outDays}</td><td>${selfHrs||0}</td><td>${crossHrs||0}</td><td>${s.tempHrs||0}</td></tr>`;
+    });
+    Object.keys(parsed.visitorEntries).forEach(name=>{
+      const v=parsed.visitorEntries[name];
+      const days=v.days.size;const hrs=v.hours;
+      rows.push(`<tr><td style="text-align:left;padding:3px 6px">${name}（來店支援）</td><td>—</td><td>—</td><td>—</td><td>—</td><td>${days||'—'}</td><td>${days||'—'}</td><td>0</td><td>${hrs||0}</td><td>—</td></tr>`);
+    });
+    Object.keys(parsed.tempEntries).forEach(name=>{
+      rows.push(`<tr><td style="text-align:left;padding:3px 6px">${name}（貼班）</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>${parsed.tempEntries[name].toFixed(1)}</td></tr>`);
+    });
+    return `<div class="prev-sec"><div class="prev-hdr" style="background:${SB[store]||'#f0f0f0'}">${store}</div><div style="overflow-x:auto"><table class="ptbl"><thead><tr><th>簡稱</th><th>平日休</th><th>假日休</th><th>請假</th><th>他店支援</th><th>來店支援</th><th>出勤天數</th><th>計時時數</th><th>跨店時數</th><th>貼班時數</th></tr></thead><tbody>${rows.join('')}</tbody></table></div></div>`;
+  }).join('');
+  document.getElementById('page4-preview').innerHTML=blocks;
+}
+function downloadExcel4(){
+  if(!p4Generated){alert('請先生成薪資假表');return;}
+  // 若使用者尚未上傳覆蓋用 Excel II，p4Workbook 會是 null（資料是自動從第二頁帶入的）。
+  // 此時下載 Excel III 前，先用與 downloadExcel2() 相同的邏輯就地生成一份 Excel II 工作簿當底，再疊加統計欄。
+  let wb=p4Workbook;
+  if(!wb){
+    const {sched,cal,y,m,supMap,mandatoryOff}=generatedData;
+    const lunarMap=parseLunarNotes();
+    const bottomNotes=((document.getElementById('bottom-notes')&&document.getElementById('bottom-notes').value)||'').split('\n').filter(Boolean);
+    wb=new ExcelJS.Workbook();
+    [...STORES.map(store=>({name:store,home:staff.filter(s=>s.store===store)})),{name:'機動人員',home:staff.filter(s=>s.type==='機動人員')}].forEach(({name,home})=>{
+      if(!home.length)return;
+      buildCalendarWorkbookSheet(wb,name,home,cal,sched,supMap,lunarMap,bottomNotes,findLinkSupport,true,mandatoryOff);
+    });
+  }
+  p4Results.forEach(({store,homeNames,parsed,dim})=>{
+    const sheetName=store.replace('店','');
+    const ws=wb.worksheets.find(w=>w.name===sheetName);
+    if(!ws)return;
+    const headers=['簡稱','平日休','假日休','請假','他店支援','來店支援','出勤天數','計時時數','跨店時數','貼班時數'];
+    const STAT_BORDER={style:'thin',color:{argb:'FFF0F0F0'}};
+    headers.forEach((h,i)=>{
+      const c=ws.getCell(1,8+i);
+      c.value=h;c.font={name:'微軟正黑體',bold:true};
+      c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEFEFEF'}};
+      c.alignment={horizontal:'center',vertical:'middle'};
+      c.border={top:STAT_BORDER,left:STAT_BORDER,bottom:STAT_BORDER,right:STAT_BORDER};
+    });
+    let row=2;
+    homeNames.forEach(name=>{
+      const s=parsed.stats[name];
+      const selfHrs=s.hourEntries.filter(e=>!e.cross).reduce((a,e)=>a+e.hours,0);
+      const crossHrs=s.hourEntries.filter(e=>e.cross).reduce((a,e)=>a+e.hours,0);
+      const st=staff.find(x=>x.name===name);
+      const noAttendance=store==='機動人員'||(st&&st.type==='計時');
+      const outDays=noAttendance?'—':dim-s.wdOff-s.hdOff-s.coveredLeave-s.selfSup;
+      [name,s.wdOff,s.hdOff,s.coveredLeave,s.selfSup,'',outDays,selfHrs||0,crossHrs||0,s.tempHrs||0].forEach((v,i)=>{const c=ws.getCell(row,8+i);c.value=v;c.font={name:'微軟正黑體'};c.alignment={horizontal:'center',vertical:'middle'};c.border={top:STAT_BORDER,left:STAT_BORDER,bottom:STAT_BORDER,right:STAT_BORDER};});
+      row++;
+    });
+    Object.keys(parsed.visitorEntries).forEach(name=>{
+      const v=parsed.visitorEntries[name];
+      const days=v.days.size;const hrs=v.hours;
+      [name+'（來店支援）','','','','',days||'',days||'',0,hrs||0,''].forEach((val,i)=>{const c=ws.getCell(row,8+i);c.value=val;c.font={name:'微軟正黑體'};c.alignment={horizontal:'center',vertical:'middle'};c.border={top:STAT_BORDER,left:STAT_BORDER,bottom:STAT_BORDER,right:STAT_BORDER};});
+      row++;
+    });
+    Object.keys(parsed.tempEntries).forEach(name=>{
+      [name+'（貼班）','','','','','','','','',parsed.tempEntries[name].toFixed(1)].forEach((val,i)=>{const c=ws.getCell(row,8+i);c.value=val;c.font={name:'微軟正黑體'};c.alignment={horizontal:'center',vertical:'middle'};c.border={top:STAT_BORDER,left:STAT_BORDER,bottom:STAT_BORDER,right:STAT_BORDER};});
+      row++;
+    });
+  });
+  downloadWorkbook(wb,`${scopeFileTag()}排班_${generatedData.y}年${generatedData.m}月_薪資假表.xlsx`);
+}
+
+// ── 第五頁：薪資系統 ──
+const ROUTE_FIXED={counter:{丙:1000,乙:1500,甲:2500},grill:{丙:1000,乙:1500,甲:2500},drink:1500,coffee:500};
+const ROUTE_HOURLY={counter:{丙:1,乙:2,甲:3},grill:{丙:1,乙:2,甲:3},drink:2,coffee:1};
+const ROUTE_CATS=[['counter','櫃檯','🧾'],['drink','包飲','🥤'],['grill','煎台','🍳'],['coffee','品咖啡','☕']];
+let p5HP={},p5Route={},p5OtherBonus={},p5InsuranceOverride={},p5InsuranceMap={},p5ManualRate={},p5Generated=false,curP5Store='全部',p5Modal=null;
+let p5BaseSalary=29500,p5BaseHourly=196;
+function overtimeAmt(){return Math.ceil(p5BaseSalary/30/8*4/3*1.5*22);}
+function crossRate(){return p5BaseHourly+10;}
+let p5CrossRateOverride={};
+function getCrossRate(name){return p5CrossRateOverride[name]!=null?p5CrossRateOverride[name]:crossRate();}
+function hpMultiplier(hp){if(hp<=0)return 0;if(hp<=9)return .5;if(hp<=14)return 1;if(hp<=21)return 1.3;return 1.5;}
+function hpMultiplierLabel(hp){if(hp<=0)return'0次・×0%';if(hp<=9)return'1~9次・×50%';if(hp<=14)return'10~14次・×100%';if(hp<=21)return'15~21次・×130%';return'22次以上・×150%';}
+function hpRate(hp){return hp>=10?p5BaseHourly+20:p5BaseHourly+10;}
+function qualAllowance(hp){if(hp<=0)return 0;if(hp<=9)return 3;if(hp<=14)return 5;if(hp<=21)return 8;return 10;}
+function getStoreHP(store){return p5HP[store]||0;}
+function routeSel(name){if(!p5Route[name])p5Route[name]={counter:null,drink:false,grill:null,coffee:false};return p5Route[name];}
+function routeFixedAmount(name){const sel=routeSel(name);let t=0;if(sel.counter)t+=ROUTE_FIXED.counter[sel.counter];if(sel.drink)t+=ROUTE_FIXED.drink;if(sel.grill)t+=ROUTE_FIXED.grill[sel.grill];if(sel.coffee)t+=ROUTE_FIXED.coffee;return t;}
+function routeHourlyAddon(name){const sel=routeSel(name);let t=0;if(sel.counter)t+=ROUTE_HOURLY.counter[sel.counter];if(sel.drink)t+=ROUTE_HOURLY.drink;if(sel.grill)t+=ROUTE_HOURLY.grill[sel.grill];if(sel.coffee)t+=ROUTE_HOURLY.coffee;return t;}
+function otherBonusObj(name){if(!p5OtherBonus[name])p5OtherBonus[name]={manage:0,train:0,hp:0,red:0,rent:0,traffic:0,other:0};return p5OtherBonus[name];}
+function otherBonusTotal(name){const o=otherBonusObj(name);return(o.manage||0)+(o.train||0)+(o.hp||0)+(o.red||0)+(o.rent||0)+(o.traffic||0)+(o.other||0);}
+function getInsurance(name){
+  if(p5InsuranceOverride[name]!=null)return{amt:p5InsuranceOverride[name],manual:true};
+  for(const k in p5InsuranceMap){if(k.includes(name))return{amt:p5InsuranceMap[k],manual:false};}
+  return{amt:0,manual:false};
+}
+async function handleP5InsuranceUpload(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=async(ev)=>{
+    const wb=new ExcelJS.Workbook();
+    await wb.xlsx.load(ev.target.result);
+    const y=generatedData?generatedData.y:null,m=generatedData?generatedData.m:null;
+    const ym=y&&m?(''+y+String(m).padStart(2,'0')):null;
+    let ws=ym?wb.worksheets.find(w=>w.name.includes(ym)):null;
+    if(!ws)ws=wb.worksheets[wb.worksheets.length-1];
+    const newMap={};
+    let amtCol=null;
+    if(ws){
+      for(let r=1;r<=ws.rowCount;r++){
+        const rowTexts=[];for(let c=1;c<=8;c++){
+          let v=ws.getCell(r,c).value;
+          if(v==null)v='';
+          else if(typeof v==='object'){
+            if(v.richText)v=v.richText.map(t=>t.text).join('');
+            else if('result'in v)v=v.result==null?'':v.result;
+            else v='';
+          }
+          rowTexts.push(String(v).trim());
+        }
+        const idx=rowTexts.findIndex(t=>t==='自付額'||t==='勞健保');
+        if(idx>=0)amtCol=idx+1;
+        const name=rowTexts[0];
+        if(!name||name==='自付額'||name==='勞健保'||!amtCol)continue;
+        const raw=rowTexts[amtCol-1];
+        const num=parseFloat(raw);
+        if(!isNaN(num))newMap[name]=num;
+      }
+    }
+    const statusEl=document.getElementById('p5-ins-status');
+    if(!amtCol||Object.keys(newMap).length===0){
+      statusEl.textContent=`⚠️上傳失敗：「${file.name}」找不到「自付額」或「勞健保」欄位，未比對到任何人員，已保留原有資料未覆蓋，請確認檔案格式`;
+      statusEl.style.color='#c00';
+    }else{
+      p5InsuranceMap=newMap;
+      statusEl.textContent=`已上傳：${file.name}（共讀取${Object.keys(p5InsuranceMap).length}筆，未比對到的人員可手動輸入）`;
+      statusEl.style.color='';
+    }
+    if(p5Generated)renderPage5();
+  };
+  reader.readAsArrayBuffer(file);
+}
+function getP4Entry(store){return p4Results&&p4Results.find(r=>r.store===store);}
+function calcRegular(s,hp,outDays,tempHrs){
+  const isFull8=s.type==='八小時全職';
+  const base=p5BaseSalary,ot=isFull8?0:overtimeAmt();
+  const routeAmt=isFull8?0:Math.round(routeFixedAmount(s.name)*hpMultiplier(hp));
+  const capped=Math.min(outDays,22);
+  const baseAmt=Math.round((base+ot+routeAmt)/22*capped);
+  const extraDays=Math.max(0,outDays-22);
+  const dayUnit=isFull8?8:9.5;
+  const extraAmt=Math.round(extraDays*hpRate(hp)*dayUnit);
+  const tempAmt=Math.round(tempHrs*hpRate(hp));
+  const ob=otherBonusTotal(s.name);
+  const ins=getInsurance(s.name);
+  const total=baseAmt+extraAmt+tempAmt+ob-ins.amt;
+  return{base,ot,routeAmt,baseAmt,extraAmt,tempAmt,ob,ins,total};
+}
+function calcHourly(name,hp,calcHrs,tempHrs,crossHrs){
+  const manual=p5ManualRate[name];
+  let rate,qual=0,addon=0;
+  if(manual!=null){rate=manual;}
+  else{qual=qualAllowance(hp);addon=hp>=10?routeHourlyAddon(name):0;rate=p5BaseHourly+qual+addon;}
+  // 貼班時數一律用HP費率(hpRate)，不管本人原本職別，跟正職/八小時全職的貼班算法一致；
+  // 個人時薪(基本時薪+定性加給+計時動線獎金)只適用於計時人員自己的「計時h」。
+  const amt=Math.round(rate*calcHrs)+Math.round(tempHrs*hpRate(hp));
+  const crossAmt=Math.round(crossHrs*crossRate());
+  const ins=getInsurance(name);
+  const total=amt+crossAmt-ins.amt;
+  return{rate,qual,addon,manual,amt,crossAmt,ins,total};
+}
+function calcVisitorDays(vstaff,hp,days){
+  const isFull8=vstaff.type==='八小時全職';
+  const base=p5BaseSalary,ot=isFull8?0:overtimeAmt();
+  const routeAmt=isFull8?0:Math.round(routeFixedAmount(vstaff.name)*hpMultiplier(hp));
+  const capped=Math.min(days,22);
+  const baseAmt=Math.round((base+ot+routeAmt)/22*capped);
+  const extraDays=Math.max(0,days-22);
+  const dayUnit=isFull8?8:9.5;
+  const extraAmt=Math.round(extraDays*hpRate(hp)*dayUnit);
+  return{baseAmt,extraAmt,routeAmt,total:baseAmt+extraAmt};
+}
+function genPage5(){
+  if(!p4Generated){alert('請先完成第四頁薪資假表');return;}
+  p5Generated=true;
+  const dl=document.getElementById('btn-dl5');if(dl)dl.disabled=false;
+  renderPage5();
+}
+function fmt(n){return Math.round(n).toLocaleString();}
+function renderPage5(){
+  const panel=document.getElementById('page5-panel');
+  if(!panel)return;
+  if(!p5Generated){panel.innerHTML='<div class="ph"><div style="font-size:30px">💰</div><div style="font-size:12px;font-weight:600">尚未生成薪資試算</div><div style="font-size:9px;line-height:1.6">請先完成第四頁「薪資假表」<br>再按「⚡ 生成薪資試算」</div></div>';return;}
+  let grand=0;const storeSubtotals={};
+  const cards=STORES.map(store=>{
+    const r=renderStoreCardP5(store);
+    storeSubtotals[store]=r.subtotal;grand+=r.subtotal;
+    return{store,html:r.html};
+  });
+  const tabsHtml=`<div class="store-tabs">${['全部',...STORES].map(s=>`<button class="stab${s===curP5Store?' active':''}" onclick="curP5Store='${s}';renderPage5()">${s}</button>`).join('')}</div>`;
+  const settingsHtml=`<div class="p5-summary" style="align-items:center">
+    <div style="display:flex;flex-direction:column;gap:8px;min-width:150px">
+      <div style="display:flex;align-items:center;gap:6px"><span style="font-size:9px;color:#666;width:48px">基本工資</span><input type="number" min="0" value="${p5BaseSalary}" style="width:90px" onchange="p5BaseSalary=+this.value;renderPage5()"></div>
+      <div style="display:flex;align-items:center;gap:6px"><span style="font-size:9px;color:#666;width:48px">基本時薪</span><input type="number" min="0" value="${p5BaseHourly}" style="width:90px" onchange="p5BaseHourly=+this.value;renderPage5()"></div>
+    </div>
+    <div style="width:1px;background:#e0e0e0;align-self:stretch"></div>
+    <div style="flex:1;min-width:220px">
+      <div class="p5-sum-label">全公司本月薪資試算總計</div>
+      <div class="p5-sum-total">${fmt(grand)}</div>
+      <div class="p5-sum-stores" style="margin-top:6px">${STORES.map(s=>`<div class="p5-sum-store" style="text-align:left"><div>${s.replace('店','')}</div><div>${fmt(storeSubtotals[s])}</div></div>`).join('')}</div>
+    </div>
+  </div>`;
+  const shown=curP5Store==='全部'?STORES:[curP5Store];
+  const cardsHtml=cards.filter(c=>shown.includes(c.store)).map(c=>c.html).join('');
+  panel.innerHTML=tabsHtml+settingsHtml+cardsHtml;
+}
+function insCellHtml(name,ins){
+  const cls=ins.manual?'p5-ins-manual':'p5-ins-auto';
+  const label=ins.amt?('-'+fmt(ins.amt)):'—';
+  return`<span class="${cls}">${label}</span><button class="p5-edit-btn" onclick="openInsuranceEdit('${name}')">✎</button>`;
+}
+function renderStoreCardP5(store){
+  const entry=getP4Entry(store);
+  const home=staff.filter(s=>s.store===store);
+  const dim=entry?entry.dim:0;
+  const hp=getStoreHP(store);
+  let subtotal=0;
+  const regRows=home.filter(s=>s.type==='正職'||s.type==='八小時全職').map(s=>{
+    const st=entry?entry.parsed.stats[s.name]:null;
+    const tempHrs=st?st.tempHrs:0;
+    const outDays=st?(dim-st.wdOff-st.hdOff-st.coveredLeave-st.selfSup):0;
+    const r=calcRegular(s,hp,outDays,tempHrs);
+    subtotal+=r.total;
+    const routeCell=s.type==='八小時全職'?'—':`${fmt(r.routeAmt)}<button class="p5-edit-btn" onclick="openRouteModal('${s.name}','reg')">✎</button>`;
+    return`<tr><td>${s.name}</td><td>${s.type}</td><td>${fmt(r.base)}</td><td>${r.ot?fmt(r.ot):'—'}</td><td>${routeCell}</td><td>${outDays}</td><td>${fmt(r.extraAmt)}</td><td>${tempHrs}</td><td>${fmt(r.ob)}<button class="p5-edit-btn" onclick="openOtherBonusModal('${s.name}')">✎</button></td><td>${insCellHtml(s.name,r.ins)}</td><td><b>${fmt(r.total)}</b></td></tr>`;
+  }).join('');
+  const hourRows=home.filter(s=>s.type==='計時').map(s=>{
+    const st=entry?entry.parsed.stats[s.name]:null;
+    const calcHrs=st?st.hourEntries.filter(e=>!e.cross).reduce((a,e)=>a+e.hours,0):0;
+    const crossHrs=st?st.hourEntries.filter(e=>e.cross).reduce((a,e)=>a+e.hours,0):0;
+    const tempHrs=st?st.tempHrs:0;
+    const r=calcHourly(s.name,hp,calcHrs,tempHrs,crossHrs);
+    subtotal+=r.total;
+    const isManual=r.manual!=null;
+    const rateVal=isManual?r.manual:p5BaseHourly;
+    const rateCell=`<input type="number" min="0" value="${rateVal}" style="width:48px;text-align:right" onchange="p5ManualRate['${s.name}']=+this.value;renderPage5()">`;
+    const qualCell=isManual?'—':fmt(r.qual);
+    const routeCell=isManual?'—':`${r.addon?'+'+r.addon:'0'}<button class="p5-edit-btn" onclick="openRouteModal('${s.name}','hourly')">✎</button>`;
+    return`<tr><td>${s.name}</td><td>計時${isManual?'（手動）':''}</td><td>${rateCell}</td><td>${qualCell}</td><td>${routeCell}</td><td>${calcHrs||0}</td><td>${tempHrs||0}</td><td>${crossHrs||0}</td><td><b>${fmt(r.total)}</b></td></tr>`;
+  }).join('');
+  let visitorDayRows='',visitorRows='';
+  if(entry){
+    Object.keys(entry.parsed.visitorEntries).forEach(name=>{
+      const v=entry.parsed.visitorEntries[name];
+      const vstaff=staff.find(x=>x.name===name);
+      if(v.days.size>0&&vstaff){
+        const r=calcVisitorDays(vstaff,hp,v.days.size);
+        subtotal+=r.total;
+        const routeCell=vstaff.type==='八小時全職'?'—':`${fmt(r.routeAmt)}<button class="p5-edit-btn" onclick="openRouteModal('${name}','reg')">✎</button>`;
+        visitorDayRows+=`<tr><td>${name}（來店支援）</td><td>${vstaff.type}</td><td>${fmt(p5BaseSalary)}</td><td>${vstaff.type==='八小時全職'?'—':fmt(overtimeAmt())}</td><td>${routeCell}</td><td>${v.days.size}</td><td>${fmt(r.extraAmt)}</td><td>—</td><td>—</td><td>—</td><td><b>${fmt(r.total)}</b></td></tr>`;
+      }else if(v.hours>0){
+        const rate=getCrossRate(name);
+        const amt=Math.round(v.hours*rate);
+        subtotal+=amt;
+        const rateCell=`<input type="number" min="0" value="${rate}" style="width:48px;text-align:right" onchange="p5CrossRateOverride['${name}']=+this.value;renderPage5()">`;
+        visitorRows+=`<tr><td>${name}（來店支援）</td><td>跨店支援</td><td>${rateCell}</td><td>—</td><td>—</td><td>0</td><td>0</td><td>${v.hours}</td><td><b>${fmt(amt)}</b></td></tr>`;
+      }
+    });
+    Object.keys(entry.parsed.tempEntries).forEach(name=>{
+      const hrs=entry.parsed.tempEntries[name];
+      const rate=getCrossRate(name);
+      const amt=Math.round(hrs*rate);
+      subtotal+=amt;
+      const rateCell=`<input type="number" min="0" value="${rate}" style="width:48px;text-align:right" onchange="p5CrossRateOverride['${name}']=+this.value;renderPage5()">`;
+      visitorRows+=`<tr><td>${name}（機動／貼班）</td><td>跨店支援</td><td>${rateCell}</td><td>—</td><td>—</td><td>0</td><td>0</td><td>${hrs}</td><td><b>${fmt(amt)}</b></td></tr>`;
+    });
+  }
+  const html=`<div class="p5-card">
+    <div class="p5-card-hdr">
+      <div style="display:flex;align-items:center;gap:6px"><span style="font-weight:600;font-size:13px">${store}</span></div>
+      <div class="p5-hp-box"><span style="font-size:9px;color:#666">本店HP次數</span><input type="number" min="0" value="${hp}" onchange="p5HP['${store}']=+this.value;renderPage5()"><span class="p5-hp-tag">${hpMultiplierLabel(hp)}・${hpRate(hp)}</span></div>
+    </div>
+    <div class="p5-sub-label">正職／八小時全職</div>
+    <div style="overflow-x:auto"><table class="p5tbl"><thead><tr><th>簡稱</th><th>類別</th><th>基本工資</th><th>超時加班</th><th>動線獎金</th><th>出勤天</th><th>23天起</th><th>貼班h</th><th>其他獎金</th><th>勞健保</th><th>小計</th></tr></thead><tbody>${regRows}${visitorDayRows}</tbody></table></div>
+    <div class="p5-sub-label">時薪人員／跨店支援</div>
+    <div style="overflow-x:auto"><table class="p5tbl"><thead><tr><th>簡稱</th><th>類別</th><th>基本時薪</th><th>定性加給</th><th>計時動線獎金</th><th>計時h</th><th>貼班h</th><th>跨店h</th><th>小計</th></tr></thead><tbody>${hourRows}${visitorRows}</tbody></table></div>
+    <div class="p5-subtotal">本店小計 <b>${fmt(subtotal)}</b></div>
+  </div>`;
+  return{html,subtotal};
+}
+function closeP5Modal(){document.getElementById('p5-modal-root').innerHTML='';p5Modal=null;}
+function openRouteModal(name,mode){
+  p5Modal={name,mode};
+  renderRouteModal();
+}
+function renderRouteModal(){
+  const{name,mode}=p5Modal;
+  const sel=routeSel(name);
+  const isHourly=mode==='hourly';
+  const table=isHourly?ROUTE_HOURLY:ROUTE_FIXED;
+  const rows=ROUTE_CATS.map(([key,label,icon])=>{
+    if(key==='drink'||key==='coffee'){
+      const val=table[key];
+      const active=sel[key];
+      return`<div class="p5-route-cat"><span aria-hidden="true">${icon}</span><span class="lbl">${label}</span><div class="p5-route-row"><button class="p5-route-opt${active?' sel':''}" onclick="routeSel('${name}').${key}=!routeSel('${name}').${key};renderRouteModal()">${isHourly?'+':''}${val}</button></div></div>`;
+    }
+    const opts=['丙','乙','甲'].map(l=>{
+      const v=table[key][l];
+      const active=sel[key]===l;
+      return`<button class="p5-route-opt${active?' sel':''}" onclick="routeSel('${name}').${key}=routeSel('${name}').${key}==='${l}'?null:'${l}';renderRouteModal()">${l}${isHourly?'+':''}${v}</button>`;
+    }).join('');
+    return`<div class="p5-route-cat"><span aria-hidden="true">${icon}</span><span class="lbl">${label}</span><div class="p5-route-row">${opts}</div></div>`;
+  }).join('');
+  const totalLabel=isHourly?'時薪加值':'固定金額';
+  const totalVal=isHourly?routeHourlyAddon(name):routeFixedAmount(name);
+  const subLabel=isHourly?'依本店HP次數判斷門檻（未達10次不計入）':'依本店HP次數套用倍率';
+  document.getElementById('p5-modal-root').innerHTML=`<div class="modal-bg" style="position:fixed"><div class="modal-box" style="width:300px">
+    <h4>${name}・${isHourly?'計時動線獎金':'動線獎金'}</h4>
+    <div style="font-size:9px;color:#888;margin-bottom:8px">${subLabel}</div>
+    ${rows}
+    <div class="p5-subtotal" style="border-top:1px solid #eee;margin-top:6px">${totalLabel} <b>${isHourly?'+':''}${totalVal}</b></div>
+    <div class="modal-btns"><button class="mb-save" onclick="closeP5Modal();renderPage5()">完成</button></div>
+  </div></div>`;
+}
+function openOtherBonusModal(name){
+  p5Modal={name};
+  renderOtherBonusModal();
+}
+function renderOtherBonusModal(){
+  const{name}=p5Modal;
+  const o=otherBonusObj(name);
+  const FIELDS=[['manage','管理/儲備津貼'],['train','培訓補貼'],['hp','HP增值'],['red','紅包'],['rent','租賃補貼'],['traffic','交通補貼'],['other','其他']];
+  const rows=FIELDS.map(([k,label])=>`<div class="p5-ob-row"><label>${label}</label><input type="number" value="${o[k]||0}" onchange="otherBonusObj('${name}').${k}=+this.value;renderOtherBonusModal()"></div>`).join('');
+  document.getElementById('p5-modal-root').innerHTML=`<div class="modal-bg" style="position:fixed"><div class="modal-box" style="width:300px">
+    <h4>${name}・其他獎金明細</h4>
+    ${rows}
+    <div class="p5-subtotal" style="border-top:1px solid #eee;margin-top:6px">合計 <b>${fmt(otherBonusTotal(name))}</b></div>
+    <div class="modal-btns"><button class="mb-save" onclick="closeP5Modal();renderPage5()">關閉並套用</button></div>
+  </div></div>`;
+}
+function openInsuranceEdit(name){
+  const cur=getInsurance(name);
+  const v=prompt(`${name}　勞健保自付額（留空清除手動覆寫，改用自動讀取結果）`,cur.amt||'');
+  if(v===null)return;
+  if(v.trim()===''){delete p5InsuranceOverride[name];}
+  else{const n=parseFloat(v);if(!isNaN(n))p5InsuranceOverride[name]=n;}
+  renderPage5();
+}
+function downloadExcel5(){
+  if(!p5Generated){alert('請先生成薪資試算');return;}
+  const wb=new ExcelJS.Workbook();
+  STORES.forEach(store=>{
+    const ws=wb.addWorksheet(store.replace('店',''));
+    ws.addRow(['簡稱','類別','基本工資/時薪','超時加班','動線獎金','出勤天/計時h','23天起/貼班h','貼班h/跨店h','其他獎金','勞健保','小計']);
+    const entry=getP4Entry(store);const home=staff.filter(s=>s.store===store);const dim=entry?entry.dim:0;const hp=getStoreHP(store);
+    home.filter(s=>s.type==='正職'||s.type==='八小時全職').forEach(s=>{
+      const st=entry?entry.parsed.stats[s.name]:null;
+      const tempHrs=st?st.tempHrs:0;
+      const outDays=st?(dim-st.wdOff-st.hdOff-st.coveredLeave-st.selfSup):0;
+      const r=calcRegular(s,hp,outDays,tempHrs);
+      ws.addRow([s.name,s.type,r.base,r.ot,r.routeAmt,outDays,r.extraAmt,tempHrs,r.ob,-r.ins.amt,r.total]);
+    });
+    if(entry){
+      Object.keys(entry.parsed.visitorEntries).forEach(name=>{
+        const v=entry.parsed.visitorEntries[name];
+        const vstaff=staff.find(x=>x.name===name);
+        if(v.days.size>0&&vstaff){const r=calcVisitorDays(vstaff,hp,v.days.size);ws.addRow([name+'（來店支援）',vstaff.type,p5BaseSalary,vstaff.type==='八小時全職'?'—':overtimeAmt(),r.routeAmt,v.days.size,r.extraAmt,'—','—','—',r.total]);}
+      });
+    }
+    ws.addRow([]);ws.addRow(['簡稱','類別','基本時薪','定性加給','計時動線獎金','計時h','貼班h','跨店h','小計']);
+    home.filter(s=>s.type==='計時').forEach(s=>{
+      const st=entry?entry.parsed.stats[s.name]:null;
+      const calcHrs=st?st.hourEntries.filter(e=>!e.cross).reduce((a,e)=>a+e.hours,0):0;
+      const crossHrs=st?st.hourEntries.filter(e=>e.cross).reduce((a,e)=>a+e.hours,0):0;
+      const tempHrs=st?st.tempHrs:0;
+      const r=calcHourly(s.name,hp,calcHrs,tempHrs,crossHrs);
+      ws.addRow([s.name,'計時',r.manual!=null?r.manual:p5BaseHourly,r.qual,r.addon,calcHrs,tempHrs,crossHrs,r.total]);
+    });
+    if(entry){
+      Object.keys(entry.parsed.visitorEntries).forEach(name=>{
+        const v=entry.parsed.visitorEntries[name];
+        if(v.hours>0){const rate=getCrossRate(name);const amt=Math.round(v.hours*rate);ws.addRow([name+'（來店支援）','跨店支援',rate,'—','—',0,0,v.hours,amt]);}
+      });
+      Object.keys(entry.parsed.tempEntries).forEach(name=>{const hrs=entry.parsed.tempEntries[name];const rate=getCrossRate(name);const amt=Math.round(hrs*rate);ws.addRow([name+'（機動／貼班）','跨店支援',rate,'—','—',0,0,hrs,amt]);});
+    }
+    ws.columns.forEach(c=>c.width=12);
+  });
+  downloadWorkbook(wb,`${scopeFileTag()}排班_${generatedData.y}年${generatedData.m}月_薪資表.xlsx`);
+}
+
+// ── 頁籤導覽 ──
+const SYS_VERSION='排班薪資系統 v8';
+const PAGE_NAMES=['初假表','出勤紀錄','次假表','薪資假表','薪資系統'];
+const PAGE_HEADER={
+  1:{icon:'🗓',sub:'設定規則 → 生成初假表 → 下載初假表Excel'},
+  2:{icon:'🏷️',sub:'登記本店夥伴出勤異動・新增貼班人員 → 生成次假表'},
+  3:{icon:'📋',sub:'自動帶入出勤紀錄 → 匯出假表骨架・下載次假表Excel'},
+  4:{icon:'📑',sub:'自動帶入出勤紀錄或上傳覆蓋 → 生成薪資假表 → 下載薪資假表Excel'},
+  5:{icon:'💰',sub:'業績X→福利Y・試算薪資 → 生成薪資試算 → 下載薪資表Excel'}
+};
+const PERMANENT_LOCK=6;
+let maxUnlocked=1,curPage=1;
+function renderTopnav(){
+  document.getElementById('topnav').innerHTML=PAGE_NAMES.map((n,i)=>{
+    const p=i+1,locked=p>maxUnlocked||p>=PERMANENT_LOCK;
+    return `<div class="tnitem${p===curPage?' active':''}${locked?' locked':''}" onclick="goPage(${p})">${p}. ${n}</div>`;
+  }).join('');
+}
+function updateHeader(p){
+  const h=PAGE_HEADER[p];
+  document.getElementById('sys-title').textContent=`${h.icon} ${SYS_VERSION}`;
+  document.getElementById('sys-sub').textContent=h.sub;
+  document.title=SYS_VERSION;
+}
+function goPage(p){
+  if(p>=PERMANENT_LOCK){alert('此頁尚未開放');return;}
+  if(p>maxUnlocked){alert(`請先完成第${maxUnlocked}頁「${PAGE_NAMES[maxUnlocked-1]}」的生成`);return;}
+  curPage=p;
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  renderTopnav();
+  updateHeader(p);
+  if(p===2)renderPage2();
+  if(p===5)renderPage5();
+}
+renderTopnav();
+updateHeader(1);
+
+// ── 本機自動存檔（2026-08-06新增）：只顧「同一台電腦同一個瀏覽器關網頁不會消失」，
+// 不做跨裝置同步。存的是「輸入資料/設定」這個源頭（夥伴/規則/必休必上/貼班/薪資設定等），
+// 不存生成後的計算結果（generatedData等），還原時直接重跑genSchedule()/genPage2()/genPage5()
+// 這幾個既有的「生成」函式重新算一遍，沿用app本來就有的「重新生成同年月會自動套用manualAdjustments」邏輯，
+// 避免另外手刻一套還原計算結果的邏輯、跟正式生成邏輯兩邊維護容易漂移。
+// v8用自己的存檔key，避免跟v7同一個瀏覽器互相覆蓋；第一次開v8時若沒有v8存檔，會讀一次v7的存檔接著用
+const V7_SAVE_KEY='v8AutoSave_排班薪資系統';
+const V7_LEGACY_SAVE_KEY='v7AutoSave_排班薪資系統';
+function v7CollectSaveData(){
+  return{
+    v:1,
+    yr:document.getElementById('yr').value,mo:document.getElementById('mo').value,
+    sat:document.getElementById('sat').checked,sun:document.getElementById('sun').checked,
+    hols:document.getElementById('hols').value,
+    lunarNotes:document.getElementById('lunar-notes').value,
+    bottomNotes:document.getElementById('bottom-notes').value,
+    curScope,needsData,openConds,allStaff,pins,adjustments,
+    storeRules,staffRules,crossRules,storeGroups,manualAdjustments,
+    supportStaff,supportSchedule,attendanceAdjustments,page2Generated,
+    p5HP,p5Route,p5OtherBonus,p5InsuranceOverride,p5InsuranceMap,p5ManualRate,
+    p5Generated,p5BaseSalary,p5BaseHourly,p5CrossRateOverride,
+    maxUnlocked,curPage,
+    // v8：手動／鎖定的店要靠「上次結果」才能還原，所以連目前班表一起存（v7自動的店還原時照樣重新算）
+    storeMode,storeLocks,cellEdits,
+    lastGen:generatedData?{y:generatedData.y,m:generatedData.m,scope:generatedData.scope,sched:generatedData.sched,supMap:generatedData.supMap,mandatoryOff:generatedData.mandatoryOff}:null
+  };
+}
+let v7SaveSuspended=false;
+function v7ShowSaveWarn(msg){
+  const el=document.getElementById('v7-save-warn');
+  if(!el)return;
+  el.textContent=msg;
+  el.style.display='inline-block';
+}
+function v7HideSaveWarn(){
+  const el=document.getElementById('v7-save-warn');
+  if(el)el.style.display='none';
+}
+// 健檢發現：存檔失敗（例如無痕模式/瀏覽器擋localStorage/儲存空間爆掉）原本會被try/catch靜靜吞掉，
+// 使用者完全不知道其實沒在存，關網頁才會發現整份資料消失。改成失敗時在頁首跳出紅字警示。
+function v7AutoSave(){
+  if(v7SaveSuspended)return;
+  try{
+    localStorage.setItem(V7_SAVE_KEY,JSON.stringify(v7CollectSaveData()));
+    v7HideSaveWarn();
+  }catch(e){
+    v7ShowSaveWarn('⚠️本機自動存檔失敗，關閉網頁資料會消失，請自行截圖/下載Excel備份');
+  }
+}
+setInterval(v7AutoSave,4000);
+window.addEventListener('beforeunload',v7AutoSave);
+// 健檢發現：如果同一台電腦不小心開了兩個分頁同時操作這份檔案，兩邊各自每4秒自動存檔，
+// 會互相覆蓋、後存的分頁贏，另一邊的異動悄悄消失且沒有任何提示。
+// storage事件只會在「別的分頁改了localStorage」時觸發（同一分頁自己改不會觸發），用來偵測這個情況並示警。
+window.addEventListener('storage',function(e){
+  if(e.key===V7_SAVE_KEY)v7ShowSaveWarn('⚠️偵測到本頁面同時在其他分頁開啟，兩邊自動存檔會互相覆蓋，建議只保留一個分頁操作');
+});
+
+function v7ClearAutoSave(){
+  if(!confirm('確定要清除本機自動存檔、重新開始嗎？此動作無法復原，畫面上目前的所有設定跟排班資料都會消失。'))return;
+  v7SaveSuspended=true; // 避免reload觸發的beforeunload把清除前殘留在記憶體裡的舊資料又存回去
+  try{localStorage.removeItem(V7_SAVE_KEY);localStorage.setItem(V7_SAVE_KEY+'_cleared','1');}catch(e){}
+  location.reload();
+}
+
+function v7RestoreAutoSave(){
+  let raw;
+  // 按過「重新開始」就不再去讀v7的舊存檔（不然清完又被v7的資料帶回來）
+  try{raw=localStorage.getItem(V7_SAVE_KEY)||(localStorage.getItem(V7_SAVE_KEY+'_cleared')?null:localStorage.getItem(V7_LEGACY_SAVE_KEY));}catch(e){return;}
+  if(!raw)return;
+  let d;
+  try{d=JSON.parse(raw);}catch(e){return;}
+  if(!d||d.v!==1)return;
+
+  document.getElementById('yr').value=d.yr;
+  document.getElementById('mo').value=d.mo;
+  document.getElementById('sat').checked=d.sat;
+  document.getElementById('sun').checked=d.sun;
+  document.getElementById('hols').value=d.hols;
+  document.getElementById('lunar-notes').value=d.lunarNotes||'';
+  document.getElementById('bottom-notes').value=d.bottomNotes||'';
+
+  curScope=window.HR_SCOPE||d.curScope||'xh';
+  needsData=d.needsData;openConds=d.openConds;allStaff=d.allStaff;pins=d.pins;adjustments=d.adjustments||[];
+  storeRules=d.storeRules||[];staffRules=d.staffRules||[];crossRules=d.crossRules||[];storeGroups=d.storeGroups||[];
+  manualAdjustments=d.manualAdjustments||[];
+  supportStaff=d.supportStaff||[];supportSchedule=d.supportSchedule||{};
+  attendanceAdjustments=d.attendanceAdjustments||[];page2Generated=!!d.page2Generated;
+  p5HP=d.p5HP||{};p5Route=d.p5Route||{};p5OtherBonus=d.p5OtherBonus||{};
+  p5InsuranceOverride=d.p5InsuranceOverride||{};p5InsuranceMap=d.p5InsuranceMap||{};p5ManualRate=d.p5ManualRate||{};
+  p5Generated=!!d.p5Generated;p5BaseSalary=d.p5BaseSalary||29500;p5BaseHourly=d.p5BaseHourly||196;
+  p5CrossRateOverride=d.p5CrossRateOverride||{};
+  maxUnlocked=d.maxUnlocked||1;
+  storeMode=d.storeMode||{};storeLocks=d.storeLocks||{};cellEdits=d.cellEdits||[];
+  // 讓genSchedule()把存起來的班表當成「上次結果」，手動／鎖定的店才能原樣還原
+  if(maxUnlocked>=2&&d.lastGen&&d.lastGen.sched)generatedData=Object.assign({mandatoryOff:{},supMap:{}},d.lastGen);
+
+  renderScopeBtns();renderNeedTabs();renderNeedTable();renderOpenConds();renderStaff();renderPins();renderAdj();
+  renderStoreRules();renderStaffRules();renderCross();renderSelects();renderStoreGroups();checkHint();
+
+  try{
+    if(maxUnlocked>=2)genSchedule();
+    if(page2Generated)genPage2();
+    if(p5Generated)genPage5();
+  }catch(e){
+    console.error('還原自動存檔時，重新生成計算結果發生錯誤',e);
+    alert('已還原上次的設定資料，但重新計算排班/薪資結果時發生錯誤，請手動重新按各頁的「生成」按鈕。');
+  }
+
+  const targetPage=d.curPage||1;
+  curPage=targetPage;
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  const pageEl=document.getElementById('page-'+targetPage);
+  if(pageEl)pageEl.classList.add('active');
+  renderTopnav();updateHeader(targetPage);
+  if(targetPage===2)renderPage2();
+  if(targetPage===5)renderPage5();
+}
+v7RestoreAutoSave();
+</script>
+<script>
+// ── BZ HR 網頁版登入層（2026-10-27，W2）：用現有的 LINE 機器人登入，後台在生命值骨架的 網頁登入.gs ──
+// 網址決定這頁管哪一區（hr.bzhouse.tw/abao_xh/＝溪湖埤頭、/abao_sg/＝伸港，照 POS「客戶＋區」那一層）；
+// 登入後依夥伴帳號給頁面：區人資 1～3 頁、區行政 4～5 頁、老闆全部。資料還是存這台瀏覽器（存雲端是 W3）。
+// 登入金鑰存在這個網域的 localStorage（bzhr_token），兩區網址同一個網域，登入一次兩區都算。
+(function () {
+  const HR_API = {
+    abao_xh: 'https://script.google.com/macros/s/AKfycbwnE8GKzZmv3COfJmnGWS7kicCEGfepyxbnpW1wkj4pNXhZcBzOS8MOqcnsyiIcmCjXQw/exec',
+    abao_sg: 'https://script.google.com/macros/s/AKfycbzVzNdFz_ZjNsqMwtIvJb4oG4Z-05m_QW5aX28pCuiLh_X-c_p0lP-59nAxGA8KcdKa/exec'
+  };
+  const HR_REGION_NAME = { abao_xh: '溪湖埤頭', abao_sg: '伸港' };
+  const TOKEN_KEY = 'bzhr_token';
+  const PATH = window.HR_PATH;
+  const REGION = HR_REGION_NAME[PATH];
+  const POLL_MS = 4000;
+  const $ = id => document.getElementById(id);
+  let pollTimer = null, countdownTimer = null;
+
+  function getToken() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } }
+  function setToken(t) { try { localStorage.setItem(TOKEN_KEY, t); } catch (e) {} }
+  function clearToken() { try { localStorage.removeItem(TOKEN_KEY); } catch (e) {} }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+  async function call(op, extra) {
+    if (window.HR_MOCK) return window.HR_MOCK(op, extra || {});
+    // text/plain：不會觸發跨網域預檢，Apps Script 才收得到
+    const r = await fetch(HR_API[PATH], { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(Object.assign({ hrApi: 1, op: op }, extra || {})) });
+    return r.json();
+  }
+
+  function stopTimers() { clearInterval(pollTimer); clearInterval(countdownTimer); pollTimer = countdownTimer = null; }
+  function screen(sub, html) { $('hg-title').textContent = 'BZ HR 排班薪資系統（' + REGION + '）'; $('hg-sub').textContent = sub; $('hg-body').innerHTML = html; }
+
+  function showLogin(msg) {
+    stopTimers();
+    screen('請用 LINE 登入', '<div class="hg-msg">' + esc(msg || '') + '</div>' +
+      '<div class="hg-way" style="border-top:0;margin-top:0;padding-top:0"><h2>📱 用手機</h2>' +
+      '<p>在 LINE 傳「<b>網頁版</b>」給 A-Bao ' + esc(REGION) + '的人資機器人，點它回的按鈕就會登入。</p></div>' +
+      '<div class="hg-way"><h2>💻 用電腦</h2><p>按下面的按鈕，畫面會出現 6 位數字，再用手機在 LINE 傳給機器人。</p>' +
+      '<button class="hg-btn" id="hg-start">顯示登入數字</button></div>');
+    $('hg-start').onclick = startCode;
+  }
+
+  function newSecret() {
+    const a = new Uint8Array(24); crypto.getRandomValues(a);
+    return Array.from(a, b => ('0' + b.toString(16)).slice(-2)).join('');
+  }
+
+  async function startCode() {
+    stopTimers();
+    screen('請用 LINE 登入', '<p class="hg-small">正在取得登入數字…</p>');
+    let r;
+    try { r = await call('start', { secret: (startCode.secret = newSecret()) }); } catch (e) { return showError(); }
+    if (!r.ok) return showLogin(r.reason === 'busy' ? '現在按的人太多，請等一分鐘再試' : '取得登入數字失敗，請再試一次');
+    let left = (r.minutes || 5) * 60;
+    screen('用手機在 LINE 傳下面這句給機器人', '<div class="hg-code">' + esc(r.code) + '</div>' +
+      '<div class="hg-say">網頁登入 ' + esc(r.code) + '</div>' +
+      '<div class="hg-small" id="hg-left"></div><div class="hg-small">傳了之後這個畫面會自動進去，不用按任何東西。</div>' +
+      '<button class="hg-btn hg-ghost" id="hg-back">回上一步</button>');
+    $('hg-back').onclick = () => showLogin();
+    const tick = () => { left--; const el = $('hg-left'); if (el) el.textContent = '還有 ' + Math.floor(left / 60) + ' 分 ' + ('0' + left % 60).slice(-2) + ' 秒有效'; if (left <= 0) showLogin('登入數字過期了，請重新按「顯示登入數字」'); };
+    tick(); countdownTimer = setInterval(tick, 1000);
+    pollTimer = setInterval(async () => {
+      let p;
+      try { p = await call('poll', { secret: startCode.secret }); } catch (e) { return; }   // 網路一下子斷掉就下一輪再問
+      if (p.ok) { stopTimers(); setToken(p.token); checkMe(); }
+      else if (p.reason === 'expired') showLogin('登入數字過期了，請重新按「顯示登入數字」');
+    }, POLL_MS);
+  }
+
+  function showError() {
+    stopTimers();
+    screen('連不上伺服器', '<div class="hg-msg">請確認網路有通，再按重新整理。</div><button class="hg-btn" onclick="location.reload()">重新整理</button>');
+  }
+
+  function otherRegionLinks() {
+    return Object.keys(HR_REGION_NAME).filter(k => k !== PATH)
+      .map(k => '<a href="../' + k + '/">' + HR_REGION_NAME[k] + '請點這裡（hr.bzhouse.tw/' + k + '/）</a>').join('<br>');
+  }
+
+  function showDenied(me) {
+    stopTimers();
+    const who = me.name ? esc(me.name) + '，' : '';
+    const why = {
+      no_right: who + '你在' + esc(REGION) + '沒有網頁版的權限。網頁版是給區人資、區行政用的，需要的話請老闆用 LINE「改身分」設定管理角色。',
+      no_region: '你不是' + esc(REGION) + '的夥伴。<br>' + otherRegionLinks(),
+      disabled: '你的帳號目前不能使用（不加入或還在等老闆確認）。',
+      error: '系統暫時有問題，已經通知老闆，請稍後再試。'
+    }[me.reason] || '無法進入（' + esc(me.reason) + '）';
+    screen('無法進入', '<div class="hg-msg">' + why + '</div><button class="hg-btn hg-ghost" id="hg-switch">換一個帳號登入</button>');
+    $('hg-switch').onclick = logout;
+  }
+
+  async function logout() {
+    const t = getToken();
+    clearToken();
+    try { if (t) await call('logout', { token: t }); } catch (e) {}
+    location.href = location.pathname;
+  }
+
+  async function checkMe() {
+    screen('正在確認權限…', '');
+    const t = getToken();
+    if (!t) return showLogin();
+    let me;
+    try { me = await call('me', { token: t }); } catch (e) { return showError(); }
+    if (me.ok) return enter(me);
+    if (me.reason === 'login') { clearToken(); return showLogin('登入已經過期或在 LINE 登出了，請重新登入'); }
+    showDenied(me);
+  }
+
+  // ── 進到 v8：只給看得到的頁、門市範圍鎖在這一區 ──
+  function enter(me) {
+    stopTimers();
+    window.HR_ME = me;
+    const allowed = me.pages.slice();
+    const roleLabel = me.boss ? '老闆' : [allowed.indexOf(1) >= 0 ? '區人資' : '', allowed.indexOf(4) >= 0 ? '區行政' : ''].filter(Boolean).join('＋');
+    const bar = document.createElement('div');
+    bar.className = 'hr-userbar';
+    bar.innerHTML = '<span>' + esc(me.name) + '・' + esc(roleLabel) + '・' + esc(REGION) + '</span>' +
+      (me.paths || []).filter(x => x.path !== PATH).map(x => '<a href="../' + esc(x.path) + '/">切到' + esc(x.region) + '</a>').join('') +
+      '<button id="hr-logout">登出</button>';
+    const right = document.querySelector('.sys-hdr > div:last-child');
+    if (right) right.insertBefore(bar, right.firstChild);
+    $('hr-logout').onclick = () => { if (confirm('確定要登出嗎？（這台瀏覽器裡的排班資料不會刪掉）')) logout(); };
+
+    // 門市範圍只有這一區（網址決定，老闆要看別區用上面的「切到…」）
+    selectScope = function (s) { if (s !== window.HR_SCOPE) return; curScope = s; renderScopeBtns(); };
+    const origScopeBtns = renderScopeBtns;
+    renderScopeBtns = function () {
+      origScopeBtns();
+      document.querySelectorAll('#scope-selector .stab').forEach(b => { if (b.className.indexOf('active') < 0) b.style.display = 'none'; });
+    };
+    curScope = window.HR_SCOPE; renderScopeBtns();
+
+    // 頁籤：沒有權限的頁不出現。只有區行政（沒有第 1 頁）時，第 4 頁不用等前面生成就能開（可以上傳次假表 Excel）
+    const adminOnly = allowed.indexOf(1) < 0;
+    const origTopnav = renderTopnav;
+    renderTopnav = function () {
+      origTopnav();
+      document.querySelectorAll('#topnav .tnitem').forEach((el, i) => {
+        const p = i + 1;
+        if (allowed.indexOf(p) < 0) el.style.display = 'none';
+        else if (adminOnly && p === 4) el.classList.remove('locked');
+      });
+    };
+    const origGoPage = goPage;
+    goPage = function (p) {
+      if (allowed.indexOf(p) < 0) { alert('你沒有「' + PAGE_NAMES[p - 1] + '」這一頁的權限'); return; }
+      if (adminOnly && p === 4 && p > maxUnlocked) {
+        curPage = p;
+        document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+        document.getElementById('page-4').classList.add('active');
+        renderTopnav(); updateHeader(4);
+        return;
+      }
+      origGoPage(p);
+    };
+    if (allowed.indexOf(curPage) >= 0 && curPage <= Math.max(maxUnlocked, adminOnly ? 4 : 0)) renderTopnav();
+    else goPage(allowed.filter(p => p <= maxUnlocked || (adminOnly && p === 4))[0] || allowed[0]);
+    document.getElementById('hr-gate').style.display = 'none';
+    // v8 還沒有手機版：進去後手機照舊顯示縮小的電腦版（跟現在本機 v8 一樣），手機版是待辦 2g
+    const vp = document.getElementById('hr-vp');
+    if (vp) vp.setAttribute('content', 'width=980');
+  }
+
+  async function boot() {
+    if (!REGION) { screen('網址不對', ''); return; }
+    const qs = new URLSearchParams(location.search), ticket = qs.get('t');
+    if (ticket) {
+      history.replaceState(null, '', location.pathname);   // 票只能用一次，不要留在網址列、書籤裡
+      screen('正在登入…', '');
+      let r;
+      try { r = await call('ticket', { ticket: ticket }); } catch (e) { return showError(); }
+      if (!r.ok) return showLogin('這個登入按鈕已經用過或過期了（10 分鐘內有效），請在 LINE 重新傳「網頁版」');
+      setToken(r.token);
+    }
+    checkMe();
+  }
+  boot();
+})();
+</script>
+</body></html>
