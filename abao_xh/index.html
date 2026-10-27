@@ -186,6 +186,8 @@ input[type=text],input[type=number],select{border:1px solid #ccc;border-radius:5
 .sctl-tag{font-size:8px;padding:1px 5px;border-radius:6px;font-weight:600;margin-left:4px}
 .ptbl td.c-frozen{opacity:.55;cursor:not-allowed}
 .ptbl td.c-edited{box-shadow:inset 0 0 0 2px #E8A33D}
+.ptbl td.c-hri{box-shadow:inset 0 0 0 2px #E5B800;background:#FFF3B0!important}
+.btn-hri{width:100%;background:#fff;color:#7A5500;border:1px dashed #E5B800;padding:7px 0;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;margin-top:6px}
 .v8-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:60}
 .v8-modal-box{background:#fff;border-radius:10px;padding:16px;width:300px;max-width:calc(100vw - 32px);box-shadow:0 4px 20px rgba(0,0,0,.2)}
 .v8-modal-box h4{font-size:12px;font-weight:700;margin-bottom:8px}
@@ -354,7 +356,8 @@ button[onclick="v7ClearAutoSave()"]{display:none!important}
 <div class="main-body" id="main-body"><div class="ph"><div style="font-size:30px">🗓</div><div style="font-size:12px;font-weight:600">尚未生成初假表</div><div style="font-size:9px;line-height:1.6">完成左側設定後<br>按「⚡ 生成初假表」<br>修改後可重新生成</div></div></div>
 <div style="padding:0 10px 8px"><div style="font-size:9px;color:#666;margin-bottom:4px">門市範圍（決定這次要排哪個區域，設定畫面不受影響）</div><div class="store-tabs" id="scope-selector"></div>
 <div style="font-size:9px;color:#666;margin:4px 0">各店排班方式：⚡v7＝按「生成」由v7自動排｜✋手動＝保留目前結果、點格子自己改（還沒生成過就從全出勤開始）｜🔒鎖定＝完全不變動、不能點改，隨時可解開</div>
-<div class="sctl-wrap" id="store-ctl"></div></div>
+<div class="sctl-wrap" id="store-ctl"></div>
+<button class="btn-hri" onclick="hriPick()" title="區人資排好的 Excel 假表直接當初假表：讀得懂的照填、看不懂的標黃">📥 匯入人資假表</button><input type="file" id="hri-file" accept=".xlsx" style="display:none" onchange="hriOnFile(event)"></div>
 <div class="bottom-btns">
 <button class="btn-gen" onclick="genSchedule()">⚡ 生成初假表</button>
 <button class="btn-dl" id="btn-dl" onclick="downloadExcel()" disabled>⬇ 下載初假表Excel</button>
@@ -522,7 +525,341 @@ function clearStoreToWork(store){
     });
   });
   cellEdits=cellEdits.filter(e=>!(e.y===g.y&&e.m===g.m&&homeStoreOf(e.name)===store));
+  if(hrImport&&hrImport.flags)Object.keys(hrImport.flags).forEach(k=>{if(homeStoreOf(k.slice(0,k.lastIndexOf('_')))===store)delete hrImport.flags[k];});
   rerenderPreview();
+}
+
+// ==== 匯入人資假表：解析 開始 ====（純函式，不碰畫面和全域資料；tests/sim/hr_import.sim.js 直接抽這段跑兩份 11 月 Excel）
+// 2026-10-27 老闆定（選項 A 第一段）：區人資照樣排 Excel，第 1 頁按「📥 匯入人資假表」直接當初假表，後面出勤紀錄／次假表／匯出骨架照舊。
+// 讀法（老闆 10-27 逐條定）：
+//  正職（含八小時全職）人名有底色＝排休；「例」「休」＝休；計時人員「Ｘ」或那天空白＝休，只有底色沒寫時數也是休（人資習慣）；
+//  「Ｏ支援平」（人名最後一字）「支援彰水」「某某(彰水)」＝支援，以本店那頁為準，別店那頁的人名只拿來核對；
+//  人名淡黃底沒寫去哪＝支援：這區只有另一間店就是那間（伸港：新港↔中興），不只一間才標黃；
+//  正職有底色＋時段或數字＝當天排休來貼班（貼班費率，時數＝時段相減或那個數字）；正職沒底色時名字後面的數字是人資習慣，不讀；
+//  計時人員同一天在本店和同區別店錯開上班（例：新港 04-08、中興 08-12）＝本店上班、時數加起來；時段直接相減、不扣休息。
+//  看不懂的一律標黃，不猜。計時時數、跨區支援時數第二段才帶進骨架，這裡先讀出來列給人看。
+const HRI_STORE_BY_TEXT={平和:'平和店',忠孝:'忠孝店',培英:'培英店',彰水:'彰水店',新港:'新港店',中興:'中興店'};
+const HRI_STORE_BY_CHAR={平:'平和店',忠:'忠孝店',培:'培英店',彰:'彰水店',新:'新港店',中:'中興店'};
+const HRI_SUP_FILLS=['FFFF99','FFFFCC','FFFF00']; // 淡黃／黃底＝支援
+function hriStoreOf(s){
+  s=String(s||'').replace(/店$/,'').trim();
+  if(HRI_STORE_BY_TEXT[s])return HRI_STORE_BY_TEXT[s];
+  for(const k in HRI_STORE_BY_TEXT)if(s.indexOf(k)>=0)return HRI_STORE_BY_TEXT[k];
+  return s.length===1&&HRI_STORE_BY_CHAR[s]?HRI_STORE_BY_CHAR[s]:'';
+}
+function hriCell(ws,r,c){
+  const cell=ws.getCell(r,c);
+  let t='';try{t=cell.text;}catch(e){t='';}
+  t=String(t==null?'':t).replace(/[\r\n\t　]+/g,' ').replace(/\s+/g,' ').trim();
+  const f=cell.fill;let fill='';
+  if(f&&f.type==='pattern'&&f.pattern&&f.pattern!=='none'&&f.fgColor){
+    if(f.fgColor.argb)fill=String(f.fgColor.argb).slice(-6).toUpperCase();
+    else if(f.fgColor.theme!=null&&f.fgColor.theme!==0)fill='THEME'+f.fgColor.theme;
+  }
+  if(fill==='FFFFFF')fill='';
+  return{t,fill};
+}
+// 「400-1000」「0800-1200」「400--0800」→ 起訖和時數（不扣休息，老闆 10-27 定）
+function hriTimes(a,b){
+  const p=s=>{const n=+s,h=Math.floor(n/100),mi=n%100;return h<=24&&mi<60?{h,mi}:null;};
+  const s=p(a),e=p(b);if(!s||!e)return null;
+  let mins=(e.h*60+e.mi)-(s.h*60+s.mi);if(mins<=0)mins+=1440;
+  return{sH:s.h,sM:s.mi,eH:e.h,eM:e.mi,hours:Math.round(mins/60*100)/100};
+}
+// opt：{y,m,stores:這區的門市, staff:[{name,store,type}]（這區名單，含跨區支援的人）, storeGroups}
+function hrParseWorkbook(wb,opt){
+  const{y,m}=opt,dim=new Date(y,m,0).getDate();
+  const wdOf=d=>[6,0,1,2,3,4,5][new Date(y,m-1,d).getDay()];
+  const staffOf={};opt.staff.forEach(s=>{staffOf[s.name]=s;});
+  const names=opt.staff.map(s=>s.name).sort((a,b)=>b.length-a.length);
+  const isHourly=n=>staffOf[n]&&staffOf[n].type==='計時';
+  const groupOf=st=>{const g=(opt.storeGroups||[]).find(g=>g.stores.includes(st));return g?g.name:st;};
+  const res={y,m,sheets:[],stores:{},shifts:[],hours:[],visits:[],crossVisits:[],issues:[]};
+  const issue=(store,name,d,msg)=>res.issues.push({store,name,d,msg});
+  const splitName=t=>{for(const n of names)if(t.toLowerCase().indexOf(n.toLowerCase())===0)return{name:n,rest:t.slice(n.length).trim()};return null;};
+  function parseText(t,fill,store){
+    const yellow=HRI_SUP_FILLS.includes(fill),colored=!!fill&&!yellow,o={raw:t,fill,yellow,colored};
+    if(/^[XxＸｘ×]$/.test(t))return Object.assign(o,{kind:'x'});
+    let mm=t.match(/^支援(.+)$/);if(mm)return Object.assign(o,{kind:'sup',target:hriStoreOf(mm[1]),targetText:mm[1]});
+    const sp=splitName(t);
+    if(!sp){
+      // 「Ｏ支援平」：人名最後一個字＋支援＋店名第一個字（先找本店的人，再找全區）
+      mm=t.match(/^(.)支援(.+)$/);
+      if(mm){
+        const c=mm[1],home=names.filter(n=>n.slice(-1)===c&&staffOf[n].store===store),all=names.filter(n=>n.slice(-1)===c);
+        const who=home.length===1?home[0]:all.length===1?all[0]:'';
+        if(who)return Object.assign(o,{kind:'sup',name:who,target:hriStoreOf(mm[2]),targetText:mm[2]});
+      }
+      return Object.assign(o,{kind:'unknown'});
+    }
+    const r=sp.rest;o.name=sp.name;
+    if(!r)return Object.assign(o,{kind:'plain'});
+    if(/^(例|休)$/.test(r))return Object.assign(o,{kind:'word'});
+    mm=r.match(/^[(（](.+)[)）]$/);if(mm)return Object.assign(o,{kind:'sup',target:hriStoreOf(mm[1]),targetText:mm[1]});
+    mm=r.match(/^支援(.+)$/);if(mm)return Object.assign(o,{kind:'sup',target:hriStoreOf(mm[1]),targetText:mm[1]});
+    mm=r.match(/^(\d+(?:\.\d+)?)\s*h?$/i);if(mm)return Object.assign(o,{kind:'hours',hours:+mm[1]});
+    mm=r.match(/^(\d{3,4})\s*[-－~～]+\s*(\d{3,4})$/);
+    if(mm){const tm=hriTimes(mm[1],mm[2]);if(tm)return Object.assign(o,{kind:'times'},tm);}
+    return Object.assign(o,{kind:'unknown'});
+  }
+  // 日期列：這一列當月日子的那幾欄，有字就必須是對得上星期的日期數字（11/1 那種跟標題擠在同一列的也算）
+  function dateRow(ws,r){
+    let anchor=null;
+    for(let c=1;c<=7&&!anchor;c++){const mm=hriCell(ws,r,c).t.match(/^(\d{1,2})(?:\s|$)/);if(mm){const n=+mm[1];if(n>=1&&n<=dim&&wdOf(n)===c-1)anchor={c,n};}}
+    if(!anchor)return null;
+    const dates={};
+    for(let c=1;c<=7;c++){const n=anchor.n+(c-anchor.c);if(n>=1&&n<=dim)dates[c]=n;}
+    for(const c in dates){const t=hriCell(ws,r,+c).t;if(!t)continue;const mm=t.match(/^(\d{1,2})(?:\s|$)/);if(!mm||+mm[1]!==dates[c])return null;}
+    return dates;
+  }
+  const isHeader=(ws,r)=>{let k=0;for(let c=1;c<=7;c++)if(/^[一二三四五六日]/.test(hriCell(ws,r,c).t))k++;return k>=4;};
+  // ---- 每一頁：認店、認月份，讀出每一格 ----
+  const homeItems={},visitItems=[];
+  wb.worksheets.forEach(ws=>{
+    const sheet={name:ws.name,store:hriStoreOf(ws.name),skipped:''};res.sheets.push(sheet);
+    const st=sheet.store;
+    if(!st){sheet.skipped='看不出是哪間店';return;}
+    if(!opt.stores.includes(st)){sheet.skipped='不是這一區的店';return;}
+    if(res.stores[st]){sheet.skipped='同一間店有兩頁，只讀第一頁';return;}
+    let ym=ws.name.match(/(\d{1,2})\s*月/),yy=ws.name.match(/(20\d{2})/);
+    if(!ym){const t=hriCell(ws,2,1).t.match(/(20\d{2})\s*[.\-\/年]\s*(\d{1,2})/);if(t){yy=[0,t[1]];ym=[0,t[2]];}}
+    if(ym&&+ym[1]!==m){sheet.skipped=`是 ${+ym[1]} 月的表`;return;}
+    if(yy&&+yy[1]!==y){sheet.skipped=`是 ${yy[1]} 年的表`;return;}
+    if(!ym)sheet.note='頁名看不出月份，照畫面選的月份讀';
+    res.stores[st]={cells:{},counts:{work:0,off:0,sup:0,flag:0}};
+    homeItems[st]=[];
+    const rows=ws.rowCount,dateRows=[];
+    for(let r=1;r<=rows;r++){const d=dateRow(ws,r);if(d)dateRows.push({r,dates:d});}
+    if(!dateRows.length){sheet.skipped='找不到日期列';delete res.stores[st];delete homeItems[st];return;}
+    dateRows.forEach((dr,i)=>{
+      const end=i+1<dateRows.length?dateRows[i+1].r-1:rows;
+      for(let r=dr.r+1;r<=end;r++){
+        if(isHeader(ws,r))continue;
+        const cells=[];
+        for(const ck in dr.dates){const c=+ck,{t,fill}=hriCell(ws,r,c);if(!t)continue;cells.push(Object.assign(parseText(t,fill,st),{d:dr.dates[ck],r,c}));}
+        if(!cells.length)continue;
+        // 沒寫名字的格子（Ｘ、支援彰水）算這一列最多次出現的那個人
+        const cnt={};cells.forEach(x=>{if(x.name)cnt[x.name]=(cnt[x.name]||0)+1;});
+        const owner=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0]||'';
+        cells.forEach(x=>{
+          if(!x.name&&x.kind!=='unknown')x.name=owner;
+          if(!x.name){issue(st,'',x.d,`第 ${r} 列「${x.raw}」看不出是誰`);return;}
+          if(!staffOf[x.name]){issue(st,x.name,x.d,`名單沒有「${x.name}」`);return;}
+          if(staffOf[x.name].store===st)homeItems[st].push(x);else visitItems.push(Object.assign(x,{store:st}));
+        });
+      }
+    });
+  });
+  // ---- 本店那頁：每人每天的狀態 ----
+  const setCell=(st,name,d,c)=>{
+    const S=res.stores[st];if(!S.cells[name])S.cells[name]={};
+    if(S.cells[name][d]){S.cells[name][d].flag=`同一天寫了兩次（「${S.cells[name][d].raw}」和「${c.raw}」）`;return;}
+    S.cells[name][d]=c;
+  };
+  Object.keys(homeItems).forEach(st=>{
+    homeItems[st].forEach(x=>{
+      const hourly=isHourly(x.name),c={raw:x.raw,st:'',target:'',flag:'',guess:false};
+      if(x.kind==='x'||x.kind==='word')c.st='off';
+      else if(x.kind==='sup'){c.st='sup';c.target=x.target||'';if(!x.target)c.flag=`看不出支援哪間店（「${x.targetText}」）`;}
+      else if(x.kind==='unknown')c.flag=`看不懂「${x.raw}」`;
+      else if(x.yellow){c.st='sup';c.target='';if(x.kind==='times'||x.kind==='hours')c.hours=x.hours;}
+      else if(hourly){
+        if(x.kind==='plain'&&x.colored)c.st='off'; // 只有底色沒寫時數＝休（老闆 10-27：人資習慣）
+        else{c.st='work';if(x.hours!=null){c.hours=x.hours;res.hours.push({name:x.name,d:x.d,store:st,hours:x.hours,kind:'計時',raw:x.raw});}}
+      }else{
+        if(x.kind==='plain')c.st=x.colored?'off':'work';
+        else if(x.kind==='hours'){
+          if(x.colored){c.st='off';res.shifts.push({name:x.name,d:x.d,store:st,hours:x.hours,raw:x.raw});} // 排休來貼班，只寫了時數沒寫時段
+          else c.st='work';
+        }
+        else if(x.kind==='times'){
+          if(x.colored){c.st='off';res.shifts.push({name:x.name,d:x.d,store:st,sH:x.sH,sM:x.sM,eH:x.eH,eM:x.eM,hours:x.hours,raw:x.raw});}
+          else c.flag='正職寫了時段但沒有底色，看不出是排休來貼班還是上班';
+        }
+      }
+      setCell(st,x.name,x.d,c);
+    });
+  });
+  // ---- 別店那頁出現的人：核對支援 ----
+  visitItems.forEach(v=>{
+    const p=staffOf[v.name],home=p.store,offish=v.kind==='x'||v.kind==='word'||(v.kind==='plain'&&v.colored&&!isHourly(v.name));
+    if(v.kind==='unknown'){issue(v.store,v.name,v.d,`看不懂「${v.raw}」`);return;}
+    if(offish||v.kind==='sup')return; // 在別店那頁寫休／支援，不是來這間店上班
+    const hrs=v.hours!=null?v.hours:null;
+    const cross=groupOf(home)!==groupOf(v.store);
+    const rec={name:v.name,d:v.d,store:v.store,hours:hrs,raw:v.raw,cross};
+    if(cross&&hrs!=null)res.hours.push({name:v.name,d:v.d,store:v.store,hours:hrs,kind:'跨區支援',raw:v.raw});
+    if(!opt.stores.includes(home)){res.crossVisits.push(rec);return;} // 跨區來支援（例：伸港的人來彰水），這一區照支援算
+    res.visits.push(rec);
+    const S=res.stores[home];
+    if(!S){issue(v.store,v.name,v.d,`${v.store}那頁有排${v.name}，但${home}那頁沒有讀到`);return;}
+    const c=S.cells[v.name]&&S.cells[v.name][v.d];
+    if(!c){setCell(home,v.name,v.d,{raw:'',st:'sup',target:v.store,flag:'',guess:true,note:`${home}那頁沒寫，照${v.store}那頁算支援`});return;}
+    if(c.st==='sup'&&(!c.target||c.target===v.store)){c.target=v.store;return;}
+    // 計時人員同一天本店和同區別店錯開上班：算本店上班，時數加起來（老闆 10-27）
+    if(c.st==='work'&&isHourly(v.name)&&hrs!=null&&c.hours!=null&&!cross){
+      c.hours=Math.round((c.hours+hrs)*100)/100;
+      const h=res.hours.find(h=>h.name===v.name&&h.d===v.d&&h.store===home&&h.kind==='計時');
+      if(h){h.hours=c.hours;h.raw+=`＋${v.store.replace('店','')} ${v.raw}`;}
+      return;
+    }
+    if(c.st==='sup')c.flag=`${home}那頁寫支援${c.target}，${v.store}那頁也排了他`;
+    else if(!c.flag)c.flag=`${home}那頁寫「${c.raw}」，但${v.store}那頁也排了他（${v.raw}）`;
+  });
+  // ---- 收尾：推定沒寫去哪的支援、沒寫的日子、計數 ----
+  Object.keys(res.stores).forEach(st=>{
+    const S=res.stores[st],others=opt.stores.filter(x=>x!==st);
+    Object.keys(S.cells).forEach(n=>Object.keys(S.cells[n]).forEach(dk=>{
+      const c=S.cells[n][dk];
+      if(c.st==='sup'&&!c.target&&!c.flag){
+        if(others.length===1)c.target=others[0]; // 這區只有另一間店，就是那間（老闆 10-27：伸港淡黃＝支援中興）
+        else c.flag='有支援的底色，但沒寫去哪間店';
+      }
+      if(c.st==='sup'&&c.target===st)c.flag=`寫支援自己的店（「${c.raw}」）`;
+    }));
+    const homeStaff=opt.staff.filter(s=>s.store===st);
+    const emptyDays=[];
+    for(let d=1;d<=dim;d++){
+      if(!homeStaff.some(s=>S.cells[s.name]&&S.cells[s.name][d]))emptyDays.push(d);
+      homeStaff.forEach(s=>{
+        if(S.cells[s.name]&&S.cells[s.name][d])return;
+        if(!S.cells[s.name])S.cells[s.name]={};
+        if(isHourly(s.name))S.cells[s.name][d]={raw:'',st:'off',target:'',flag:'',guess:false}; // 計時那天空白＝休
+        else S.cells[s.name][d]={raw:'',st:'',target:'',flag:'Excel 這天沒有寫',guess:false,quiet:emptyDays.includes(d)};
+      });
+    }
+    if(emptyDays.length)issue(st,'',0,`${emptyDays.map(d=>m+'/'+d).join('、')} 整天沒有資料（可能寫在上個月的表），先照原本的樣子`);
+    homeStaff.forEach(s=>{
+      const row=S.cells[s.name]||{};
+      Object.keys(row).forEach(dk=>{
+        const c=row[dk];
+        if(c.st==='work')S.counts.work++;else if(c.st==='off')S.counts.off++;else if(c.st==='sup')S.counts.sup++;
+        if(c.flag||c.guess){S.counts.flag++;if(!c.quiet)issue(st,s.name,+dk,c.flag||c.note);}
+      });
+    });
+  });
+  return res;
+}
+// ==== 匯入人資假表：解析 結束 ====
+
+// ---- 匯入人資假表：畫面（檢查視窗 → 套用 → 黃格 → 復原）----
+// hrImport：最近一次匯入（跟著存檔）。flags＝要確認的格子 {'名字_日':說明}，點格子改過就拿掉；undo＝匯入前的樣子
+let hrImport=null,hriCtx=null;
+function hriActive(){return!!(hrImport&&generatedData&&hrImport.y===generatedData.y&&hrImport.m===generatedData.m&&hrImport.scope===generatedData.scope);}
+function hriFlagOf(name,d){return hriActive()?(hrImport.flags||{})[name+'_'+d]||'':'';}
+function hriClearFlag(name,d){if(hrImport&&hrImport.flags)delete hrImport.flags[name+'_'+d];}
+function hriPick(){
+  if(!curScope){alert('請先選擇門市範圍（溪湖埤頭／伸港）');return;}
+  if(!holYearReady_(+document.getElementById('yr').value)){alert('系統還沒有 '+document.getElementById('yr').value+' 年的國定假日資料，請聯繫小保補上後再排班');return;}
+  document.getElementById('hri-file').click();
+}
+async function hriOnFile(e){
+  const file=e.target.files[0];e.target.value='';if(!file)return;
+  const y=+document.getElementById('yr').value,m=+document.getElementById('mo').value;
+  let wb;
+  try{wb=new ExcelJS.Workbook();await wb.xlsx.load(await file.arrayBuffer());}
+  catch(err){alert('讀不到這個 Excel（'+(err.message||err)+'），請確認是 .xlsx 檔');return;}
+  const res=hrParseWorkbook(wb,{y,m,stores:SCOPE_STORES[curScope],staff:allStaff.map(s=>({name:s.name,store:s.store,type:s.type})),storeGroups});
+  if(!Object.keys(res.stores).length){
+    alert(`這個檔案沒有可以匯入的頁（現在選的是 ${y} 年 ${m} 月・${SCOPE_LABEL[curScope]}）：\n`+res.sheets.map(s=>`・${s.name}：${s.skipped||'讀不到'}`).join('\n')+'\n\n請確認上面選的年月、門市範圍跟 Excel 一樣。');
+    return;
+  }
+  hriCtx={res,file:file.name};
+  hriShowCheck();
+}
+function hriShowCheck(){
+  const{res,file}=hriCtx,sts=Object.keys(res.stores);
+  const locked=sts.filter(st=>isLocked(st));
+  const shiftN=res.shifts.length,hourN=res.hours.filter(h=>h.kind==='計時').length,crossN=res.hours.filter(h=>h.kind==='跨區支援').length;
+  const skipped=res.sheets.filter(s=>s.skipped);
+  const issues=res.issues.map(i=>`<div style="padding:2px 0;border-bottom:1px dashed #eee">${i.store.replace('店','')}${i.d?` ${res.m}/${i.d}`:''}${i.name?` ${i.name}`:''}：${i.msg}</div>`).join('');
+  document.getElementById('v8-modal-root').innerHTML=`<div class="v8-modal-bg"><div class="v8-modal-box" style="width:520px">
+    <h4>📥 匯入人資假表・${file}</h4>
+    <div style="font-size:10px;color:#666;margin-bottom:6px">${res.y} 年 ${res.m} 月・${SCOPE_LABEL[curScope]}　（還沒寫進去，看完再按「確定匯入」）</div>
+    <table class="ptbl" style="border-collapse:collapse;width:100%;font-size:10px;margin-bottom:6px"><tr><th></th><th style="text-align:left">門市</th><th>上班</th><th>休</th><th>支援</th><th>⚠️ 要確認</th></tr>
+    ${sts.map(st=>{const c=res.stores[st].counts;return`<tr><td><input type="checkbox" class="hri-sel" value="${st}" checked></td><td style="text-align:left">${st}${isLocked(st)?' 🔒':''}</td><td>${c.work}</td><td>${c.off}</td><td>${c.sup}</td><td style="${c.flag?'color:#9A6B00;font-weight:700':''}">${c.flag}</td></tr>`;}).join('')}
+    </table>
+    ${skipped.length?`<div style="font-size:9px;color:#888;margin-bottom:4px">沒讀的頁：${skipped.map(s=>`${s.name.trim()}（${s.skipped}）`).join('、')}</div>`:''}
+    <div style="font-size:9px;color:#555;line-height:1.6;margin-bottom:4px">
+      ・排休來貼班 ${shiftN} 筆：寫進第 2 頁出勤紀錄（貼班）<br>
+      ・計時時數 ${hourN} 筆、跨區支援時數 ${crossN} 筆：先讀出來，第二段才帶進骨架（現在第 4、5 頁照舊算 9.5 小時）
+      ${res.crossVisits.length?`<br>・別區來支援 ${res.crossVisits.length} 筆（${[...new Set(res.crossVisits.map(v=>v.name))].join('、')}）：照支援填進去`:''}
+    </div>
+    ${issues?`<div style="font-size:10px;font-weight:700;color:#9A6B00;margin:6px 0 2px">⚠️ 要確認的（匯入後這些格子標黃，點一下改好就不黃）</div><div style="max-height:180px;overflow:auto;font-size:9px;line-height:1.5;border:1px solid #F0E0A0;background:#FFFCEB;border-radius:6px;padding:4px 6px">${issues}</div>`:'<div class="ok-box" style="margin:4px 0">✅ 每一格都讀得懂</div>'}
+    <div style="font-size:9px;color:#888;margin-top:6px;line-height:1.5">勾選的店會改成 ✋手動、照 Excel 填好${locked.length?`（${locked.join('、')}的鎖定會解開）`:''}；沒勾的店不動。匯錯可以按預覽上方的「↩ 復原這次匯入」。</div>
+    <div class="modal-btns"><button class="mb-cancel" onclick="closeV8Modal()">取消</button><button class="mb-save" onclick="hriApply()">確定匯入</button></div>
+  </div></div>`;
+}
+function hriApply(){
+  if(!hriCtx)return;
+  const{res,file}=hriCtx;
+  const sel=[...document.querySelectorAll('.hri-sel')].filter(x=>x.checked).map(x=>x.value);
+  if(!sel.length){alert('沒有勾選任何門市');return;}
+  // 匯入前的樣子，給「↩ 復原這次匯入」
+  const undo=JSON.parse(JSON.stringify({gen:generatedData,storeMode,storeLocks,cellEdits,attendanceAdjustments,maxUnlocked,prev:hrImport?Object.assign({},hrImport,{undo:null}):null}));
+  sel.forEach(st=>{storeMode[st]='manual';delete storeLocks[st];});
+  closeV8Modal();
+  // 這個月已經有初假表就直接蓋上去（重新生成的話，沒勾、⚡v7自動的店會被重排）；還沒有才先生成一次
+  if(!hasResultForScope()||generatedData.y!==res.y||generatedData.m!==res.m)genSchedule();
+  const g=generatedData;
+  if(!g||g.y!==res.y||g.m!==res.m){alert('初假表沒有生成成功，這次沒有匯入');return;}
+  const missing=allStaff.filter(s=>sel.includes(s.store)&&!g.sched[s.name]).map(s=>s.name);
+  const flags={};
+  sel.forEach(st=>{
+    const cells=res.stores[st].cells;
+    Object.keys(cells).forEach(name=>{
+      if(!g.sched[name])return;
+      Object.keys(cells[name]).forEach(dk=>{
+        const c=cells[name][dk],d=+dk;
+        if(c.st)setCellState(g.sched,g.supMap,g.mandatoryOff,name,d,c.st,c.target||'');
+        if(c.flag||c.guess)flags[name+'_'+d]=c.flag||c.note;
+      });
+    });
+  });
+  const noCross=new Set();
+  res.crossVisits.filter(v=>sel.includes(v.store)).forEach(v=>{if(g.sched[v.name])setCellState(g.sched,g.supMap,g.mandatoryOff,v.name,v.d,'sup',v.store);else noCross.add(v.name);});
+  cellEdits=cellEdits.filter(e=>!(e.y===g.y&&e.m===g.m&&sel.includes(homeStoreOf(e.name))));
+  // 排休來貼班 → 第 2 頁出勤紀錄（跟手動登記的貼班一樣，算貼班費率）
+  res.shifts.filter(s=>sel.includes(s.store)).forEach(s=>{
+    attendanceAdjustments=attendanceAdjustments.filter(a=>!(a.y===g.y&&a.m===g.m&&a.d===s.d&&a.staffName===s.name&&a.personType==='home'));
+    const p2=n=>n==null?'':String(n).padStart(2,'0'); // 只寫數字（例：4.5）沒寫時段的，起訖留空、照時數算
+    attendanceAdjustments.push({y:g.y,m:g.m,d:s.d,staffName:s.name,personType:'home',targetStore:s.store,link:'',hours:s.hours,sH:p2(s.sH),sM:p2(s.sM),eH:p2(s.eH),eM:p2(s.eM),brk:0,statEffect:'shift',source:'人資假表'});
+  });
+  hrImport={y:g.y,m:g.m,scope:g.scope,file,at:new Date().toISOString(),stores:sel,flags,
+    hours:res.hours.filter(h=>sel.includes(h.store)),undo};
+  hriCtx=null;
+  renderStoreCtl();rerenderPreview();
+  if(missing.length)alert(`名單裡有、但這次初假表沒有的人：${missing.join('、')}\n（初假表生成之後才加進名單的人）\n請先按「↩ 復原這次匯入」，再按「⚡ 生成初假表」，然後重新匯入。`);
+  if(noCross.size)alert(`別區來支援的 ${[...noCross].join('、')} 沒有填進去：這一區的初假表沒有他們。\n要在「跨店規則」設他們支援這一區的店，生成初假表時才會有他們；設好後按「↩ 復原這次匯入」、「⚡ 生成初假表」，再重新匯入。`);
+}
+function hriUndo(){
+  if(!hrImport||!hrImport.undo)return;
+  if(!confirm(`確定復原這次匯入（${hrImport.file}）？\n初假表、各店排班方式、出勤紀錄會回到匯入前的樣子；匯入後自己點改的格子也會一起退回。`))return;
+  const u=hrImport.undo;
+  generatedData=u.gen;storeMode=u.storeMode;storeLocks=u.storeLocks;cellEdits=u.cellEdits;attendanceAdjustments=u.attendanceAdjustments;maxUnlocked=u.maxUnlocked;
+  hrImport=u.prev;
+  renderStoreCtl();renderTopnav();
+  if(generatedData&&generatedData.scope===curScope){document.getElementById('btn-dl').disabled=false;rerenderPreview();}
+  else{generatedData=null;document.getElementById('btn-dl').disabled=true;document.getElementById('main-body').innerHTML='<div class="ph"><div style="font-size:30px">🗓</div><div style="font-size:12px;font-weight:600">已復原，尚未生成初假表</div></div>';}
+}
+function hriShowFlags(){
+  const f=hrImport&&hrImport.flags||{},keys=Object.keys(f);
+  const rows=keys.map(k=>{const i=k.lastIndexOf('_');return{name:k.slice(0,i),d:+k.slice(i+1),msg:f[k]};}).sort((a,b)=>a.d-b.d);
+  document.getElementById('v8-modal-root').innerHTML=`<div class="v8-modal-bg" onclick="if(event.target===this)closeV8Modal()"><div class="v8-modal-box" style="width:420px">
+    <h4>⚠️ 還要確認的格子（${keys.length}）</h4>
+    <div style="max-height:300px;overflow:auto;font-size:10px;line-height:1.6">${rows.map(r=>`<div>${hrImport.m}/${r.d} ${r.name}：${r.msg}</div>`).join('')||'都確認完了'}</div>
+    <div style="font-size:9px;color:#888;margin-top:6px">在預覽裡點黃色的格子改好，就會從清單拿掉。</div>
+    <div class="modal-btns"><button class="mb-cancel" onclick="closeV8Modal()">關閉</button></div>
+  </div></div>`;
+}
+function hriBarHtml(){
+  if(!hriActive())return'';
+  const n=Object.keys(hrImport.flags||{}).length;
+  return`<div style="margin:4px 0 8px;padding:6px 8px;background:#FFFCEB;border:1px solid #F0E0A0;border-radius:6px;font-size:9px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+    <span>📥 已匯入人資假表「${hrImport.file}」（${hrImport.stores.join('、')}）</span>
+    ${n?`<span style="color:#9A6B00;font-weight:700">⚠️ 還有 ${n} 格要確認（黃框）</span><button class="sctl-b" onclick="hriShowFlags()">看清單</button>`:'<span style="color:#0F6E56">✅ 黃格都確認完了</span>'}
+    ${hrImport.undo?'<button class="sctl-b" onclick="hriUndo()">↩ 復原這次匯入</button>':''}
+  </div>`;
 }
 
 // 點格子：跳出狀態選單
@@ -541,6 +878,7 @@ function openCellEdit(name,d){
   ceCtx={name,d};
   document.getElementById('v8-modal-root').innerHTML=`<div class="v8-modal-bg" onclick="if(event.target===this)closeV8Modal()"><div class="v8-modal-box">
     <h4>✏️ ${name}・${g.m}月${d}日（週${wn}）</h4>
+    ${hriFlagOf(name,d)?`<div style="font-size:9px;color:#9A6B00;background:#FFFCEB;border:1px solid #F0E0A0;border-radius:5px;padding:4px 6px;margin-bottom:6px">⚠️ 人資假表：${hriFlagOf(name,d)}<br>選一個狀態就算確認</div>`:''}
     <div class="ce-opts">${opts.map(([k,l])=>`<button class="ce-opt${curKey===k?' cur':''}" onclick="applyCellEdit('${k}','')">${l}</button>`).join('')}</div>
     ${targets.length?`<div class="fg" style="margin-top:8px"><label>支援到別店</label><div style="display:flex;gap:5px"><select id="ce-target">${targets.map(t=>`<option${t===curTarget?' selected':''}>${t}</option>`).join('')}</select><button class="ce-opt${cur==='sup'?' cur':''}" style="padding:4px 10px;white-space:nowrap;flex-shrink:0" onclick="applyCellEdit('sup',document.getElementById('ce-target').value)">支援</button></div></div>`:''}
     <div style="font-size:9px;color:#888;margin-top:8px;line-height:1.5">${modeOf(s.store)==='auto'?'這間店是 ⚡v7自動：你設定的格子會變成固定條件，下次按「生成」v7會繞開它排。':'這間店是 ✋手動：改完立即生效，按「生成」也不會被v7改掉。'}</div>
@@ -555,6 +893,7 @@ function applyCellEdit(st,target){
   setCellState(g.sched,g.supMap,g.mandatoryOff,name,d,st,target);
   cellEdits=cellEdits.filter(e=>!(e.y===g.y&&e.m===g.m&&e.name===name&&e.d===d));
   cellEdits.push({y:g.y,m:g.m,name,d,st,target:st==='sup'?target:''});
+  hriClearFlag(name,d); // 匯入人資假表標黃的格子，點過選好就算確認了
   closeV8Modal();rerenderPreview();
 }
 function removeCellEdit(){
@@ -1281,7 +1620,8 @@ function renderPreview(sched,cal,supMap,conflicts,mandatoryOff){
         // v8：鎖定的格子變淡、不能拖；手動設定過的格子加橘框；點一下跳出狀態選單
         const fz=!!cellFrozenReason(s.name,d);
         const edited=!fz&&generatedData&&cellEdits.some(e=>e.y===generatedData.y&&e.m===generatedData.m&&e.name===s.name&&e.d===d);
-        return`<td class="${CLS[st]||'c-work'}${fz?' c-frozen':''}${edited?' c-edited':''}" style="${bg}padding:3px 2px;font-size:9px;text-align:center;${isMust?'font-weight:700;':''}" ${fz?'':`draggable="true" ondragstart="dragCellStart(event,'${s.name}',${d})"`} ondragover="allowDrop(event)" ondragleave="dragLeaveCell(event)" ondrop="dropStatus(event,'${s.name}',${d})" onclick="openCellEdit('${s.name}',${d})">${TXT[st]||''}</td>`;
+        const hri=hriFlagOf(s.name,d); // 匯入人資假表要確認的格子：黃框
+        return`<td class="${CLS[st]||'c-work'}${fz?' c-frozen':''}${edited&&!hri?' c-edited':''}${hri?' c-hri':''}"${hri?` title="⚠️ ${hri.replace(/"/g,'&quot;')}"`:''}style="${bg}padding:3px 2px;font-size:9px;text-align:center;${isMust?'font-weight:700;':''}" ${fz?'':`draggable="true" ondragstart="dragCellStart(event,'${s.name}',${d})"`} ondragover="allowDrop(event)" ondragleave="dragLeaveCell(event)" ondrop="dropStatus(event,'${s.name}',${d})" onclick="openCellEdit('${s.name}',${d})">${TXT[st]||''}</td>`;
       }).join('');
       return`<tr><td style="font-size:9px;font-weight:600;white-space:nowrap;text-align:left;padding:3px 5px;min-width:32px;border-right:2px solid #ccc;position:sticky;left:0;background:#fff;z-index:1">${s.name}</td>${cells}</tr>`;
     }).join('');
@@ -1313,6 +1653,7 @@ function renderPreview(sched,cal,supMap,conflicts,mandatoryOff){
       <div style="font-size:8px;color:#888">✏️ 點格子可直接設定出勤／休／必休／必上／支援（橘框＝手動設定過；⚡v7自動的店重新生成時會繞開它排）</div>
       <div style="font-size:8px;color:#888">🖐️ 拖曳格子到另一格可互換兩天的班表狀態（重新生成同年月會自動保留此調整，年月變更則清空）｜🔒 鎖定門市的格子變淡、不能改</div>
     </div>
+    ${hriBarHtml()}
     ${conflicts.length?`<div class="conf-box"><div class="conf-title">⚠ 發現 ${conflicts.length} 項需注意</div>${conflicts.map(c=>`<div class="conf-item"><span>${c.type==='error'?'❌':'⚠️'}</span><span>${c.msg}</span></div>`).join('')}</div>`:`<div class="ok-box">✅ 設定無明顯衝突，班表已生成</div>`}
     ${mobStaff.length?`<div class="prev-sec"><div class="prev-hdr" style="background:#FFFBEB;border:1px solid #F5C842">🔄 機動人員</div>${buildTable(mobStaff,'')}</div>`:''}
     ${storeGroups.map(({store,members})=>`<div class="prev-sec"><div class="prev-hdr" style="background:${SB[store]}"><div style="width:7px;height:7px;border-radius:50%;background:${SC[store]}"></div>${store}${storeBadge(store)}</div>${buildTable(members,store)}</div>`).join('')}
@@ -2641,6 +2982,7 @@ function v7CollectSaveData(){
     maxUnlocked,curPage,
     // v8：手動／鎖定的店要靠「上次結果」才能還原，所以連目前班表一起存（v7自動的店還原時照樣重新算）
     storeMode,storeLocks,cellEdits,
+    hrImport, // 2026-10-27 匯入人資假表：要確認的黃格、復原用的匯入前樣子
     lastGen:generatedData?{y:generatedData.y,m:generatedData.m,scope:generatedData.scope,sched:generatedData.sched,supMap:generatedData.supMap,mandatoryOff:generatedData.mandatoryOff}:null
   };
 }
@@ -2711,6 +3053,7 @@ function v7RestoreAutoSave(){
   p5CrossRateOverride=d.p5CrossRateOverride||{};
   maxUnlocked=d.maxUnlocked||1;
   storeMode=d.storeMode||{};storeLocks=d.storeLocks||{};cellEdits=d.cellEdits||[];
+  hrImport=d.hrImport||null;
   // 讓genSchedule()把存起來的班表當成「上次結果」，手動／鎖定的店才能原樣還原
   if(maxUnlocked>=2&&d.lastGen&&d.lastGen.sched)generatedData=Object.assign({mandatoryOff:{},supMap:{}},d.lastGen);
 
@@ -2753,7 +3096,8 @@ v7RestoreAutoSave();
   const PART_KEYS = {
     '排班': ['yr', 'mo', 'sat', 'sun', 'hols', 'lunarNotes', 'bottomNotes', 'needsData', 'openConds', 'allStaff', 'pins', 'adjustments',
       'storeRules', 'staffRules', 'crossRules', 'storeGroups', 'manualAdjustments', 'supportStaff', 'supportSchedule',
-      'attendanceAdjustments', 'page2Generated', 'maxUnlocked', 'storeMode', 'storeLocks', 'cellEdits', 'lastGen'],
+      'attendanceAdjustments', 'page2Generated', 'maxUnlocked', 'storeMode', 'storeLocks', 'cellEdits', 'lastGen',
+      'hrImport'],   // 10-27 第 1 頁匯入人資假表：要確認的黃格、復原用的匯入前樣子
     '薪資': ['p5HP', 'p5Route', 'p5OtherBonus', 'p5InsuranceOverride', 'p5InsuranceMap', 'p5ManualRate', 'p5Generated',
       'p5BaseSalary', 'p5BaseHourly', 'p5CrossRateOverride']
   };
