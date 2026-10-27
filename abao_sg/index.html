@@ -2152,7 +2152,7 @@ function exportScheduleSkeleton(){
       const{store:st}=splitSupKey(k);
       (supMap[k]||[]).forEach(n=>{
         const home=homeStoreOf(n);
-        if(!STORES.includes(home))return; // 跨區支援（例：伸港的人來溪湖）不在這次範圍，本來就各自匯入
+        if(!STORES.includes(home)||!STORES.includes(st))return; // 跨區支援（例：伸港的人來溪湖、伸港的人去彰水店）不在這次範圍，本來就各自匯入
         if(sel.includes(st)&&!sel.includes(home))cross.add(`${n}（${home}→${st}）`);
         if(!sel.includes(st)&&sel.includes(home))cross.add(`${n}（${home}→${st}）`);
       });
