@@ -2746,6 +2746,9 @@ v7RestoreAutoSave();
 // 存檔：改完約 5 秒自動存；沒網路就先存在這台（v8 本來每 4 秒存瀏覽器），連上自動補存。
 // 第一次打開：雲端是空的、這台有資料 → 問要不要放上雲端；兩邊都有、而且這台有沒存上去的改動 → 問要用哪一份。
 // 雲端資料一律照 v8 原本的「還原存檔」流程套進畫面（v7RestoreAutoSave），不另外寫一套還原。
+// 10-27 老闆定：備份不再下載檔案，改存進雲端歷史（stash，存檔人寫「某某（這台沒存上去的）」）；送不出去先記在這台、之後補送。
+//   二選一改成自己畫的視窗：兩邊各有幾個夥伴、幾條規則直接寫出來，「用雲端的」在前面；選「用這台的」要再確認一次，
+//   這台的夥伴比雲端少就紅字提醒（10-27 老闆按到用這台的，把溪湖 11 人蓋成 0 人）；蓋掉雲端時後台一律把雲端那份留進歷史。
 (function () {
   const PART_KEYS = {
     '排班': ['yr', 'mo', 'sat', 'sun', 'hols', 'lunarNotes', 'bottomNotes', 'needsData', 'openConds', 'allStaff', 'pins', 'adjustments',
@@ -2776,15 +2779,63 @@ v7RestoreAutoSave();
     try { localStorage.setItem(META_KEY, JSON.stringify(m)); } catch (e) {}
   }
 
-  /** 這台的某一份下載成備份檔（被接手、選用雲端的時候，這台沒存上去的改動不會不見） */
+  // ── 備份：這台沒存上去的改動存進雲端歷史（被接手、選用雲端、存檔被擋、登入過期的時候，不會不見） ──
+  // 先記在這台（STASH_KEY），再送去雲端；沒網路、登入過期送不出去就留著，下次打開、連上網路再補送
+  const STASH_KEY = 'bzhr_stash_' + window.HR_PATH;
+  let flushing = false;
+  function loadStash() { try { return JSON.parse(localStorage.getItem(STASH_KEY) || '[]'); } catch (e) { return []; } }
+  function saveStash(a) { try { if (a.length) localStorage.setItem(STASH_KEY, JSON.stringify(a.slice(-10))); else localStorage.removeItem(STASH_KEY); } catch (e) {} }
   function backup(part) {
-    const t = new Date(), pad = n => ('0' + n).slice(-2);
-    const name = 'BZHR備份_' + window.HR_REGION + '_' + part + '_' + t.getFullYear() + pad(t.getMonth() + 1) + pad(t.getDate()) + '_' + pad(t.getHours()) + pad(t.getMinutes()) + '.json';
+    const list = loadStash();
+    list.push({ part: part, base: (S[part] || {}).version || 0, data: partStr(part), at: Date.now() });
+    saveStash(list);
+    flushStash();
+  }
+  async function flushStash() {
+    if (flushing) return;
+    flushing = true;
     try {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([partStr(part)], { type: 'application/json' }));
-      a.download = name; document.body.appendChild(a); a.click(); a.remove();
-    } catch (e) {}
+      for (const it of loadStash()) {
+        let r;
+        try { r = await call('stash', it.part, { base: it.base, data: it.data }); } catch (e) { break; }   // 沒網路：下次再送
+        if (!r.ok && r.reason === 'login') break;                                                          // 登入過期：重新登入後再送
+        saveStash(loadStash().filter(x => !(x.at === it.at && x.part === it.part)));                      // 送到了（或永遠送不了，例如沒權限）就拿掉
+      }
+    } finally { flushing = false; }
+  }
+
+  // ── 二選一的視窗（取代瀏覽器的〔確定〕〔取消〕，老闆 10-27：太容易按錯）──
+  /** 一份的摘要：排班＝夥伴幾人、必休必上幾條、跨店規則幾條、月份；薪資＝基本薪資幾人、HP 幾人。count 拿來比哪邊少 */
+  function summary(part, str) {
+    let d = {}; try { d = str ? JSON.parse(str) : {}; } catch (e) {}
+    const n = x => Array.isArray(x) ? x.length : (x && typeof x === 'object' ? Object.keys(x).length : 0);
+    if (part === '排班') return { count: n(d.allStaff), what: '夥伴', unit: ' 人',
+      text: '夥伴 ' + n(d.allStaff) + ' 人、必休必上 ' + n(d.pins) + ' 條、跨店規則 ' + n(d.crossRules) + ' 條' + (d.yr && d.mo ? '、月份 ' + d.yr + '/' + d.mo : '') };
+    return { count: Math.max(n(d.p5BaseSalary), n(d.p5HP)), what: '薪資設定', unit: ' 人', text: '基本薪資設定 ' + n(d.p5BaseSalary) + ' 人、HP ' + n(d.p5HP) + ' 人' };
+  }
+  /** 跳出視窗等人按：回傳按了第幾顆（第 0 顆＝建議的那顆，畫大的） */
+  function ask(o) {
+    if (!$('hr-ask-css')) {
+      const st = document.createElement('style'); st.id = 'hr-ask-css';
+      st.textContent = '#hr-ask{position:fixed;inset:0;z-index:10001;background:rgba(30,28,60,.45);display:flex;align-items:center;justify-content:center;padding:16px;' +
+        'font-family:-apple-system,BlinkMacSystemFont,"Microsoft JhengHei",sans-serif;color:#222}' +
+        '#hr-ask .ha-box{background:#fff;border-radius:12px;max-width:460px;width:100%;padding:20px;box-shadow:0 8px 30px rgba(0,0,0,.2)}' +
+        '#hr-ask .ha-t{font-size:16px;font-weight:600;line-height:1.5;margin-bottom:12px}' +
+        '#hr-ask .ha-l{font-size:14px;line-height:1.7;padding:8px 10px;background:#f4f3fb;border-radius:8px;margin-bottom:6px}' +
+        '#hr-ask .ha-w{color:#C0392B;font-size:14px;line-height:1.6;margin:10px 0 0;font-weight:600}' +
+        '#hr-ask .ha-b{display:flex;flex-direction:column;gap:8px;margin-top:16px}' +
+        '#hr-ask .ha-main{background:#534AB7;color:#fff;border:0;border-radius:10px;padding:14px;font-size:16px;cursor:pointer}' +
+        '#hr-ask .ha-sub{background:#fff;color:#555;border:1px solid #ccc;border-radius:10px;padding:10px;font-size:14px;cursor:pointer}';
+      document.head.appendChild(st);
+    }
+    return new Promise(res => {
+      const w = document.createElement('div'); w.id = 'hr-ask';
+      w.innerHTML = '<div class="ha-box"><div class="ha-t">' + esc(o.title) + '</div>' + (o.lines || []).map(l => '<div class="ha-l">' + esc(l) + '</div>').join('') +
+        (o.warn ? '<div class="ha-w">' + esc(o.warn) + '</div>' : '') +
+        '<div class="ha-b">' + o.buttons.map((b, i) => '<button type="button" data-i="' + i + '" class="' + (i ? 'ha-sub' : 'ha-main') + '">' + esc(b) + '</button>').join('') + '</div></div>';
+      document.body.appendChild(w);
+      w.querySelectorAll('button').forEach(b => { b.onclick = () => { w.remove(); res(Number(b.getAttribute('data-i'))); }; });
+    });
   }
 
   /** 把雲端的幾份套進畫面：用目前的資料當底、蓋上雲端那幾份，交給 v8 原本的還原流程 */
@@ -2802,6 +2853,7 @@ v7RestoreAutoSave();
     const right = { '排班': { read: pg.indexOf(1) >= 0 || pg.indexOf(4) >= 0 }, '薪資': { read: pg.indexOf(4) >= 0 } };
     const meta = loadMeta(), apply = {};
     let reset = false;
+    flushStash();   // 上次沒送到雲端歷史的備份（沒網路、登入過期）先補送
     for (const part of ['排班', '薪資']) {
       if (!right[part].read) continue;
       const r = await call('load', part);
@@ -2811,17 +2863,27 @@ v7RestoreAutoSave();
       const localDirty = s.write && (m ? localNow !== m.synced : hasRealData(part));
       if (!r.version) {
         if (localDirty && s.mine) {
-          if (confirm('雲端還沒有' + window.HR_REGION + '的「' + PART_LABEL[part] + '」資料。\n要把這台瀏覽器裡的資料放上雲端嗎？\n\n按「取消」：這台的資料先下載成備份檔，然後從空白開始。')) s.uploadNow = true;
+          const i = await ask({ title: '雲端還沒有' + window.HR_REGION + '的「' + PART_LABEL[part] + '」，要把這台的放上去嗎？',
+            lines: ['💻 這台：' + summary(part, localNow).text],
+            buttons: ['放上雲端（建議）', '不要，這台從空白開始（這台的先存進雲端歷史）'] });
+          if (i === 0) s.uploadNow = true;
           else { backup(part); reset = true; }
         } else s.synced = localNow;
       } else if (localDirty && s.mine && m && m.version === r.version) {
         s.uploadNow = true;   // 上次沒網路排隊的改動：雲端這段時間沒人動過，直接補存
       } else if (localDirty && s.mine) {
-        if (confirm('雲端有 ' + (r.savedBy || '別人') + '（' + r.savedAt + '）存的「' + PART_LABEL[part] + '」，這台也有還沒存上去的改動。\n\n按「確定」：用雲端的（這台的改動先下載成備份檔）\n按「取消」：用這台的，蓋掉雲端那份')) { backup(part); apply[part] = r.data; }
-        else s.uploadNow = true;
-      } else if (localDirty && r.data !== localNow) {   // 這台有沒存上去的改動，但別人正在用：先下載備份，畫面換成雲端的
+        const cl = summary(part, r.data), lo = summary(part, localNow);
+        const warn = lo.count < cl.count ? '這台的' + cl.what + '比雲端少 ' + (cl.count - lo.count) + cl.unit + '，通常是舊資料，建議用雲端的。' : '';
+        const lines = ['☁️ 雲端（' + (r.savedBy || '別人') + ' ' + r.savedAt + ' 存）：' + cl.text, '💻 這台（還沒存上去）：' + lo.text];
+        let i = await ask({ title: '雲端和這台的「' + PART_LABEL[part] + '」不一樣，要用哪一份？', lines: lines, warn: warn,
+          buttons: ['用雲端的（建議）', '用這台的，蓋掉雲端'] });
+        if (i === 1) i = await ask({ title: '確定要用這台的蓋掉雲端嗎？', lines: ['💻 這台：' + lo.text, '☁️ 雲端那份（' + cl.text + '）會放進歷史，要救回找小才。'], warn: warn,
+          buttons: ['不要，用雲端的', '確定，用這台的蓋掉雲端'] });
+        if (i === 1) { s.uploadNow = true; s.overwrite = true; }   // 後台會把雲端原本那份留進歷史
+        else { backup(part); apply[part] = r.data; }
+      } else if (localDirty && r.data !== localNow) {   // 這台有沒存上去的改動，但別人正在用：先存進雲端歷史，畫面換成雲端的
         backup(part);
-        alert((r.lock ? r.lock.name : '別人') + ' 正在用「' + PART_LABEL[part] + '」。\n這台還沒存上去的改動已經下載成備份檔，畫面先換成雲端的版本。');
+        alert((r.lock ? r.lock.name : '別人') + ' 正在用「' + PART_LABEL[part] + '」。\n這台還沒存上去的改動已經存進雲端歷史（要救回找小才），畫面先換成雲端的版本。');
         apply[part] = r.data;
       } else if (r.data !== localNow) apply[part] = r.data;
       else s.synced = localNow;
@@ -2839,7 +2901,7 @@ v7RestoreAutoSave();
     setInterval(tick, 4000);
     setInterval(poll, POLL_MS);
     ['pointerdown', 'keydown', 'input'].forEach(t => document.addEventListener(t, () => { lastActive = Date.now(); }, true));
-    window.addEventListener('online', () => Object.keys(S).forEach(p => { if (S[p].offline) doSave(p); }));
+    window.addEventListener('online', () => { flushStash(); Object.keys(S).forEach(p => { if (S[p].offline) doSave(p); }); });
     window.addEventListener('pagehide', releaseAll);
   }
 
@@ -2866,7 +2928,7 @@ v7RestoreAutoSave();
     if (data === s.synced) { s.pending = false; render(); return; }
     s.saving = true; render();
     let r;
-    try { r = await call('save', p, { base: s.version, data: data }); }
+    try { r = await call('save', p, { base: s.version, data: data, overwrite: s.overwrite ? 1 : 0 }); }
     catch (e) {   // 沒網路：先存在這台（v8 本來就每 4 秒存瀏覽器），30 秒後、或連上網路就補存
       s.saving = false; s.offline = true; render();
       clearTimeout(s.timer); s.timer = setTimeout(() => doSave(p), RETRY_MS);
@@ -2874,11 +2936,11 @@ v7RestoreAutoSave();
     }
     s.saving = false; s.offline = false;
     if (r.ok) {
-      s.version = r.version; s.synced = data; s.savedAt = r.savedAt; s.pending = partStr(p) !== data; s.error = '';
+      s.version = r.version; s.synced = data; s.savedAt = r.savedAt; s.pending = partStr(p) !== data; s.error = ''; s.overwrite = false;
       saveMeta();
       if (s.pending) { clearTimeout(s.timer); s.timer = setTimeout(() => doSave(p), SAVE_DELAY); }
     } else if (r.reason === 'locked' || r.reason === 'conflict') lostLock(p, r);
-    else if (r.reason === 'login') { backup(p); alert('登入過期了。這台還沒存上去的改動已經下載成備份檔，請重新登入。'); location.reload(); }
+    else if (r.reason === 'login') { backup(p); alert('登入過期了。這台還沒存上去的改動先記在這台，重新登入後會自動存進雲端歷史，請重新登入。'); location.reload(); }
     else s.error = r.reason;
     render();
   }
@@ -2898,9 +2960,9 @@ v7RestoreAutoSave();
     clearTimeout(s.timer);
     if (partStr(p) !== s.synced) {
       backup(p);
-      alert((s.lock ? s.lock.name : '別人') + ' 接手編輯「' + PART_LABEL[p] + '」了。\n你這台還沒存上去的改動已經下載成備份檔，現在換成只能看。');
+      alert((s.lock ? s.lock.name : '別人') + ' 接手編輯「' + PART_LABEL[p] + '」了。\n你這台還沒存上去的改動已經存進雲端歷史（要救回找小才），現在換成只能看。');
     }
-    refresh(p, true);   // 畫面換回雲端那份（沒存上去的改動已經在備份檔裡）
+    refresh(p, true);   // 畫面換回雲端那份（沒存上去的改動已經存進雲端歷史）
   }
 
   /** 重新讀雲端：版本變了（或 force）就套進畫面；沒人在用就順便拿到編輯權（load 會拿） */
