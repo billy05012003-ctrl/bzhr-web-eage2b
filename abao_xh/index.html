@@ -2965,13 +2965,19 @@ v7RestoreAutoSave();
     const roParts = parts.filter(p => !S[p].mine);
     const ro = $('hr-ro');
     if (ro) {
+      // 同一個人同時佔著兩份 → 合成一句、一個按鈕（老闆 10-27：不要按兩次接手編輯）；不同人在用才分開寫
+      const groups = {};
+      roParts.forEach(p => { const l = S[p].lock, k = l ? l.name + '|' + l.samePerson : '-'; (groups[k] = groups[k] || []).push(p); });
       ro.style.display = roParts.length ? 'flex' : 'none';
-      ro.innerHTML = roParts.map(p => {
-        const l = S[p].lock;
-        return '<span>⚠ ' + (l ? esc(l.name) + (l.samePerson ? '（你在另一台）' : '') + '使用中（' + ago(l.last) + '還在改）' : '目前') +
-          '— ' + PART_LABEL[p] + '你現在只能看</span>' + (l && l.canTake ? '<button data-take="' + p + '">接手編輯</button>' : '');
+      ro.innerHTML = Object.keys(groups).map(k => {
+        const ps = groups[k], l = S[ps[0]].lock;
+        const last = Math.max.apply(null, ps.map(p => (S[p].lock || {}).last || 0));
+        const label = ps.length > 1 ? '第 1～5 頁' : PART_LABEL[ps[0]];
+        const canTake = ps.every(p => S[p].lock && S[p].lock.canTake);
+        return '<span>⚠ ' + (l ? esc(l.name) + (l.samePerson ? '（你在另一台）' : '') + '使用中（' + ago(last) + '還在改）' : '目前') +
+          '— ' + label + '你現在只能看</span>' + (canTake ? '<button data-take="' + ps.join(',') + '">接手編輯</button>' : '');
       }).join('');
-      ro.querySelectorAll('[data-take]').forEach(b => { b.onclick = () => takeover(b.getAttribute('data-take')); });
+      ro.querySelectorAll('[data-take]').forEach(b => { b.onclick = async () => { for (const p of b.getAttribute('data-take').split(',')) await takeover(p); }; });
     }
     document.body.classList.toggle('hr-ro-a', !(S['排班'] && S['排班'].mine));
     document.body.classList.toggle('hr-ro-b', !(S['薪資'] && S['薪資'].mine));
