@@ -219,6 +219,11 @@ input[type=text],input[type=number],select{border:1px solid #ccc;border-radius:5
 #hr-gate .hg-big{flex:1;background:#534AB7;color:#fff;border:0;border-radius:10px;padding:18px 8px;font-size:16px;line-height:1.6;cursor:pointer}
 #hr-gate .hg-steps{font-size:15px;line-height:1.9;padding-left:22px;margin:0 0 6px}
 #hr-gate .hg-p{font-size:14px;margin:8px 0 0}
+#hr-ro{background:#FAEEDA;color:#633806;font-size:12px;padding:6px 10px;gap:8px;align-items:center;flex-wrap:wrap}
+#hr-ro button{background:#fff;color:#633806;border:1px solid #BA7517;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer}
+body.hr-ro-a :is(#page-1,#page-2,#page-3) :is(input,select,textarea,button:not(.btn-dl)){pointer-events:none;opacity:.55}
+body.hr-ro-b :is(#page-4,#page-5) :is(input,select,textarea,button:not(.btn-dl)){pointer-events:none;opacity:.55}
+button[onclick="v7ClearAutoSave()"]{display:none!important}
 .hr-userbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10px;color:#fff}
 .hr-userbar button,.hr-userbar a{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:5px;padding:4px 8px;font-size:9px;cursor:pointer;white-space:nowrap;text-decoration:none}
 </style>
@@ -2618,7 +2623,7 @@ updateHeader(1);
 // 這幾個既有的「生成」函式重新算一遍，沿用app本來就有的「重新生成同年月會自動套用manualAdjustments」邏輯，
 // 避免另外手刻一套還原計算結果的邏輯、跟正式生成邏輯兩邊維護容易漂移。
 // v8用自己的存檔key，避免跟v7同一個瀏覽器互相覆蓋；第一次開v8時若沒有v8存檔，會讀一次v7的存檔接著用
-const V7_SAVE_KEY='v8AutoSave_排班薪資系統';
+const V7_SAVE_KEY='v8AutoSave_排班薪資系統'+(window.HR_PATH?'_'+window.HR_PATH:'');
 const V7_LEGACY_SAVE_KEY='v7AutoSave_排班薪資系統';
 function v7CollectSaveData(){
   return{
@@ -2730,12 +2735,254 @@ function v7RestoreAutoSave(){
   if(targetPage===2)renderPage2();
   if(targetPage===5)renderPage5();
 }
+window.HR_DEFAULTS=v7CollectSaveData();
 v7RestoreAutoSave();
 </script>
 <script>
+// ── BZ HR 網頁版存雲端（2026-10-27，W3 選項 A；後台在生命值骨架的 網頁存檔.gs）──
+// 每區兩份：排班份（第 1～3 頁，區人資改）、薪資份（第 4～5 頁，區行政改）；區人資完全拿不到薪資份，老闆兩份都能改。
+// 使用中：可以改的人打開就拿到那一份的編輯權，別人打開只能看（老闆 10-27 定「只能看，等他用完」）；
+//   10 分鐘沒動作自動放掉，老闆或本人換裝置可以「接手編輯」。
+// 存檔：改完約 5 秒自動存；沒網路就先存在這台（v8 本來每 4 秒存瀏覽器），連上自動補存。
+// 第一次打開：雲端是空的、這台有資料 → 問要不要放上雲端；兩邊都有、而且這台有沒存上去的改動 → 問要用哪一份。
+// 雲端資料一律照 v8 原本的「還原存檔」流程套進畫面（v7RestoreAutoSave），不另外寫一套還原。
+(function () {
+  const PART_KEYS = {
+    '排班': ['yr', 'mo', 'sat', 'sun', 'hols', 'lunarNotes', 'bottomNotes', 'needsData', 'openConds', 'allStaff', 'pins', 'adjustments',
+      'storeRules', 'staffRules', 'crossRules', 'storeGroups', 'manualAdjustments', 'supportStaff', 'supportSchedule',
+      'attendanceAdjustments', 'page2Generated', 'maxUnlocked', 'storeMode', 'storeLocks', 'cellEdits', 'lastGen'],
+    '薪資': ['p5HP', 'p5Route', 'p5OtherBonus', 'p5InsuranceOverride', 'p5InsuranceMap', 'p5ManualRate', 'p5Generated',
+      'p5BaseSalary', 'p5BaseHourly', 'p5CrossRateOverride']
+  };
+  // 沒放進雲端的：curScope（網址決定）、curPage（每台自己記停在哪頁）
+  const PART_LABEL = { '排班': '排班（第 1～3 頁）', '薪資': '薪資（第 4～5 頁）' };
+  const SAVE_DELAY = 5000, RETRY_MS = 30000, TOUCH_MS = 60000, POLL_MS = 60000;
+  const META_KEY = 'bzhr_sync_' + window.HR_PATH;
+  // 這台有沒有真的資料：跟「什麼都沒填」的樣子（產生部署檔時在 v8 還原存檔前記下的 HR_DEFAULTS）比
+  const hasRealData = part => !!window.HR_DEFAULTS && partStr(part) !== JSON.stringify(pick(part, window.HR_DEFAULTS));
+  const editor = (() => { const a = new Uint8Array(12); crypto.getRandomValues(a); return 'E' + Array.from(a, b => ('0' + b.toString(16)).slice(-2)).join(''); })();
+  const S = {};   // 份別 → { write, mine, lock, version, synced, savedAt, saving, offline, pending, timer, lastSeen }
+  let lastActive = Date.now(), lastTouch = Date.now(), started = false;
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  const call = (op, part, extra) => window.HR_CALL(op, Object.assign({ token: window.HR_TOKEN(), part: part, editor: editor }, extra || {}));
+  function pick(part, d) { const o = {}; PART_KEYS[part].forEach(k => { if (d[k] !== undefined) o[k] = d[k]; }); return o; }
+  function partStr(part) { return JSON.stringify(pick(part, v7CollectSaveData())); }
+  function loadMeta() { try { return JSON.parse(localStorage.getItem(META_KEY) || '{}'); } catch (e) { return {}; } }
+  function saveMeta() {
+    const m = loadMeta();
+    Object.keys(S).forEach(p => { if (S[p].write && S[p].synced != null) m[p] = { version: S[p].version, synced: S[p].synced }; });
+    try { localStorage.setItem(META_KEY, JSON.stringify(m)); } catch (e) {}
+  }
+
+  /** 這台的某一份下載成備份檔（被接手、選用雲端的時候，這台沒存上去的改動不會不見） */
+  function backup(part) {
+    const t = new Date(), pad = n => ('0' + n).slice(-2);
+    const name = 'BZHR備份_' + window.HR_REGION + '_' + part + '_' + t.getFullYear() + pad(t.getMonth() + 1) + pad(t.getDate()) + '_' + pad(t.getHours()) + pad(t.getMinutes()) + '.json';
+    try {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([partStr(part)], { type: 'application/json' }));
+      a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    } catch (e) {}
+  }
+
+  /** 把雲端的幾份套進畫面：用目前的資料當底、蓋上雲端那幾份，交給 v8 原本的還原流程 */
+  function applyCloud(datas) {
+    const d = v7CollectSaveData();
+    Object.keys(datas).forEach(p => { if (datas[p]) Object.assign(d, JSON.parse(datas[p])); });
+    try { localStorage.setItem(V7_SAVE_KEY, JSON.stringify(d)); } catch (e) {}
+    v7RestoreAutoSave();
+    if (window.HR_FIX_PAGE) window.HR_FIX_PAGE();
+    Object.keys(S).forEach(p => { if (!S[p].uploadNow) S[p].synced = partStr(p); });   // 還原會重新生成，以還原後的樣子當作「已同步」
+  }
+
+  async function start(me) {
+    const pg = me.pages || [];
+    const right = { '排班': { read: pg.indexOf(1) >= 0 || pg.indexOf(4) >= 0 }, '薪資': { read: pg.indexOf(4) >= 0 } };
+    const meta = loadMeta(), apply = {};
+    let reset = false;
+    for (const part of ['排班', '薪資']) {
+      if (!right[part].read) continue;
+      const r = await call('load', part);
+      if (!r.ok) throw new Error(r.reason);
+      const s = S[part] = { write: r.write, lock: r.lock, mine: !!(r.lock && r.lock.mine), version: r.version, savedAt: r.savedAt, savedBy: r.savedBy, synced: null };
+      const localNow = partStr(part), m = meta[part];
+      const localDirty = s.write && (m ? localNow !== m.synced : hasRealData(part));
+      if (!r.version) {
+        if (localDirty && s.mine) {
+          if (confirm('雲端還沒有' + window.HR_REGION + '的「' + PART_LABEL[part] + '」資料。\n要把這台瀏覽器裡的資料放上雲端嗎？\n\n按「取消」：這台的資料先下載成備份檔，然後從空白開始。')) s.uploadNow = true;
+          else { backup(part); reset = true; }
+        } else s.synced = localNow;
+      } else if (localDirty && s.mine && m && m.version === r.version) {
+        s.uploadNow = true;   // 上次沒網路排隊的改動：雲端這段時間沒人動過，直接補存
+      } else if (localDirty && s.mine) {
+        if (confirm('雲端有 ' + (r.savedBy || '別人') + '（' + r.savedAt + '）存的「' + PART_LABEL[part] + '」，這台也有還沒存上去的改動。\n\n按「確定」：用雲端的（這台的改動先下載成備份檔）\n按「取消」：用這台的，蓋掉雲端那份')) { backup(part); apply[part] = r.data; }
+        else s.uploadNow = true;
+      } else if (localDirty && r.data !== localNow) {   // 這台有沒存上去的改動，但別人正在用：先下載備份，畫面換成雲端的
+        backup(part);
+        alert((r.lock ? r.lock.name : '別人') + ' 正在用「' + PART_LABEL[part] + '」。\n這台還沒存上去的改動已經下載成備份檔，畫面先換成雲端的版本。');
+        apply[part] = r.data;
+      } else if (r.data !== localNow) apply[part] = r.data;
+      else s.synced = localNow;
+    }
+    if (reset) {   // 選了從空白開始：清掉這台、重新整理（v8 關頁時會再存一次，先擋住）
+      v7SaveSuspended = true;
+      try { localStorage.removeItem(V7_SAVE_KEY); localStorage.removeItem(META_KEY); } catch (e) {}
+      location.reload();
+      return new Promise(() => {});
+    }
+    if (Object.keys(apply).length) applyCloud(apply);
+    started = true;
+    render();
+    Object.keys(S).forEach(p => { if (S[p].uploadNow) { S[p].uploadNow = false; S[p].synced = S[p].synced || ''; doSave(p); } });
+    setInterval(tick, 4000);
+    setInterval(poll, POLL_MS);
+    ['pointerdown', 'keydown', 'input'].forEach(t => document.addEventListener(t, () => { lastActive = Date.now(); }, true));
+    window.addEventListener('online', () => Object.keys(S).forEach(p => { if (S[p].offline) doSave(p); }));
+    window.addEventListener('pagehide', releaseAll);
+  }
+
+  // ── 自動存 ──
+  function tick() {
+    Object.keys(S).forEach(p => {
+      const s = S[p];
+      if (!s.write || !s.mine) return;
+      const now = partStr(p);
+      if (now === s.synced) { if (s.pending && !s.saving) { s.pending = false; render(); } return; }
+      if (now !== s.lastSeen) {   // 還在改：每次有新改動就重新等 5 秒
+        s.lastSeen = now; s.pending = true;
+        if (!s.offline) { clearTimeout(s.timer); s.timer = setTimeout(() => doSave(p), SAVE_DELAY); }
+        render();
+      }
+    });
+    if (lastActive > lastTouch && Date.now() - lastTouch > TOUCH_MS) touchAll();
+  }
+
+  async function doSave(p) {
+    const s = S[p];
+    if (!s.mine || s.saving) return;
+    const data = partStr(p);
+    if (data === s.synced) { s.pending = false; render(); return; }
+    s.saving = true; render();
+    let r;
+    try { r = await call('save', p, { base: s.version, data: data }); }
+    catch (e) {   // 沒網路：先存在這台（v8 本來就每 4 秒存瀏覽器），30 秒後、或連上網路就補存
+      s.saving = false; s.offline = true; render();
+      clearTimeout(s.timer); s.timer = setTimeout(() => doSave(p), RETRY_MS);
+      return;
+    }
+    s.saving = false; s.offline = false;
+    if (r.ok) {
+      s.version = r.version; s.synced = data; s.savedAt = r.savedAt; s.pending = partStr(p) !== data; s.error = '';
+      saveMeta();
+      if (s.pending) { clearTimeout(s.timer); s.timer = setTimeout(() => doSave(p), SAVE_DELAY); }
+    } else if (r.reason === 'locked' || r.reason === 'conflict') lostLock(p, r);
+    else if (r.reason === 'login') { backup(p); alert('登入過期了。這台還沒存上去的改動已經下載成備份檔，請重新登入。'); location.reload(); }
+    else s.error = r.reason;
+    render();
+  }
+
+  // ── 使用中 ──
+  async function touchAll() {
+    lastTouch = Date.now();
+    for (const p of Object.keys(S)) {
+      if (!S[p].mine) continue;
+      try { const r = await call('touch', p); if (r.ok && r.lock && !r.lock.mine) lostLock(p, r); } catch (e) {}
+    }
+  }
+
+  function lostLock(p, r) {
+    const s = S[p];
+    s.mine = false; s.lock = r.lock || s.lock; s.pending = false;
+    clearTimeout(s.timer);
+    if (partStr(p) !== s.synced) {
+      backup(p);
+      alert((s.lock ? s.lock.name : '別人') + ' 接手編輯「' + PART_LABEL[p] + '」了。\n你這台還沒存上去的改動已經下載成備份檔，現在換成只能看。');
+    }
+    refresh(p, true);   // 畫面換回雲端那份（沒存上去的改動已經在備份檔裡）
+  }
+
+  /** 重新讀雲端：版本變了（或 force）就套進畫面；沒人在用就順便拿到編輯權（load 會拿） */
+  async function refresh(p, force) {
+    let r;
+    try { r = await call('load', p); } catch (e) { return; }
+    if (!r.ok) return;
+    const s = S[p];
+    const changed = r.version !== s.version;
+    s.lock = r.lock; s.mine = !!(r.lock && r.lock.mine); s.version = r.version; s.savedAt = r.savedAt; s.savedBy = r.savedBy;
+    if ((changed || (force && partStr(p) !== s.synced)) && r.data) applyCloud({ [p]: r.data });
+    render();
+  }
+
+  /** 只能看的人每分鐘看一次：別人存了新的就更新畫面；那個人用完了就換我拿編輯權 */
+  function poll() { Object.keys(S).forEach(p => { if (!S[p].mine) refresh(p); }); }
+
+  async function takeover(p) {
+    let r;
+    try { r = await call('takeover', p); } catch (e) { alert('連不上伺服器，請稍後再試'); return; }
+    if (!r.ok) { alert('沒辦法接手（' + (r.lock ? r.lock.name + ' 使用中' : r.reason) + '）'); return; }
+    await refresh(p);   // 接手前先拿雲端最新的那版，才不會蓋掉對方剛存的
+  }
+
+  function releaseAll() {
+    Object.keys(S).forEach(p => {
+      if (!S[p].mine) return;
+      const body = { hrApi: 1, op: 'release', token: window.HR_TOKEN(), part: p, editor: editor };
+      if (window.HR_MOCK) { window.HR_MOCK('release', body); return; }
+      try { navigator.sendBeacon(window.HR_API_URL, new Blob([JSON.stringify(body)], { type: 'text/plain' })); } catch (e) {}
+    });
+  }
+
+  // ── 只能看：擋掉會改資料的操作（下載 Excel、展開／收合區塊照樣可以） ──
+  function partOfPage(el) {
+    const pgEl = el && el.closest ? el.closest('.page') : null;
+    if (!pgEl) return '';
+    return Number(pgEl.id.replace('page-', '')) <= 3 ? '排班' : '薪資';
+  }
+  function blocked(el) { const p = partOfPage(el); return p && !(S[p] && S[p].mine); }
+  ['click', 'mousedown', 'keydown', 'beforeinput', 'paste', 'drop'].forEach(t => document.addEventListener(t, e => {
+    if (!started || !blocked(e.target)) return;
+    if (e.target.closest('.btn-dl, .sh')) return;
+    e.preventDefault(); e.stopPropagation();
+    if (t === 'click') { const ro = $('hr-ro'); if (ro) { ro.style.outline = '2px solid #D85A30'; setTimeout(() => { ro.style.outline = ''; }, 600); } }
+  }, true));
+
+  // ── 畫面：上面的存檔狀態、只能看的那條 ──
+  function ago(ms) { const m = Math.max(0, Math.round((Date.now() - ms) / 60000)); return m < 1 ? '剛剛' : m + ' 分鐘前'; }
+  function render() {
+    const parts = Object.keys(S).filter(p => S[p].write);   // 只看得到、不能改的份（區行政的排班份）不顯示
+    const sync = $('hr-sync');
+    if (sync) sync.textContent = parts.map(p => {
+      const s = S[p], label = parts.length > 1 ? p + ' ' : '';
+      if (!s.mine) return label + '👁 只能看';
+      if (s.saving) return label + '存檔中…';
+      if (s.offline) return label + '⚠ 沒網路，先存在這台，連上會自動補存';
+      if (s.error) return label + '⚠ 存檔失敗（' + s.error + '）';
+      if (s.pending) return label + '有改動，等一下自動存';
+      return label + (s.savedAt ? '✓ 已存雲端 ' + s.savedAt : '✓ 雲端已同步');
+    }).join('｜');
+    const roParts = parts.filter(p => !S[p].mine);
+    const ro = $('hr-ro');
+    if (ro) {
+      ro.style.display = roParts.length ? 'flex' : 'none';
+      ro.innerHTML = roParts.map(p => {
+        const l = S[p].lock;
+        return '<span>⚠ ' + (l ? esc(l.name) + (l.samePerson ? '（你在另一台）' : '') + '使用中（' + ago(l.last) + '還在改）' : '目前') +
+          '— ' + PART_LABEL[p] + '你現在只能看</span>' + (l && l.canTake ? '<button data-take="' + p + '">接手編輯</button>' : '');
+      }).join('');
+      ro.querySelectorAll('[data-take]').forEach(b => { b.onclick = () => takeover(b.getAttribute('data-take')); });
+    }
+    document.body.classList.toggle('hr-ro-a', !(S['排班'] && S['排班'].mine));
+    document.body.classList.toggle('hr-ro-b', !(S['薪資'] && S['薪資'].mine));
+  }
+
+  window.HR_CLOUD = { start: start, _S: S, _editor: editor };
+})();
+
 // ── BZ HR 網頁版登入層（2026-10-27，W2）：用現有的 LINE 機器人登入，後台在生命值骨架的 網頁登入.gs ──
 // 網址決定這頁管哪一區（hr.bzhouse.tw/abao_xh/＝溪湖埤頭、/abao_sg/＝伸港，照 POS「客戶＋區」那一層）；
-// 登入後依夥伴帳號給頁面：區人資 1～3 頁、區行政 4～5 頁、老闆全部。資料還是存這台瀏覽器（存雲端是 W3）。
+// 登入後依夥伴帳號給頁面：區人資 1～3 頁、區行政 4～5 頁、老闆全部。資料存雲端見 雲端存檔.js（W3）。
 // 登入金鑰存在這個網域的 localStorage（bzhr_token），兩區網址同一個網域，登入一次兩區都算。
 (function () {
   const HR_API = {
@@ -2763,6 +3010,8 @@ v7RestoreAutoSave();
       body: JSON.stringify(Object.assign({ hrApi: 1, op: op }, extra || {})) });
     return r.json();
   }
+  // 給雲端存檔.js 用
+  window.HR_CALL = call; window.HR_TOKEN = getToken; window.HR_API_URL = HR_API[PATH]; window.HR_REGION = REGION;
 
   function stopTimers() { clearInterval(pollTimer); clearInterval(countdownTimer); pollTimer = countdownTimer = null; }
   function screen(sub, html) { $('hg-title').textContent = 'BZ HR 排班薪資系統（' + REGION + '）'; $('hg-sub').textContent = sub; $('hg-body').innerHTML = html; }
@@ -2853,7 +3102,7 @@ v7RestoreAutoSave();
   }
 
   // ── 進到 v8：只給看得到的頁、門市範圍鎖在這一區 ──
-  function enter(me) {
+  async function enter(me) {
     stopTimers();
     window.HR_ME = me;
     const allowed = me.pages.slice();
@@ -2862,9 +3111,13 @@ v7RestoreAutoSave();
     bar.className = 'hr-userbar';
     bar.innerHTML = '<span>' + esc(me.name) + '・' + esc(roleLabel) + '・' + esc(REGION) + '</span>' +
       (me.paths || []).filter(x => x.path !== PATH).map(x => '<a href="../' + esc(x.path) + '/">切到' + esc(x.region) + '</a>').join('') +
-      '<button id="hr-logout">登出</button>';
+      '<span id="hr-sync"></span><button id="hr-logout">登出</button>';
     const right = document.querySelector('.sys-hdr > div:last-child');
     if (right) right.insertBefore(bar, right.firstChild);
+    const ro = document.createElement('div');   // 「某某使用中，你只能看」那條（雲端存檔.js 填內容）
+    ro.id = 'hr-ro'; ro.style.display = 'none';
+    const hdr = document.querySelector('.sys-hdr');
+    if (hdr) hdr.parentNode.insertBefore(ro, hdr.nextSibling);
     $('hr-logout').onclick = () => { if (confirm('確定要登出嗎？（這台瀏覽器裡的排班資料不會刪掉）')) logout(); };
 
     // 門市範圍只有這一區（網址決定，老闆要看別區用上面的「切到…」）
@@ -2899,8 +3152,18 @@ v7RestoreAutoSave();
       }
       origGoPage(p);
     };
-    if (allowed.indexOf(curPage) >= 0 && curPage <= Math.max(maxUnlocked, adminOnly ? 4 : 0)) renderTopnav();
-    else goPage(allowed.filter(p => p <= maxUnlocked || (adminOnly && p === 4))[0] || allowed[0]);
+    // 停在有權限、已經解鎖的頁（雲端資料載入、重新還原之後也要再跑一次，雲端存檔.js 會呼叫）
+    window.HR_FIX_PAGE = function () {
+      if (allowed.indexOf(curPage) >= 0 && curPage <= Math.max(maxUnlocked, adminOnly ? 4 : 0)) renderTopnav();
+      else goPage(allowed.filter(p => p <= maxUnlocked || (adminOnly && p === 4))[0] || allowed[0]);
+    };
+    window.HR_FIX_PAGE();
+    // W3：先把雲端的資料載進來才放人進去（載入中不能改，免得跟雲端的資料打架）
+    if (window.HR_CLOUD) {
+      screen('正在讀取雲端資料…', '');
+      try { await window.HR_CLOUD.start(me); }
+      catch (e) { console.error(e); alert('讀取雲端資料失敗，這次先用這台瀏覽器的資料、不會存上雲端。請檢查網路後重新整理。'); }
+    }
     document.getElementById('hr-gate').style.display = 'none';
     // v8 還沒有手機版：進去後手機照舊顯示縮小的電腦版（跟現在本機 v8 一樣），手機版是待辦 2g
     const vp = document.getElementById('hr-vp');
