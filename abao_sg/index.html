@@ -215,6 +215,10 @@ input[type=text],input[type=number],select{border:1px solid #ccc;border-radius:5
 #hr-gate .hg-say{font-size:14px;background:#f4f3fb;border-radius:6px;padding:8px 10px;margin-top:6px;word-break:break-all}
 #hr-gate .hg-small{font-size:12px;color:#888;margin-top:6px}
 #hr-gate a{color:#534AB7}
+#hr-gate .hg-pick{display:flex;gap:12px}
+#hr-gate .hg-big{flex:1;background:#534AB7;color:#fff;border:0;border-radius:10px;padding:18px 8px;font-size:16px;line-height:1.6;cursor:pointer}
+#hr-gate .hg-steps{font-size:15px;line-height:1.9;padding-left:22px;margin:0 0 6px}
+#hr-gate .hg-p{font-size:14px;margin:8px 0 0}
 .hr-userbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10px;color:#fff}
 .hr-userbar button,.hr-userbar a{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:5px;padding:4px 8px;font-size:9px;cursor:pointer;white-space:nowrap;text-decoration:none}
 </style>
@@ -2739,9 +2743,10 @@ v7RestoreAutoSave();
     abao_sg: 'https://script.google.com/macros/s/AKfycbzVzNdFz_ZjNsqMwtIvJb4oG4Z-05m_QW5aX28pCuiLh_X-c_p0lP-59nAxGA8KcdKa/exec'
   };
   const HR_REGION_NAME = { abao_xh: '溪湖埤頭', abao_sg: '伸港' };
+  const HR_BOT_NAME = { abao_xh: '溪湖Abao', abao_sg: '伸港Abao' };   // 兩區人資機器人在 LINE 上的名字（@628geihr、@676jflve）
   const TOKEN_KEY = 'bzhr_token';
   const PATH = window.HR_PATH;
-  const REGION = HR_REGION_NAME[PATH];
+  const REGION = HR_REGION_NAME[PATH], BOT = HR_BOT_NAME[PATH];
   const POLL_MS = 4000;
   const $ = id => document.getElementById(id);
   let pollTimer = null, countdownTimer = null;
@@ -2762,14 +2767,21 @@ v7RestoreAutoSave();
   function stopTimers() { clearInterval(pollTimer); clearInterval(countdownTimer); pollTimer = countdownTimer = null; }
   function screen(sub, html) { $('hg-title').textContent = 'BZ HR 排班薪資系統（' + REGION + '）'; $('hg-sub').textContent = sub; $('hg-body').innerHTML = html; }
 
+  // 登入畫面（老闆 10-27 選 A）：先問用手機還是電腦，點了只顯示那一種的步驟
   function showLogin(msg) {
     stopTimers();
-    screen('請用 LINE 登入', '<div class="hg-msg">' + esc(msg || '') + '</div>' +
-      '<div class="hg-way" style="border-top:0;margin-top:0;padding-top:0"><h2>📱 用手機</h2>' +
-      '<p>在 LINE 傳「<b>網頁版</b>」給 A-Bao ' + esc(REGION) + '的人資機器人，點它回的按鈕就會登入。</p></div>' +
-      '<div class="hg-way"><h2>💻 用電腦</h2><p>按下面的按鈕，畫面會出現 6 位數字，再用手機在 LINE 傳給機器人。</p>' +
-      '<button class="hg-btn" id="hg-start">顯示登入數字</button></div>');
-    $('hg-start').onclick = startCode;
+    screen('你現在用哪個開這個網頁？', '<div class="hg-msg">' + esc(msg || '') + '</div>' +
+      '<div class="hg-pick"><button class="hg-big" id="hg-phone">📱<br>我用手機</button><button class="hg-big" id="hg-pc">💻<br>我用電腦</button></div>');
+    $('hg-phone').onclick = showPhone;
+    $('hg-pc').onclick = startCode;
+  }
+
+  function showPhone() {
+    stopTimers();
+    screen('用手機登入', '<ol class="hg-steps"><li>打開 LINE，進入「<b>' + esc(BOT) + '</b>」</li><li>傳「<b>網頁版</b>」</li>' +
+      '<li>點它回的「<b>開啟網頁版</b>」按鈕<br><span class="hg-small">→ 會自動打開這個網頁並登入</span></li></ol>' +
+      '<button class="hg-btn hg-ghost" id="hg-back">回上一步</button>');
+    $('hg-back').onclick = () => showLogin();
   }
 
   function newSecret() {
@@ -2784,12 +2796,12 @@ v7RestoreAutoSave();
     try { r = await call('start', { secret: (startCode.secret = newSecret()) }); } catch (e) { return showError(); }
     if (!r.ok) return showLogin(r.reason === 'busy' ? '現在按的人太多，請等一分鐘再試' : '取得登入數字失敗，請再試一次');
     let left = (r.minutes || 5) * 60;
-    screen('用手機在 LINE 傳下面這句給機器人', '<div class="hg-code">' + esc(r.code) + '</div>' +
-      '<div class="hg-say">網頁登入 ' + esc(r.code) + '</div>' +
-      '<div class="hg-small" id="hg-left"></div><div class="hg-small">傳了之後這個畫面會自動進去，不用按任何東西。</div>' +
+    screen('用電腦登入', '<div class="hg-code">' + esc(r.code) + '</div>' +
+      '<p class="hg-p">用手機在 LINE「<b>' + esc(BOT) + '</b>」傳：</p><div class="hg-say">網頁登入 ' + esc(r.code) + '</div>' +
+      '<div class="hg-small">傳完這裡會自動進去，不用按任何東西（<span id="hg-left"></span>）</div>' +
       '<button class="hg-btn hg-ghost" id="hg-back">回上一步</button>');
     $('hg-back').onclick = () => showLogin();
-    const tick = () => { left--; const el = $('hg-left'); if (el) el.textContent = '還有 ' + Math.floor(left / 60) + ' 分 ' + ('0' + left % 60).slice(-2) + ' 秒有效'; if (left <= 0) showLogin('登入數字過期了，請重新按「顯示登入數字」'); };
+    const tick = () => { left--; const el = $('hg-left'); if (el) el.textContent = '還有 ' + Math.floor(left / 60) + ':' + ('0' + left % 60).slice(-2); if (left <= 0) showLogin('登入數字過期了，請重新按「顯示登入數字」'); };
     tick(); countdownTimer = setInterval(tick, 1000);
     pollTimer = setInterval(async () => {
       let p;
