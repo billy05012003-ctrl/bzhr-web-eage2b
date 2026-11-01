@@ -106,6 +106,8 @@ input[type=text],input[type=number],select{border:1px solid #ccc;border-radius:5
 .conf-item:last-child{border-bottom:none}
 .ok-box{background:#D4EDDA;border:1px solid #90C090;border-radius:6px;padding:7px 10px;margin-bottom:8px;font-size:9px;color:#155724;font-weight:500}
 .bottom-btns{padding:8px 10px;border-top:1px solid #ddd;display:flex;gap:6px;background:#fff;flex-shrink:0}
+.sec-save{margin-left:auto;margin-right:6px;font-size:8px;padding:1px 6px;border-radius:8px;white-space:nowrap}
+.sec-save.ok{background:#E8F6EE;color:#1E6B3A}.sec-save.busy{background:#FFF3C4;color:#7A5500}.sec-save.ro{background:#f0f0f0;color:#777}.sec-save.bad{background:#FADBD8;color:#A32D2D}
 .btn-gen{background:#534AB7;color:#fff;border:none;padding:8px 0;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;flex:1}
 .btn-gen:hover{background:#3C3489}
 .btn-dl{background:#3B6D11;color:#fff;border:none;padding:8px 0;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;flex:1}
@@ -238,36 +240,30 @@ button[onclick="v7ClearAutoSave()"]{display:none!important}
 <div class="panel-scroll">
 
 <div class="sec" id="s-date"><div class="sh" onclick="tog('s-date')"><div class="st">📅 假表設定</div><span id="cv-s-date">▲</span></div><div class="sb">
-<div class="r2"><div class="fg" style="margin-top:0"><label>年</label><input type="number" id="yr" value="2026" min="2024" max="2030" onchange="checkHint()"></div><div class="fg" style="margin-top:0"><label>月</label><input type="number" id="mo" value="7" min="1" max="12" onchange="checkHint()"></div></div>
+<div class="r2"><div class="fg" style="margin-top:0"><label>年</label><input type="number" id="yr" value="2026" min="2024" max="2030" onchange="onYMChange()"></div><div class="fg" style="margin-top:0"><label>月</label><input type="number" id="mo" value="7" min="1" max="12" onchange="onYMChange()"></div></div>
 <div style="margin-top:7px;font-size:9px;color:#666;margin-bottom:3px">假日定義</div>
 <div class="cbr"><input type="checkbox" id="sat" checked><label for="sat">星期六算假日</label></div>
 <div class="cbr"><input type="checkbox" id="sun" checked><label for="sun">星期日算假日</label></div>
-<div style="margin-top:7px;font-size:9px;color:#666;margin-bottom:3px">國定假日</div>
-<div id="hint" class="hint" style="display:none"><div style="display:flex;justify-content:space-between;gap:5px;align-items:flex-start"><div><strong id="hint-t"></strong><br><span id="hint-b"></span></div><button onclick="autoFill()" style="background:#534AB7;color:#fff;border:none;padding:2px 6px;border-radius:3px;font-size:8px;cursor:pointer;white-space:nowrap">自動代入</button></div></div>
-<div class="fg"><label>自訂（逗號分隔）</label><input type="text" id="hols" placeholder="例：1,2,3" oninput="renderHolList()"></div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:7px;margin-bottom:3px"><span style="font-size:9px;color:#666">國定假日（自動帶入，不對點 📅 改）</span><button onclick="autoFill()" title="換回這個月的國定假日" style="background:none;border:1px solid #ccc;color:#555;padding:1px 6px;border-radius:4px;font-size:8px;cursor:pointer">↺ 重新帶入</button></div>
+<div style="display:none"><div id="hint" class="hint" style="display:none"><div style="display:flex;justify-content:space-between;gap:5px;align-items:flex-start"><div><strong id="hint-t"></strong><br><span id="hint-b"></span></div><button onclick="autoFill()" style="background:#534AB7;color:#fff;border:none;padding:2px 6px;border-radius:3px;font-size:8px;cursor:pointer;white-space:nowrap">重新帶入</button></div></div></div>
+<div style="display:flex;gap:4px"><input type="text" id="hols" placeholder="沒有國定假日" oninput="renderHolList()" style="flex:1"><button class="badd bsec pk-btn" onclick="openDatePicker('hols')">📅</button></div>
 <div id="hol-list"></div>
-<div style="margin-top:8px;font-size:9px;color:#666;margin-bottom:2px">農曆／特殊備註（格式 日:文字，逗號分隔）</div>
-<input type="text" id="lunar-notes" placeholder="例：1:十六,15:初一限定,16:初二">
-<div style="margin-top:8px;font-size:9px;color:#666;margin-bottom:2px">Excel 底部備註（自由輸入，可多行）</div>
-<textarea id="bottom-notes" placeholder="例：6/21-6/28夏至活動…" style="width:100%;font-size:10px;padding:5px 7px;border:1px solid #ccc;border-radius:5px;min-height:50px;font-family:inherit"></textarea>
-<div style="margin-top:8px;font-size:9px;font-weight:600;margin-bottom:2px">每天出勤人數上限</div>
-<div style="font-size:8px;color:#666;margin-bottom:5px">每天每店出勤人數必須 ≤ 上限，超過則主動排休</div>
+<div style="margin-top:8px;font-size:9px;color:#666;margin-bottom:2px">特殊日備註（打勾才會顯示在假表上；文字可以改；點日期格選日子）</div>
+<div id="note-rows"></div>
+<!-- 2026-11-01 老闆：「其他」「Excel 底部備註」畫面拿掉；留著藏起來給舊存檔、匯出用 -->
+<input type="hidden" id="lunar-notes"><textarea id="bottom-notes" style="display:none"></textarea>
+<div id="need-head"></div>
 <div class="store-tabs" id="need-stabs"></div><div id="need-table"></div>
 </div></div>
 
-<div class="sec" id="s-open"><div class="sh" onclick="tog('s-open')"><div class="st">🏪 開店條件</div><span id="cv-s-open">▲</span></div><div class="sb"><div id="open-conditions"></div></div></div>
+<div class="sec" id="s-open"><div class="sh" onclick="tog('s-open')"><div class="st">🏪 開店條件</div><span class="sec-save" id="ss-s-open"></span><span id="cv-s-open">▲</span></div><div class="sb"><div id="open-conditions"></div></div></div>
 
-<div class="sec" id="s-staff"><div class="sh" onclick="tog('s-staff')"><div class="st">👥 夥伴管理</div><span id="cv-s-staff">▲</span></div><div class="sb">
-<div style="font-size:8px;color:#666;margin-bottom:5px;background:#f0f0f0;padding:4px 7px;border-radius:4px">↑ = 下限（至少排幾天）・月休 = 上限（最多幾天）</div>
+<div class="sec" id="s-staff"><div class="sh" onclick="tog('s-staff')"><div class="st">👥 夥伴管理</div><span class="sec-save" id="ss-s-staff"></span><span id="cv-s-staff">▲</span></div><div class="sb">
 <div id="staff-list"></div>
-<div class="abox"><h4>＋ 新增夥伴</h4>
-<div class="r2"><div class="fg" style="margin-top:0"><label>簡稱</label><input type="text" id="n-name" placeholder="簡稱（兩個字）"></div><div class="fg" style="margin-top:0"><label>所屬門市</label><select id="n-store"><option>平和店</option><option>忠孝店</option><option>培英店</option><option>彰水店</option><option>新港店</option><option>中興店</option><option>機動人員</option></select></div></div>
-<div class="r2"><div class="fg" style="margin-top:0"><label>職別</label><select id="n-type"><option>正職</option><option>計時</option><option>八小時全職</option><option>機動人員</option></select></div><div class="fg" style="margin-top:0"><label>月休上限</label><input type="number" id="n-days" value="6" min="0" max="31"></div></div>
-<div class="r2">
-<div class="fg" style="margin-top:0"><label>平日休下限（天）</label><div class="spin-wrap"><div class="spinner"><button class="spin-up" onclick="spin('n-wd',1,0,8)">▲</button><div class="spinner-val" id="n-wd-v">0</div><button class="spin-dn" onclick="spin('n-wd',-1,0,8)">▼</button></div><input type="hidden" id="n-wd" value="0"></div></div>
-<div class="fg" style="margin-top:0"><label>假日休下限（天）</label><div class="spin-wrap"><div class="spinner"><button class="spin-up" onclick="spin('n-hd',1,0,8)">▲</button><div class="spinner-val" id="n-hd-v">0</div><button class="spin-dn" onclick="spin('n-hd',-1,0,8)">▼</button></div><input type="hidden" id="n-hd" value="0"></div></div>
-</div>
-<div style="font-size:9px;color:#7A5500;margin-top:3px;background:#FFFBEB;padding:3px 6px;border-radius:3px">平日休下限＋假日休下限 ≤ 月休上限</div>
+<button class="badd bsec" id="n-open" onclick="toggleAddStaff(true)">＋ 新增夥伴</button>
+<div class="abox" id="n-box" style="display:none"><h4 style="display:flex;justify-content:space-between">＋ 新增夥伴<span onclick="toggleAddStaff(false)" style="cursor:pointer;color:#999;font-weight:400">✕ 收起</span></h4>
+<div style="display:flex;gap:5px"><div class="fg" style="margin-top:0;flex:1;min-width:0"><label>簡稱</label><input type="text" id="n-name" placeholder="兩個字"></div><div class="fg" style="margin-top:0;flex:1;min-width:0"><label>所屬門市</label><select id="n-store"></select></div><div class="fg" style="margin-top:0;flex:1;min-width:0"><label>職別</label><select id="n-type" onchange="document.getElementById('n-seg-box').innerHTML=staffSegFields('n',{type:this.value,hrs:document.getElementById('n-hrs').value})"><option>正職</option><option>計時</option><option>八小時全職</option><option>機動人員</option></select></div></div>
+<div id="n-days-box"></div><div id="n-seg-box"></div>
 <div style="margin-top:5px"><div style="font-size:9px;color:#666;margin-bottom:2px">能力分級</div>
 <div class="skill-row">
 <label class="ski"><input type="checkbox" id="sk-g"> 煎台<select id="sk-gl" style="width:auto;font-size:8px;padding:1px 2px"><option>丙</option><option>乙</option><option>甲</option></select></label>
@@ -278,17 +274,15 @@ button[onclick="v7ClearAutoSave()"]{display:none!important}
 <button class="badd" onclick="addStaff()">＋ 新增夥伴</button></div>
 </div></div>
 
-<div class="sec" id="s-pin"><div class="sh" onclick="tog('s-pin')"><div class="st">📌 必休／必上</div><span id="cv-s-pin">▲</span></div><div class="sb">
+<div class="sec" id="s-pin"><div class="sh" onclick="tog('s-pin')"><div class="st">📌 必休／必上</div><span class="sec-save" id="ss-s-pin"></span><span id="cv-s-pin">▲</span></div><div class="sb">
 <div id="pin-list"></div>
-<div class="abox"><h4>新增</h4>
-<div class="r2"><div class="fg" style="margin-top:0"><label>夥伴</label><select id="p-staff"></select></div><div class="fg" style="margin-top:0"><label>類型</label><select id="p-type"><option value="off">必休</option><option value="on">必上</option></select></div></div>
-<div style="height:1px;background:#e0e0e0;margin:5px 0"></div>
-<div class="fg" style="margin-top:0"><label>📆 指定日期（逗號分隔）</label><div style="display:flex;gap:4px"><input type="text" id="p-dates" placeholder="不填則略過" style="flex:1"><button class="badd bsec pk-btn" onclick="openDatePicker('p-dates')">📅</button></div></div>
-<div class="fg"><label>📅 指定星期</label><div style="display:flex;gap:4px"><input type="text" id="p-weeks" placeholder="不填則略過" style="flex:1"><button class="badd bsec pk-btn" onclick="openWeekPicker('p-weeks')">📅</button></div></div>
+<button class="badd bsec" id="pn-open" onclick="togglePinAdd(true)">＋ 新增必休／必上</button>
+<div class="abox" id="pn-box" style="display:none"><h4 style="display:flex;justify-content:space-between">＋ 新增必休／必上<span onclick="togglePinAdd(false)" style="cursor:pointer;color:#999;font-weight:400">✕ 收起</span></h4><div id="pn-form"></div>
 <button class="badd" onclick="addPin()">＋ 新增</button></div>
 </div></div>
 
-<div class="sec" id="s-adj"><div class="sh" onclick="tog('s-adj')"><div class="st">✏️ 休假日微調</div><span id="cv-s-adj">▲</span></div><div class="sb">
+<!-- 2026-11-01 老闆：休假日微調畫面拿掉（預覽表拖曳互換、點格子已取代），舊存檔的微調照樣套用 -->
+<div class="sec" id="s-adj" style="display:none"><div class="sh" onclick="tog('s-adj')"><div class="st">✏️ 休假日微調</div><span id="cv-s-adj">▲</span></div><div class="sb">
 <div style="font-size:9px;color:#666;margin-bottom:5px;line-height:1.5">生成班表後，可將休假日從A日挪到B日。</div>
 <div id="adj-list"></div>
 <button class="btn-adj-new" onclick="toggleAdjForm()">新增微調</button>
@@ -319,32 +313,17 @@ button[onclick="v7ClearAutoSave()"]{display:none!important}
 
 <div class="sec" id="s-rules"><div class="sh" onclick="tog('s-rules')"><div class="st">⚙️ 排班規則</div><span id="cv-s-rules">▲</span></div><div class="sb">
 <div class="sub-label">🎯 排班技能</div>
-<div class="skill-block"><div class="sbt"><span>假日避休（計時／機動人員）</span><label class="tog"><input type="checkbox" id="sk-holiday" checked><span class="tog-sl"></span></label></div><div class="sbd">計時和機動人員假日盡量出勤，假日休假只在必休或跨店連動時才排</div></div>
-<div class="skill-block"><div class="sbt"><span>休假間距</span><label class="tog"><input type="checkbox" id="sk-gap" checked><span class="tog-sl"></span></label></div><div class="sbd">分散排休，避免休假過密</div>
-<div style="display:flex;gap:12px;flex-wrap:wrap">
-<div><div style="font-size:9px;color:#666;margin-bottom:2px">最短間距</div><div class="spin-wrap"><div class="spinner"><button class="spin-up" onclick="spin('sk-mingap',1,0,5)">▲</button><div class="spinner-val" id="sk-mingap-v">2</div><button class="spin-dn" onclick="spin('sk-mingap',-1,0,5)">▼</button></div><input type="hidden" id="sk-mingap" value="2"><span style="font-size:9px;color:#666">天</span></div></div>
-</div></div>
-<div class="skill-block"><div class="sbt"><span>平日出勤人力保障</span><label class="tog"><input type="checkbox" id="sk-manpower" checked><span class="tog-sl"></span></label></div><div class="sbd">計算全月可排休平日總名額，等比例調整每位夥伴平日休下限（不足則減少，超出則增加）</div></div>
+<div class="skill-block"><div class="sbt"><span>假日避休（計時人員）</span><label class="tog"><input type="checkbox" id="sk-holiday" checked onchange="schedOpts.holiday=this.checked"><span class="tog-sl"></span></label></div><div class="sbd">開：計時假日不自動排休（要休用必休）。關：計時也照「假日休下限」排假日休</div></div>
+<div class="skill-block"><div class="sbt"><span>休假間距</span><label class="tog"><input type="checkbox" id="sk-gap" checked onchange="schedOpts.gap=this.checked"><span class="tog-sl"></span></label></div><div class="sbd">同一人兩次休假盡量隔開，排不開才放寬；預覽會提醒隔太近的</div>
+<div style="display:flex;align-items:center;gap:4px;font-size:9px;color:#666;margin-top:3px">兩次休假中間至少上班 <input type="number" id="sk-mingap" min="0" max="5" value="2" style="width:40px;padding:1px 3px;font-size:10px" onchange="schedOpts.minGap=Math.max(0,Math.min(5,+this.value||0));this.value=schedOpts.minGap"> 天</div></div>
+<div class="skill-block"><div class="sbt"><span>平日出勤人力保障</span><label class="tog"><input type="checkbox" id="sk-manpower" checked onchange="schedOpts.manpower=this.checked"><span class="tog-sl"></span></label></div><div class="sbd">開：平日能休的名額全部分完（每人平日休可能比下限多）。關：只照每人平日休下限排</div></div>
 
-<div class="sub-label">🏪 門市規則</div><div id="store-rule-list"></div>
-<div class="abox"><h4>新增門市規則</h4><div class="fg" style="margin-top:0"><label>門市</label><select id="r-store"><option>平和店</option><option>忠孝店</option><option>培英店</option><option>彰水店</option><option>新港店</option><option>中興店</option></select></div><div class="fg"><label>規則描述</label><input type="text" id="r-store-desc" placeholder="例：星期六、日2人開店"></div><button class="badd" onclick="addStoreRule()">＋ 新增</button></div>
-
-<div class="sub-label">👤 夥伴規則</div>
-<div style="font-size:8px;color:#888;margin-bottom:4px;padding:3px 6px;background:#f5f5f5;border-radius:3px">同步休假：觸發人休假→夥伴同步休假 ／ 同步出勤：觸發人出勤→夥伴同步出勤</div>
-<div id="staff-rule-list"></div>
-<div class="abox"><h4>新增夥伴規則</h4>
-<div class="r2"><div class="fg" style="margin-top:0"><label>夥伴（被連動）</label><select id="r-staff-name"></select></div><div class="fg" style="margin-top:0"><label>類型</label><select id="r-type"><option>同步休假</option><option>同步出勤</option><option>其他</option></select></div></div>
-<div class="fg"><label>觸發人</label><select id="r-staff"></select></div>
-<div class="fg"><label>描述（可選）</label><input type="text" id="r-staff-desc" placeholder="例：小美平日出勤小華同步出勤"></div>
-<button class="badd" onclick="addStaffRule()">＋ 新增</button></div>
-
-<div class="sub-label">🔄 跨店支援規則</div><div id="cross-list"></div>
-<div class="abox"><h4>新增跨店規則</h4>
-<div class="r2"><div class="fg" style="margin-top:0"><label>支援人員</label><select id="cr-staff"></select></div><div class="fg" style="margin-top:0"><label>支援門市</label><select id="cr-store"><option>平和店</option><option>忠孝店</option><option>培英店</option><option>彰水店</option><option>新港店</option><option>中興店</option></select></div></div>
-<div class="r2"><div class="fg" style="margin-top:0"><label>觸發條件</label><select id="cr-trigger" onchange="toggleNewCondPerson()"><option>固定星期</option><option>特定人休假時</option><option>人力不足時</option><option>其他</option></select></div><div class="fg" style="margin-top:0"><label>星期說明</label><input type="text" id="cr-cond" placeholder="例：星期四"></div></div>
-<div id="cr-cond-person-row" style="display:none"><div class="fg" style="margin-top:0"><label>指定人（休假時觸發）</label><select id="cr-cond-person"></select></div></div>
-<div class="fg" style="margin-top:4px"><label>連動排休人員（可空白）</label><select id="cr-linked-rest"><option value="">— 無 —</option></select></div>
-<button class="badd" onclick="addCrossRule()">＋ 新增</button></div>
+<!-- 2026-11-01 老闆：門市規則只是文字備忘、排班不讀，畫面拿掉（舊文字留在存檔） -->
+<div style="display:none"><div id="store-rule-list"></div></div>
+<div class="sub-label">🔄 支援／連動規則</div><div id="ru-list"></div>
+<button class="badd bsec" id="ru-open" onclick="toggleRuleAdd(true)">＋ 新增規則</button>
+<div class="abox" id="ru-box" style="display:none"><h4 style="display:flex;justify-content:space-between">＋ 新增規則<span onclick="toggleRuleAdd(false)" style="cursor:pointer;color:#999;font-weight:400">✕ 收起</span></h4><div id="ru-form"></div>
+<button class="badd" onclick="addRule()">＋ 新增</button></div>
 
 <div class="sub-label">🗺️ 地區群組</div><div id="group-list"></div>
 <div class="abox"><button class="badd" onclick="addStoreGroup()">＋ 新增群組</button></div>
@@ -359,7 +338,7 @@ button[onclick="v7ClearAutoSave()"]{display:none!important}
 <div class="sctl-wrap" id="store-ctl"></div>
 <button class="btn-hri" onclick="hriPick()" title="區人資排好的 Excel 假表直接當初假表：讀得懂的照填、看不懂的標黃">📥 匯入人資假表</button><input type="file" id="hri-file" accept=".xlsx" style="display:none" onchange="hriOnFile(event)"></div>
 <div class="bottom-btns">
-<button class="btn-gen" onclick="genSchedule()">⚡ 生成初假表</button>
+<button class="btn-gen" onclick="genScheduleBtn()">⚡ 生成初假表</button>
 <button class="btn-dl" id="btn-dl" onclick="downloadExcel()" disabled>⬇ 下載初假表Excel</button>
 </div>
 </div>
@@ -430,7 +409,8 @@ const SKILL_OPTS=['不限','煎台丙','煎台乙','煎台甲','櫃台丙','櫃�
 const TYPE_OPTS=['正職','計時','八小時全職','機動人員','跨店支援'];
 const WN=['一','二','三','四','五','六','日'];
 // 星期的寫法：一律顯示「星期一」（老闆 2026-11-01：不要再用「週」或「周」加一～日）；舊存檔裡的舊寫法讀進來照樣認得
-function weekText(s){return String(s||'').replace(/[週周]([一二三四五六日])/g,'星期$1');}
+// 「週二ㄋㄟㄋㄟ日」「週四定食日」是固定活動名稱（老闆 11-01），不換
+function weekText(s){return String(s||'').replace(/[週周]([一二三四五六日])(?!ㄋㄟㄋㄟ日|定食日)/g,'星期$1');}
 function hasWeekday(s,w){return weekText(s).includes('星期'+w);}
 const HOL={'2026-1':['1'],'2026-2':['9','10','11','12','13'],'2026-4':['4'],'2026-5':['1'],'2026-10':['10'],'2026-12':['25'],'2027-1':['1'],'2027-2':['4','5','8','9','10'],'2027-3':['1'],'2027-4':['5','6','30'],'2027-6':['9'],'2027-9':['15','28'],'2027-10':['11','25'],'2027-12':['24','31']};
 const HOL_N={'2026-1-1':'元旦','2026-2-9':'春節','2026-2-10':'春節','2026-2-11':'春節','2026-2-12':'春節','2026-2-13':'春節','2026-4-4':'兒童節/清明','2026-5-1':'勞動節','2026-10-10':'國慶日','2026-12-25':'行憲紀念日','2027-1-1':'元旦','2027-2-4':'春節(小年夜)','2027-2-5':'春節(除夕)','2027-2-8':'春節(初三)','2027-2-9':'春節補假','2027-2-10':'春節補假','2027-3-1':'和平紀念日補假','2027-4-5':'清明節','2027-4-6':'兒童節補假','2027-4-30':'勞動節補假','2027-6-9':'端午節','2027-9-15':'中秋節','2027-9-28':'教師節','2027-10-11':'國慶日補假','2027-10-25':'光復節','2027-12-24':'行憲紀念日補假','2027-12-31':'元旦補假(117年)'};
@@ -439,7 +419,9 @@ function holYearReady_(y){return Object.keys(HOL).some(k=>k.split('-')[0]===Stri
 let curNS='平和店',eSIdx=-1,ePIdx=-1,eSRIdx=-1,eStRIdx=-1,eCIdx=-1,adjOpen=false,generatedData=null;
 // 門市範圍：預設'xh'(溪湖埤頭)維持既有4店行為不變；選'sg'才切到伸港2店。生成/預覽/匯出全部依這個範圍narrow
 let curScope=window.HR_SCOPE||'xh';
-function selectScope(s){curScope=s;renderScopeBtns();}
+// 人力上限、開店條件只列這一區的店（2026-11-01 老闆：溪湖埤頭、伸港已經拆開，設定不要再合在一起）
+function scopeStoreNames(){return SCOPE_STORES[curScope]||ALL_STORE_NAMES;}
+function selectScope(s){curScope=s;renderScopeBtns();if(typeof renderNeedTabs==='function'){renderNeedTabs();renderNeedTable();renderOpenConds();renderStaff();renderPins();renderStoreGroups();renderRules();}}
 function scopeFileTag(){return curScope==='sg'?'伸港':'溪湖';}
 function renderScopeBtns(){
   const el=document.getElementById('scope-selector');if(!el)return;
@@ -858,8 +840,11 @@ function hriShowFlags(){
 function hriBarHtml(){
   if(!hriActive())return'';
   const n=Object.keys(hrImport.flags||{}).length;
-  return`<div style="margin:4px 0 8px;padding:6px 8px;background:#FFFCEB;border:1px solid #F0E0A0;border-radius:6px;font-size:9px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
-    <span>📥 已匯入人資假表「${hrImport.file}」（${hrImport.stores.join('、')}）</span>
+  const at=hrImport.at?new Date(hrImport.at):null,atTxt=at?`${at.getMonth()+1}/${at.getDate()} ${String(at.getHours()).padStart(2,'0')}:${String(at.getMinutes()).padStart(2,'0')}`:'';
+  return`<div style="margin:4px 0 8px;padding:10px 12px;background:#E8F6EE;border:2px solid #4CAF7A;border-radius:8px;font-size:12px;line-height:1.6">
+    <div style="font-size:13px;font-weight:700;color:#1E6B3A">✅ 已匯入人資假表「${hrImport.file}」（${hrImport.stores.join('、')}）${atTxt}</div>
+    <div style="color:#2E5E3E">這幾間店已經是 ✋手動，<b>不用再按「⚡ 生成初假表」</b>，直接檢查黃框格子就好。再按生成只會重排設成 ⚡自動 的店。</div>
+  </div><div style="margin:0 0 8px;padding:6px 8px;background:#FFFCEB;border:1px solid #F0E0A0;border-radius:6px;font-size:9px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
     ${n?`<span style="color:#9A6B00;font-weight:700">⚠️ 還有 ${n} 格要確認（黃框）</span><button class="sctl-b" onclick="hriShowFlags()">看清單</button>`:'<span style="color:#0F6E56">✅ 黃格都確認完了</span>'}
     ${hrImport.undo?'<button class="sctl-b" onclick="hriUndo()">↩ 復原這次匯入</button>':''}
   </div>`;
@@ -884,9 +869,31 @@ function openCellEdit(name,d){
     ${hriFlagOf(name,d)?`<div style="font-size:9px;color:#9A6B00;background:#FFFCEB;border:1px solid #F0E0A0;border-radius:5px;padding:4px 6px;margin-bottom:6px">⚠️ 人資假表：${hriFlagOf(name,d)}<br>選一個狀態就算確認</div>`:''}
     <div class="ce-opts">${opts.map(([k,l])=>`<button class="ce-opt${curKey===k?' cur':''}" onclick="applyCellEdit('${k}','')">${l}</button>`).join('')}</div>
     ${targets.length?`<div class="fg" style="margin-top:8px"><label>支援到別店</label><div style="display:flex;gap:5px"><select id="ce-target">${targets.map(t=>`<option${t===curTarget?' selected':''}>${t}</option>`).join('')}</select><button class="ce-opt${cur==='sup'?' cur':''}" style="padding:4px 10px;white-space:nowrap;flex-shrink:0" onclick="applyCellEdit('sup',document.getElementById('ce-target').value)">支援</button></div></div>`:''}
+    ${isSegMode()?dayShiftFieldsHtml(s,d):''}
     <div style="font-size:9px;color:#888;margin-top:8px;line-height:1.5">${modeOf(s.store)==='auto'?'這間店是 ⚡v7自動：你設定的格子會變成固定條件，下次按「生成」v7會繞開它排。':'這間店是 ✋手動：改完立即生效，按「生成」也不會被v7改掉。'}</div>
     <div class="modal-btns">${hasEdit&&modeOf(s.store)==='auto'?`<button class="mb-clear" onclick="removeCellEdit()">移除手動設定</button>`:''}<button class="mb-cancel" onclick="closeV8Modal()">取消</button></div>
   </div></div>`;
+}
+// 2026-11-01 時段＋人力：這一天跟平常不一樣（時數、上哪幾段）就在這裡設，只影響這一天的人力和開店條件
+function dayShiftFieldsHtml(s,d){
+  const{y,m}=curYM(),ds=dayShiftEntry(s.name,d,y,m),sg=daySegOf(s,d,y,m),h=ds&&ds.hrs!=null&&ds.hrs!==''?ds.hrs:'';
+  const base=dayHrsOf(Object.assign({},s),d,y,m);
+  return`<div style="margin-top:8px;padding:6px;border:1px dashed #ccc;border-radius:6px;font-size:9px"><div style="font-weight:600;margin-bottom:4px">這一天的時數／時段（跟平常不一樣才改）</div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">時數 <input type="number" id="ce-hrs" min="0" max="16" step="0.5" value="${h}" placeholder="${base}" style="width:46px;font-size:10px">
+    ${SEGS.map(([k,l])=>`<label style="display:flex;align-items:center;gap:2px"><input type="checkbox" id="ce-s${k}"${sg[k]?' checked':''}>${l}</label>`).join('')}</div>
+    <div style="display:flex;gap:5px;margin-top:5px"><button class="ce-opt" style="padding:3px 8px" onclick="applyDayShift()">套用這一天</button>${ds?'<button class="ce-opt" style="padding:3px 8px" onclick="clearDayShift()">回到平常</button>':''}</div></div>`;
+}
+function applyDayShift(){
+  if(!ceCtx)return;const{name,d}=ceCtx,{y,m}=curYM();
+  const hv=document.getElementById('ce-hrs').value,seg={};SEGS.forEach(([k])=>{seg[k]=document.getElementById('ce-s'+k).checked;});
+  dayShifts=dayShifts.filter(x=>!(x.y===y&&x.m===m&&x.name===name&&x.d===d));
+  dayShifts.push({y,m,name,d,hrs:hv===''?null:+hv,seg});
+  closeV8Modal();rerenderPreview();
+}
+function clearDayShift(){
+  if(!ceCtx)return;const{name,d}=ceCtx,{y,m}=curYM();
+  dayShifts=dayShifts.filter(x=>!(x.y===y&&x.m===m&&x.name===name&&x.d===d));
+  closeV8Modal();rerenderPreview();
 }
 function closeV8Modal(){document.getElementById('v8-modal-root').innerHTML='';ceCtx=null;}
 function applyCellEdit(st,target){
@@ -927,6 +934,26 @@ function confirmStorePicker(){
 // 檔名：全選維持原本檔名；只勾部分就加上門市名（例：溪湖排班_2026年11月_平和忠孝_初假表.xlsx）
 function pickedFileTag(sel,all){return sel.length===all.length&&all.every(s=>sel.includes(s))?'':'_'+sel.map(s=>s.replace('店','')).join('');}
 
+// 2026-11-01 時段＋人力的設定（說明見 checkOpen 上面那段）
+let schedMode='seg';   // 'seg'＝新排法（時段＋人力）；'old'＝舊排法
+let fteBase=9.5;       // 標準工時：幾小時＝1 人力
+let forceData=null;    // 每天出勤人力上限（每店星期一～日）；null＝還沒搬，從舊的人數上限帶
+let segConds=null;     // 開店條件（每店每段）；null＝還沒搬，從舊的開店條件組帶
+let dayShifts=[];      // 班表點格子設的當天時數／時段 {y,m,name,d,hrs,seg}
+const SEGS=[['e','開早'],['p','尖峰'],['c','收尾']];
+const HOURLY_UNSET_HRS=4.5;   // 計時人員還沒填時數：先當 4.5 小時算（畫面會提醒去填）
+// 特殊日備註五格（2026-11-01 老闆定）：{on 打勾才顯示, text 文字, dates 日期「1,15」}
+const NOTE_PRESETS=['農曆初一限定','週二ㄋㄟㄋㄟ日','週四定食日','雞塊日',''];   // 「週二ㄋㄟㄋㄟ日」「週四定食日」是固定活動名稱（老闆 11-01），不改成星期
+let noteRows=null;
+// 排班技能開關（2026-11-01 老闆：開關要真的有作用）：假日避休（計時）、休假間距（盡量分開）、平日出勤人力保障
+// 支援／連動規則的種類（開頁一開始就會畫，要放在前面）
+const RULE_KINDS=[['fix','固定星期去支援'],['short','缺人時去支援'],['off','跟著休'],['on','跟著上']];
+let ruEdit=null;
+const SCHED_OPTS_DEFAULT={holiday:true,gap:true,minGap:2,manpower:true};
+let schedOpts=Object.assign({},SCHED_OPTS_DEFAULT);
+function renderSchedOpts(){const c=(id,v)=>{const el=document.getElementById(id);if(el)el.checked=v!==false;};c('sk-holiday',schedOpts.holiday);c('sk-gap',schedOpts.gap);c('sk-manpower',schedOpts.manpower);const g=document.getElementById('sk-mingap');if(g)g.value=schedOpts.minGap;}
+// 休假間距：這一天前後 minGap 天內已經有休假＝太近（排休時先挑不近的，挑不到才放寬）
+function gapNear(name,d,sched){if(!schedOpts.gap||!(schedOpts.minGap>0))return 0;const r=sched[name];if(!r)return 0;for(let k=1;k<=schedOpts.minGap;k++){if(r[d-k]==='off'||r[d+k]==='off')return 1;}return 0;}
 let needsData={平和店:[2,3,2,2,2,3,3],忠孝店:[2,3,2,3,2,3,3],培英店:[3,3,3,3,3,2,2],彰水店:[2,2,2,2,2,2,3],新港店:[3,4,3,4,3,4,5],中興店:[2,2,2,2,2,2,3]};
 
 let openConds={
@@ -976,21 +1003,23 @@ function sameGroup(storeA,storeB){
   if(storeA===storeB)return true;
   return storeGroups.some(g=>g.stores.includes(storeA)&&g.stores.includes(storeB));
 }
+// 2026-11-01 老闆：各網域只顯示自己這一區的群組（別區的群組資料照留，判斷外區支援要用）
 function renderStoreGroups(){
   const el=document.getElementById('group-list');if(!el)return;
-  el.innerHTML=storeGroups.map((g,gi)=>`<div class="adj-card" style="flex-direction:column;align-items:stretch">
+  const sc=scopeStoreNames();
+  el.innerHTML=storeGroups.map((g,gi)=>{
+    if(g.stores.length&&!g.stores.some(st=>sc.includes(st)))return'';
+    const left=sc.filter(st=>!storeGroups.some(x=>x.stores.includes(st)));
+    return`<div class="adj-card" style="flex-direction:column;align-items:stretch">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <input type="text" value="${g.name}" oninput="storeGroups[${gi}].name=this.value" style="font-size:10px;font-weight:600;border:none;background:transparent;width:60%;color:#1a1a1a">
-      <button class="bi" onclick="storeGroups.splice(${gi},1);renderStoreGroups()">🗑</button>
+      <button class="bi" onclick="if(confirm('確定刪除群組「'+storeGroups[${gi}].name+'」？')){storeGroups.splice(${gi},1);renderStoreGroups();}">🗑</button>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0">
-      ${g.stores.map((s,si)=>`<span class="bdg" style="background:#EEEDFE;color:#333">${s}<span style="cursor:pointer;margin-left:4px" onclick="storeGroups[${gi}].stores.splice(${si},1);renderStoreGroups()">×</span></span>`).join('')}
+      ${g.stores.map((st,si)=>`<span class="bdg" style="background:#EEEDFE;color:#333">${st}<span style="cursor:pointer;margin-left:4px" onclick="storeGroups[${gi}].stores.splice(${si},1);renderStoreGroups()">×</span></span>`).join('')}
     </div>
-    <div style="display:flex;gap:4px">
-      <input type="text" id="group-add-${gi}" placeholder="新增門市名稱" style="font-size:10px;flex:1;color:#1a1a1a;background:#fff;width:auto">
-      <button class="badd" style="padding:2px 8px" onclick="const v=document.getElementById('group-add-${gi}').value.trim();if(v){storeGroups[${gi}].stores.push(v);renderStoreGroups();}">＋</button>
-    </div>
-  </div>`).join('');
+    ${left.length?`<select style="font-size:10px;color:#1a1a1a;background:#fff" onchange="if(this.value){storeGroups[${gi}].stores.push(this.value);renderStoreGroups();}"><option value="">＋ 加入門市…</option>${left.map(st=>`<option>${st}</option>`).join('')}</select>`:''}
+  </div>`;}).join('');
 }
 function addStoreGroup(){storeGroups.push({name:'新群組',stores:[]});renderStoreGroups();}
 
@@ -999,43 +1028,114 @@ function tog(id){const s=document.getElementById(id),c=document.getElementById('
 function lvOpts(c){return['丙','乙','甲'].map(l=>`<option${l===c?' selected':''}>${l}</option>`).join('');}
 function skillStr(sk){let p=[];if(sk.g)p.push('煎'+sk.gl);if(sk.c)p.push('櫃'+sk.cl);if(sk.d)p.push('包飲');if(sk.intern)p.push('實習');return p.length?p.join('・'):'—';}
 function checkHint(){const y=+document.getElementById('yr').value,m=+document.getElementById('mo').value;const dates=HOL[`${y}-${m}`]||[];const box=document.getElementById('hint');if(dates.length){document.getElementById('hint-t').textContent=`${y}年${m}月 國定假日`;document.getElementById('hint-b').textContent=`建議代入：${dates.map(d=>`${m}/${d}`).join('、')}`;box.style.display='block';}else box.style.display='none';renderHolList();}
+// 國定假日欄是空的就先帶入這個月的國定假日（開頁、還原存檔時）
+function holsDefault(){const el=document.getElementById('hols');if(el&&!el.value.trim())autoFill();}
+function onYMChange(){autoFill();checkHint();}
 function autoFill(){const y=+document.getElementById('yr').value,m=+document.getElementById('mo').value;document.getElementById('hols').value=(HOL[`${y}-${m}`]||[]).join(',');renderHolList();}
-function renderHolList(){const y=+document.getElementById('yr').value,m=+document.getElementById('mo').value;const dates=document.getElementById('hols').value.split(',').map(s=>s.trim()).filter(s=>s&&!isNaN(+s));const el=document.getElementById('hol-list');if(!dates.length){el.innerHTML='';return;}el.innerHTML=`<div style="background:#f9f9f9;border-radius:4px;padding:5px 7px;margin-top:4px;border:1px solid #e0e0e0">${dates.map(d=>`<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0"><span>${m}/${d}</span><span style="color:#888">${HOL_N[`${y}-${m}-${d}`]||''}</span></div>`).join('')}</div>`;}
-function renderNeedTabs(){document.getElementById('need-stabs').innerHTML=ALL_STORE_NAMES.map(s=>`<button class="stab${s===curNS?' active':''}" onclick="switchNS('${s}')">${s}</button>`).join('');}
+function renderHolList(){const y=+document.getElementById('yr').value,m=+document.getElementById('mo').value;const dates=document.getElementById('hols').value.split(',').map(s=>s.trim()).filter(s=>s&&!isNaN(+s));const el=document.getElementById('hol-list');if(!dates.length){el.innerHTML='';return;}el.innerHTML=`<div style="font-size:9px;color:#888;margin-top:3px">${dates.map(d=>`${m}/${d}${HOL_N[`${y}-${m}-${d}`]?' '+HOL_N[`${y}-${m}-${d}`]:''}`).join('、')}</div>`;}
+function renderNeedTabs(){if(!scopeStoreNames().includes(curNS))curNS=scopeStoreNames()[0];document.getElementById('need-stabs').innerHTML=scopeStoreNames().map(s=>`<button class="stab${s===curNS?' active':''}" onclick="switchNS('${s}')">${s}</button>`).join('');}
 function switchNS(s){curNS=s;renderNeedTabs();renderNeedTable();}
-function renderNeedTable(){const d=needsData[curNS];document.getElementById('need-table').innerHTML=`<div style="background:#f9f9f9;border-radius:6px;padding:7px;border:1px solid #e0e0e0"><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center">${WN.map((day,i)=>`<div><div style="font-size:8px;font-weight:500;color:${i>=5?'#A32D2D':'#666'};margin-bottom:3px">星期${day}</div><select onchange="needsData['${curNS}'][${i}]=+this.value" style="font-size:10px;padding:2px 1px;text-align:center;width:100%">${[0,1,2,3,4].map(n=>`<option${d[i]===n?' selected':''}>${n}</option>`).join('')}</select></div>`).join('')}</div><div style="margin-top:4px;font-size:8px;color:#888;text-align:center">人（每日出勤上限）</div></div>`;}
+function setSchedMode(m){schedMode=m;renderNeedTable();renderOpenConds();if(generatedData)rerenderPreview();}
+function renderNeedTable(){
+  ensureSegData();
+  const head=document.getElementById('need-head');
+  if(head)head.innerHTML=`<div style="display:flex;gap:4px;margin:8px 0 6px;flex-wrap:wrap"><button class="stab${isSegMode()?' active':''}" onclick="setSchedMode('seg')">新排法：時段＋人力</button><button class="stab${isSegMode()?'':' active'}" onclick="setSchedMode('old')">舊排法：人數</button></div>`+(isSegMode()
+    ?`<div style="font-size:9px;font-weight:600;margin-bottom:2px">每天出勤人力上限</div><div style="font-size:8px;color:#666;margin-bottom:5px;line-height:1.6">人力＝時數÷<input type="number" value="${fteBase}" min="1" max="12" step="0.5" style="width:40px;font-size:9px;padding:1px 2px" onchange="fteBase=+this.value||9.5;renderNeedTable();renderStaff();if(generatedData)rerenderPreview()"> 小時，四捨五入到小數一位。例：2 位正職＋1 位 4.5 小時計時＝${fmtForce(2+forceOfHrs(4.5))}。每天每店超過就主動排休。</div>`
+    :`<div style="font-size:9px;font-weight:600;margin-bottom:2px">每天出勤人數上限</div><div style="font-size:8px;color:#666;margin-bottom:5px">每天每店出勤人數必須 ≤ 上限，超過則主動排休</div>`);
+  if(isSegMode()){
+    const d=forceData[curNS];
+    document.getElementById('need-table').innerHTML=`<div style="background:#f9f9f9;border-radius:6px;padding:7px;border:1px solid #e0e0e0"><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center">${WN.map((day,i)=>`<div><div style="font-size:8px;font-weight:500;color:${i>=5?'#A32D2D':'#666'};margin-bottom:3px">星期${day}</div><input type="number" min="0" max="9" step="0.1" value="${d[i]}" onchange="forceData['${curNS}'][${i}]=Math.round((+this.value||0)*10)/10;this.value=forceData['${curNS}'][${i}]" style="font-size:10px;padding:2px 1px;text-align:center;width:100%"></div>`).join('')}</div><div style="margin-top:4px;font-size:8px;color:#888;text-align:center">人力（每日出勤上限，可填小數，例 2.5）</div></div>`;
+    return;
+  }
+  const d=needsData[curNS];document.getElementById('need-table').innerHTML=`<div style="background:#f9f9f9;border-radius:6px;padding:7px;border:1px solid #e0e0e0"><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center">${WN.map((day,i)=>`<div><div style="font-size:8px;font-weight:500;color:${i>=5?'#A32D2D':'#666'};margin-bottom:3px">星期${day}</div><select onchange="needsData['${curNS}'][${i}]=+this.value" style="font-size:10px;padding:2px 1px;text-align:center;width:100%">${[0,1,2,3,4].map(n=>`<option${d[i]===n?' selected':''}>${n}</option>`).join('')}</select></div>`).join('')}</div><div style="margin-top:4px;font-size:8px;color:#888;text-align:center">人（每日出勤上限）</div></div>`;
+}
 function genSummary(store){const c=openConds[store];if(!c||!c.length)return'尚未設定';return c.map(g=>g.rows.map(r=>`${r.count}位${r.type}${r.skill!=='不限'?'('+r.skill+')':''}`).join('＋')).join(' 或 ');}
-function renderOpenConds(){document.getElementById('open-conditions').innerHTML=ALL_STORE_NAMES.map(store=>{const conds=openConds[store];const groups=conds.map((g,gi)=>`<div class="oc-group"><div class="oc-ghdr"><span class="oc-glabel">第${gi+1}組</span><button class="oc-del-g" onclick="delGroup('${store}',${gi})">刪除整組</button></div>${g.rows.map((r,ri)=>`<div class="oc-row"><select onchange="updateOC('${store}',${gi},${ri},'type',this.value)" style="font-size:9px;padding:2px 3px">${TYPE_OPTS.map(t=>`<option${t===r.type?' selected':''}>${t}</option>`).join('')}</select><select onchange="updateOC('${store}',${gi},${ri},'skill',this.value)" style="font-size:9px;padding:2px 3px">${SKILL_OPTS.map(s=>`<option${s===r.skill?' selected':''}>${s}</option>`).join('')}</select><div style="display:flex;align-items:center;gap:1px;font-size:9px">×<input type="number" value="${r.count}" min="1" max="9" style="width:24px;padding:1px 2px;font-size:9px;text-align:center" onchange="updateOC('${store}',${gi},${ri},'count',+this.value)"></div><button class="oc-del-r" onclick="delRow('${store}',${gi},${ri})">×</button></div>`).join('')}<button class="oc-add-m" onclick="addRow('${store}',${gi})">＋ 加夥伴要求</button></div>${gi<conds.length-1?'<div class="oc-or">── 或 ──</div>':''}`).join('');return`<div class="oc-store"><div class="oc-title"><div style="width:7px;height:7px;border-radius:50%;background:${SC[store]}"></div>${store} 開店條件</div><div class="oc-sum">🔑 ${genSummary(store)}</div><div class="oc-hint">滿足以下任何一組就能開店</div>${groups}<button class="oc-add-g" onclick="addGroup('${store}')">＋ 新增條件組</button></div>`;}).join('');}
+function updateSeg(store,k,f,v){ensureSegData();segConds[store][k][f]=f==='on'?!!v:Math.max(0,Math.round(+v||0));renderOpenConds();}
+function segSummary(store){const c=segConds[store]||{};const on=SEGS.filter(([k])=>c[k]&&c[k].on);if(!on.length)return'沒有勾任何時段（不檢查）';return on.map(([k,l])=>`${l} ${c[k].min} 人${+c[k].reg?`（正職 ${c[k].reg}）`:''}`).join('・');}
+function renderOpenConds(){
+  if(isSegMode()){
+    ensureSegData();
+    const num=(store,k,f,v)=>`<input type="number" min="0" max="9" value="${v}" style="width:30px;padding:1px 2px;font-size:10px;text-align:center" onchange="updateSeg('${store}','${k}','${f}',this.value)">`;
+    document.getElementById('open-conditions').innerHTML='<div class="oc-hint">勾了的時段每天都要做到；不勾＝不檢查</div>'+scopeStoreNames().map(store=>{const c=segConds[store];return`<div class="oc-store"><div class="oc-title"><div style="width:7px;height:7px;border-radius:50%;background:${SC[store]}"></div>${store} 開店條件</div>${SEGS.map(([k,l])=>{const r=c[k];return`<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:10px;padding:4px 0;border-top:1px solid #f0f0f0"><label style="display:flex;align-items:center;gap:3px;min-width:54px;font-weight:600"><input type="checkbox"${r.on?' checked':''} onchange="updateSeg('${store}','${k}','on',this.checked)">${l}</label><span style="color:${r.on?'#333':'#bbb'}">至少 ${num(store,k,'min',r.min)} 人，其中正職至少 ${num(store,k,'reg',r.reg)} 位</span></div>`;}).join('')}</div>`;}).join('');
+    return;
+  }
+  document.getElementById('open-conditions').innerHTML=scopeStoreNames().map(store=>{const conds=openConds[store];const groups=conds.map((g,gi)=>`<div class="oc-group"><div class="oc-ghdr"><span class="oc-glabel">第${gi+1}組</span><button class="oc-del-g" onclick="delGroup('${store}',${gi})">刪除整組</button></div>${g.rows.map((r,ri)=>`<div class="oc-row"><select onchange="updateOC('${store}',${gi},${ri},'type',this.value)" style="font-size:9px;padding:2px 3px">${TYPE_OPTS.map(t=>`<option${t===r.type?' selected':''}>${t}</option>`).join('')}</select><select onchange="updateOC('${store}',${gi},${ri},'skill',this.value)" style="font-size:9px;padding:2px 3px">${SKILL_OPTS.map(s=>`<option${s===r.skill?' selected':''}>${s}</option>`).join('')}</select><div style="display:flex;align-items:center;gap:1px;font-size:9px">×<input type="number" value="${r.count}" min="1" max="9" style="width:24px;padding:1px 2px;font-size:9px;text-align:center" onchange="updateOC('${store}',${gi},${ri},'count',+this.value)"></div><button class="oc-del-r" onclick="delRow('${store}',${gi},${ri})">×</button></div>`).join('')}<button class="oc-add-m" onclick="addRow('${store}',${gi})">＋ 加夥伴要求</button></div>${gi<conds.length-1?'<div class="oc-or">── 或 ──</div>':''}`).join('');return`<div class="oc-store"><div class="oc-title"><div style="width:7px;height:7px;border-radius:50%;background:${SC[store]}"></div>${store} 開店條件</div><div class="oc-sum">🔑 ${genSummary(store)}</div><div class="oc-hint">滿足以下任何一組就能開店</div>${groups}<button class="oc-add-g" onclick="addGroup('${store}')">＋ 新增條件組</button></div>`;}).join('');
+}
 function updateOC(store,gi,ri,f,v){openConds[store][gi].rows[ri][f]=v;renderOpenConds();}
 function addRow(store,gi){openConds[store][gi].rows.push({type:'正職',skill:'不限',count:1});renderOpenConds();}
 function delRow(store,gi,ri){openConds[store][gi].rows.splice(ri,1);if(!openConds[store][gi].rows.length)openConds[store].splice(gi,1);renderOpenConds();}
 function addGroup(store){openConds[store].push({rows:[{type:'正職',skill:'不限',count:1}]});renderOpenConds();}
 function delGroup(store,gi){openConds[store].splice(gi,1);renderOpenConds();}
-function renderStaff(){document.getElementById('staff-list').innerHTML=allStaff.map((s,i)=>`<div class="card"><div class="ct"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap"><span style="font-size:10px;font-weight:600">${s.name}</span><span class="bdg" style="background:${SB[s.store]||'#FFFBEB'};color:${SC[s.store]||'#7A5500'}">${s.store==='機動人員'?'機動':s.store.replace('店','')}</span><span class="bdg" style="background:#f0f0f0;color:#555">${s.type}</span><span class="bdg" style="background:#E8F4FD;color:#0C447C">平${s.wd}↑ 假${s.hd}↑ 月${s.days}↑</span></div><div style="font-size:8px;color:#888;margin-top:1px">${skillStr(s.sk)}</div></div><div class="sa"><button class="bi" onclick="editS(${i})">✏️</button><button class="bi" onclick="delS(${i})">🗑</button></div></div>${eSIdx===i?renderES(i):''}</div>`).join('');}
+// 夥伴的時數、時段（2026-11-01）：卡片上的小標、編輯表單、讀表單
+function staffHrsBadge(s){const h=staffHrsOf(s),miss=h==null;return`<span class="bdg" style="background:${miss?'#FADBD8':'#F1F8E9'};color:${miss?'#A32D2D':'#33691E'}" title="人力 ${miss?'—':fmtForce(forceOfHrs(h))}">${miss?'時數沒填':h+'h'}・${segText(staffSegOf(s))}</span>`;}
+function staffSegFields(p,s){const sg=staffSegOf(s),h=s.hrs!=null&&s.hrs!==''?s.hrs:'',dh=typeDefaultHrs(s.type);return`<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:5px;font-size:9px;color:#666"><span>時數</span><input type="number" id="${p}-hrs" min="0" max="16" step="0.5" value="${h}" placeholder="${dh==null?'要填':dh}" title="空白＝${dh==null?'沒填（計時要填）':dh+' 小時'}" style="width:46px;padding:2px 3px;font-size:10px"><span>h</span><span style="color:#ccc">｜</span>${SEGS.map(([k,l])=>`<label class="ski"><input type="checkbox" id="${p}-s${k}"${sg[k]?' checked':''}> ${l}</label>`).join('')}</div>`;}
+// 平日休下限、假日休下限、月休上限：同一行三格；加起來超過才跳黃色提醒
+function staffDaysFields(p,dId,s){const inp=(id,v,l)=>`<div class="fg" style="margin-top:0;flex:1;min-width:0"><label>${l}</label><input type="number" id="${id}" value="${v}" min="0" max="31" oninput="chkDaysWarn('${p}','${dId}')"></div>`;return`<div style="display:flex;gap:5px;margin-top:5px">${inp(p+'-wd',s.wd,'平日休下限')}${inp(p+'-hd',s.hd,'假日休下限')}${inp(dId,s.days,'月休上限')}</div><div id="${p}-dwarn" style="display:${(+s.wd||0)+(+s.hd||0)>(+s.days||0)?'block':'none'};font-size:9px;color:#7A5500;margin-top:3px;background:#FFFBEB;padding:3px 6px;border-radius:3px">⚠ 平日休下限＋假日休下限 超過 月休上限了</div>`;}
+function chkDaysWarn(p,dId){const v=id=>+(document.getElementById(id)||{}).value||0;const el=document.getElementById(p+'-dwarn');if(el)el.style.display=v(p+'-wd')+v(p+'-hd')>v(dId)?'block':'none';}
+// 所屬門市只列這一區的店＋機動人員（原本是別區的店也留著，才不會存檔時被換掉）
+function storeOpts(cur){const list=[...scopeStoreNames(),'機動人員'];if(cur&&ALL_STORES.includes(cur)&&!list.includes(cur))list.push(cur);return list.map(st=>`<option${st===cur?' selected':''}>${st}</option>`).join('');}
+function typeOpts(cur){return['正職','計時','八小時全職','機動人員'].map(t=>`<option${t===cur?' selected':''}>${t}</option>`).join('');}
+// 新增夥伴：平常收成一顆按鈕，按了才展開
+function toggleAddStaff(open){const box=document.getElementById('n-box'),btn=document.getElementById('n-open');if(!box)return;if(open){const ns=document.getElementById('n-store');ns.innerHTML=storeOpts(ns.value||scopeStoreNames()[0]);document.getElementById('n-days-box').innerHTML=staffDaysFields('n','n-days',{wd:0,hd:0,days:6});document.getElementById('n-seg-box').innerHTML=staffSegFields('n',{type:document.getElementById('n-type').value});}box.style.display=open?'':'none';btn.style.display=open?'none':'';}
+function readSegFields(p){const o={},hv=(document.getElementById(p+'-hrs')||{}).value;if(hv!=null&&hv!=='')o.hrs=+hv;const seg={};SEGS.forEach(([k])=>{const el=document.getElementById(p+'-s'+k);seg[k]=!!(el&&el.checked);});o.seg=seg;return o;}
+// 2026-11-01（u）：夥伴設定存了就同步到已生成的班表（預覽、第 2～5 頁讀的是生成那一刻的名單），不用重新生成
+function syncStaffAfterEdit(oldName,obj){
+  if(staff!==allStaff){const k=staff.findIndex(x=>x.name===oldName);if(k>=0)staff[k]=obj;}
+  if(generatedData)rerenderPreview();
+  if(page2Generated&&typeof renderPage2==='function')renderPage2();
+  if(p5Generated&&typeof renderPage5==='function')renderPage5();
+}
+function staffCard(s,i){return`<div class="card"><div class="ct"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap"><span style="font-size:10px;font-weight:600">${s.name}</span><span class="bdg" style="background:#f0f0f0;color:#555">${s.type}</span><span class="bdg" style="background:#E8F4FD;color:#0C447C" title="平日休下限・假日休下限・月休上限">平日休≥${s.wd}・假日休≥${s.hd}・月休≤${s.days}</span>${staffHrsBadge(s)}</div><div style="font-size:8px;color:#888;margin-top:1px">${skillStr(s.sk)}</div></div><div class="sa"><button class="bi" onclick="editS(${i})">✏️</button><button class="bi" onclick="delS(${i})">🗑</button></div></div>${eSIdx===i?renderES(i):''}</div>`;}
+// 名單依門市分組：這一區的店→機動人員→別區的店
+function renderStaff(){
+  const order=[...scopeStoreNames(),'機動人員',...ALL_STORE_NAMES.filter(x=>!scopeStoreNames().includes(x))];
+  allStaff.forEach(p=>{if(!order.includes(p.store))order.push(p.store);});
+  document.getElementById('staff-list').innerHTML=order.map(st=>{const list=allStaff.map((p,i)=>[p,i]).filter(([p])=>p.store===st);if(!list.length)return'';return`<div style="display:flex;align-items:center;gap:4px;font-size:9px;font-weight:600;color:#555;margin:7px 0 3px"><div style="width:7px;height:7px;border-radius:50%;background:${SC[st]||'#F5C842'}"></div>${st}<span style="font-weight:400;color:#999">${list.length} 人</span></div>`+list.map(([p,i])=>staffCard(p,i)).join('');}).join('');
+  const nb=document.getElementById('n-box');if(nb&&nb.style.display!=='none'){const ns=document.getElementById('n-store');ns.innerHTML=storeOpts(ns.value);}
+}
 function spES(id,val,mn,mx){return`<div class="spin-wrap"><div class="spinner"><button class="spin-up" onclick="spin('${id}',1,${mn},${mx})">▲</button><div class="spinner-val" id="${id}-v">${val}</div><button class="spin-dn" onclick="spin('${id}',-1,${mn},${mx})">▼</button></div><input type="hidden" id="${id}" value="${val}"></div>`;}
-function renderES(i){const s=allStaff[i];return`<div class="ei"><div class="r2"><div class="fg" style="margin-top:0"><label>簡稱</label><input id="es-n" type="text" value="${s.name}"></div><div class="fg" style="margin-top:0"><label>所屬門市</label><select id="es-s">${ALL_STORES.map(st=>`<option${st===s.store?' selected':''}>${st}</option>`).join('')}</select></div></div><div class="r2"><div class="fg" style="margin-top:0"><label>職別</label><select id="es-t"><option${s.type==='正職'?' selected':''}>正職</option><option${s.type==='計時'?' selected':''}>計時</option><option${s.type==='八小時全職'?' selected':''}>八小時全職</option><option${s.type==='機動人員'?' selected':''}>機動人員</option></select></div><div class="fg" style="margin-top:0"><label>月休上限</label><input id="es-d" type="number" value="${s.days}" min="0" max="31"></div></div><div class="r2"><div class="fg" style="margin-top:0"><label>平日休下限</label>${spES('es-wd',s.wd,0,8)}</div><div class="fg" style="margin-top:0"><label>假日休下限</label>${spES('es-hd',s.hd,0,8)}</div></div><div style="font-size:9px;color:#7A5500;margin-top:3px;background:#FFFBEB;padding:3px 6px;border-radius:3px">平日休下限＋假日休下限 ≤ 月休上限</div><div style="margin-top:5px"><div style="font-size:9px;color:#666;margin-bottom:2px">能力分級</div><div class="skill-row"><label class="ski"><input type="checkbox" id="es-g"${s.sk.g?' checked':''}> 煎台<select id="es-gl" style="width:auto;font-size:8px;padding:1px 2px">${lvOpts(s.sk.gl)}</select></label><label class="ski"><input type="checkbox" id="es-c"${s.sk.c?' checked':''}> 櫃台<select id="es-cl" style="width:auto;font-size:8px;padding:1px 2px">${lvOpts(s.sk.cl)}</select></label><label class="ski"><input type="checkbox" id="es-dr"${s.sk.d?' checked':''}> 包飲</label><label class="ski"><input type="checkbox" id="es-in"${s.sk.intern?' checked':''}> 實習生</label></div></div><div style="display:flex;gap:4px;margin-top:7px"><button class="badd" style="flex:2" onclick="saveS(${i})">儲存</button><button class="badd bsec" style="flex:1" onclick="cancelES()">取消</button></div></div>`;}
+function renderES(i){const s=allStaff[i];return`<div class="ei"><div style="display:flex;gap:5px"><div class="fg" style="margin-top:0;flex:1;min-width:0"><label>簡稱</label><input id="es-n" type="text" value="${s.name}"></div><div class="fg" style="margin-top:0;flex:1;min-width:0"><label>所屬門市</label><select id="es-s">${storeOpts(s.store)}</select></div><div class="fg" style="margin-top:0;flex:1;min-width:0"><label>職別</label><select id="es-t">${typeOpts(s.type)}</select></div></div>${staffDaysFields('es','es-d',s)}${staffSegFields('es',s)}<div style="margin-top:5px"><div style="font-size:9px;color:#666;margin-bottom:2px">能力分級</div><div class="skill-row"><label class="ski"><input type="checkbox" id="es-g"${s.sk.g?' checked':''}> 煎台<select id="es-gl" style="width:auto;font-size:8px;padding:1px 2px">${lvOpts(s.sk.gl)}</select></label><label class="ski"><input type="checkbox" id="es-c"${s.sk.c?' checked':''}> 櫃台<select id="es-cl" style="width:auto;font-size:8px;padding:1px 2px">${lvOpts(s.sk.cl)}</select></label><label class="ski"><input type="checkbox" id="es-dr"${s.sk.d?' checked':''}> 包飲</label><label class="ski"><input type="checkbox" id="es-in"${s.sk.intern?' checked':''}> 實習生</label></div></div><div style="display:flex;gap:4px;margin-top:7px"><button class="badd" style="flex:2" onclick="saveS(${i})">儲存</button><button class="badd bsec" style="flex:1" onclick="cancelES()">取消</button></div></div>`;}
 function editS(i){eSIdx=(eSIdx===i?-1:i);renderStaff();}
 function cancelES(){eSIdx=-1;renderStaff();}
 function saveS(i){
   const wd=+document.getElementById('es-wd').value||0,hd=+document.getElementById('es-hd').value||0,days=+document.getElementById('es-d').value||0;
   if(wd+hd>days){alert(`平日休下限(${wd})+假日休下限(${hd})超過月休上限(${days}天)`);return;}
-  allStaff[i]={name:document.getElementById('es-n').value,store:document.getElementById('es-s').value,type:document.getElementById('es-t').value,days,wd,hd,sk:{g:document.getElementById('es-g').checked,gl:document.getElementById('es-gl').value,c:document.getElementById('es-c').checked,cl:document.getElementById('es-cl').value,d:document.getElementById('es-dr').checked,intern:document.getElementById('es-in').checked}};eSIdx=-1;renderStaff();renderSelects();
+  const old=allStaff[i],newName=document.getElementById('es-n').value.trim();
+  // 2026-11-01（u）：初假表生成之後改簡稱，班表是用簡稱對人的，要重新生成才對得上
+  if(generatedData&&newName!==old.name&&!confirm(`初假表已經生成了，班表是用簡稱對人的。\n把「${old.name}」改成「${newName}」之後，要重新按「⚡ 生成初假表」才對得上（手動、鎖定的店，這個人的格子會變回全出勤）。\n確定要改嗎？`))return;
+  const obj={name:newName,store:document.getElementById('es-s').value,type:document.getElementById('es-t').value,days,wd,hd,sk:{g:document.getElementById('es-g').checked,gl:document.getElementById('es-gl').value,c:document.getElementById('es-c').checked,cl:document.getElementById('es-cl').value,d:document.getElementById('es-dr').checked,intern:document.getElementById('es-in').checked}};
+  Object.assign(obj,readSegFields('es'));
+  allStaff[i]=obj;eSIdx=-1;renderStaff();renderSelects();
+  syncStaffAfterEdit(old.name,obj);
 }
-function delS(i){if(eSIdx===i)eSIdx=-1;allStaff.splice(i,1);renderStaff();renderSelects();}
+function delS(i){const p=allStaff[i];if(!p||!confirm(`確定刪除夥伴「${p.name}」（${p.store}・${p.type}）？${generatedData?'\n已生成的初假表不會跟著改，要重新按「⚡ 生成初假表」。':''}`))return;if(eSIdx===i)eSIdx=-1;else if(eSIdx>i)eSIdx--;allStaff.splice(i,1);renderStaff();renderSelects();}
 function addStaff(){
   const name=document.getElementById('n-name').value.trim();if(!name)return;
   const wd=+document.getElementById('n-wd').value||0,hd=+document.getElementById('n-hd').value||0,days=+document.getElementById('n-days').value||0;
   if(wd+hd>days){alert(`平日休下限(${wd})+假日休下限(${hd})超過月休上限(${days}天)`);return;}
-  allStaff.push({name,store:document.getElementById('n-store').value,type:document.getElementById('n-type').value,days,wd,hd,sk:{g:document.getElementById('sk-g').checked,gl:document.getElementById('sk-gl').value,c:document.getElementById('sk-c').checked,cl:document.getElementById('sk-cl').value,d:document.getElementById('sk-d').checked,intern:document.getElementById('sk-i').checked}});
-  document.getElementById('n-name').value='';['n-wd','n-hd'].forEach(id=>{document.getElementById(id).value=0;document.getElementById(id+'-v').textContent=0;});renderStaff();renderSelects();
+  allStaff.push(Object.assign({name,store:document.getElementById('n-store').value,type:document.getElementById('n-type').value,days,wd,hd,sk:{g:document.getElementById('sk-g').checked,gl:document.getElementById('sk-gl').value,c:document.getElementById('sk-c').checked,cl:document.getElementById('sk-cl').value,d:document.getElementById('sk-d').checked,intern:document.getElementById('sk-i').checked}},readSegFields('n')));
+  document.getElementById('n-hrs').value='';
+  document.getElementById('n-name').value='';toggleAddStaff(false);renderStaff();renderSelects();
 }
-function renderPins(){document.getElementById('pin-list').innerHTML=pins.length?pins.map((p,i)=>`<div class="card"><div class="ct"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:3px;margin-bottom:2px"><span class="bdg ${p.type==='off'?'poff':'pon'}">${p.type==='off'?'必休':'必上'}</span><span style="font-size:10px;font-weight:600">${p.name}</span></div><div style="font-size:8px;color:#888;line-height:1.5">${p.dates?`<div>📆 ${p.dates}</div>`:''}${p.weeks?`<div>📅 ${p.weeks}</div>`:''}</div></div><div class="sa"><button class="bi" onclick="editP(${i})">✏️</button><button class="bi" onclick="delP(${i})">🗑</button></div></div>${ePIdx===i?renderEP(i):''}</div>`).join(''):`<div style="font-size:9px;color:#888;padding:2px 0 5px">尚無設定</div>`;}
-function renderEP(i){const p=pins[i];return`<div class="ei"><div class="r2"><div class="fg" style="margin-top:0"><label>夥伴</label><select id="ep-s">${allStaff.map(s=>`<option${s.name===p.name?' selected':''}>${s.name}</option>`).join('')}</select></div><div class="fg" style="margin-top:0"><label>類型</label><select id="ep-t"><option value="off"${p.type==='off'?' selected':''}>必休</option><option value="on"${p.type==='on'?' selected':''}>必上</option></select></div></div><div style="height:1px;background:#e0e0e0;margin:5px 0"></div><div class="fg" style="margin-top:0"><label>📆 指定日期</label><div style="display:flex;gap:4px"><input id="ep-d" type="text" value="${p.dates||''}" placeholder="不填則略過" style="flex:1"><button class="badd bsec pk-btn" onclick="openDatePicker('ep-d')">📅</button></div></div><div class="fg"><label>📅 指定星期</label><div style="display:flex;gap:4px"><input id="ep-w" type="text" value="${p.weeks||''}" placeholder="不填則略過" style="flex:1"><button class="badd bsec pk-btn" onclick="openWeekPicker('ep-w')">📅</button></div></div><div style="display:flex;gap:4px;margin-top:7px"><button class="badd" style="flex:2" onclick="saveP(${i})">儲存</button><button class="badd bsec" style="flex:1" onclick="cancelEP()">取消</button></div></div>`;}
+// 星期直接勾（2026-11-01 老闆：星期不要手打）；存成「星期一、星期三」
+function weekChecks(p,val){return`<div class="skill-row" style="margin-top:0">${PK_WN.map((w,j)=>`<label class="ski"><input type="checkbox" id="${p}-w${j}"${val&&hasWeekday(val,w)?' checked':''}>${w}</label>`).join('')}</div>`;}
+function readWeeks(p){return PK_WN.filter((w,j)=>{const el=document.getElementById(p+'-w'+j);return el&&el.checked;}).map(w=>'星期'+w).join('、');}
+// 名單分組順序：這一區的店→機動人員→別區的店
+function storeOrder(){const sc=scopeStoreNames();return[...sc,'機動人員',...ALL_STORE_NAMES.filter(x=>!sc.includes(x))];}
+function staffStoreOf(name){return(allStaff.find(p=>p.name===name)||{}).store||'';}
+function groupHdr(st,n){return`<div style="display:flex;align-items:center;gap:4px;font-size:9px;font-weight:600;color:#555;margin:7px 0 3px"><div style="width:7px;height:7px;border-radius:50%;background:${SC[st]||'#F5C842'}"></div>${st||'不在名單'}<span style="font-weight:400;color:#999">${n}</span></div>`;}
+// ① 必休必上：卡片一行、依門市分組
+function pinText(p){const a=[];if(p.weeks)a.push('每'+p.weeks);if(p.dates)a.push(p.dates.split(',').map(x=>x.trim()).filter(Boolean).join('、')+' 日');return a.join('・');}
+function pinFields(p,pin){pin=pin||{};return`<div class="r2"><div class="fg" style="margin-top:0"><label>夥伴</label><select id="${p}-s">${allStaff.map(x=>`<option${x.name===pin.name?' selected':''}>${x.name}</option>`).join('')}</select></div><div class="fg" style="margin-top:0"><label>類型</label><select id="${p}-t"><option value="off"${pin.type!=='on'?' selected':''}>必休</option><option value="on"${pin.type==='on'?' selected':''}>必上</option></select></div></div><div class="fg"><label>每星期幾</label>${weekChecks(p,pin.weeks)}</div><div class="fg"><label>指定日期</label><div style="display:flex;gap:4px"><input id="${p}-d" type="text" value="${pin.dates||''}" placeholder="點 📅 選" readonly onclick="openDatePicker('${p}-d')" style="flex:1;cursor:pointer"><button class="badd bsec pk-btn" onclick="openDatePicker('${p}-d')">📅</button></div></div>`;}
+function readPinFields(p){return{name:document.getElementById(p+'-s').value,type:document.getElementById(p+'-t').value,dates:document.getElementById(p+'-d').value.trim(),weeks:readWeeks(p)};}
+function togglePinAdd(open){const box=document.getElementById('pn-box'),btn=document.getElementById('pn-open');if(!box)return;if(open)document.getElementById('pn-form').innerHTML=pinFields('pn',null);box.style.display=open?'':'none';btn.style.display=open?'none':'';}
+function renderPins(){const el=document.getElementById('pin-list');if(!pins.length){el.innerHTML=`<div style="font-size:9px;color:#888;padding:2px 0 5px">尚無設定</div>`;return;}const order=storeOrder();pins.forEach(p=>{const st=staffStoreOf(p.name);if(!order.includes(st))order.push(st);});el.innerHTML=order.map(st=>{const list=pins.map((p,i)=>[p,i]).filter(([p])=>staffStoreOf(p.name)===st);if(!list.length)return'';return groupHdr(st,list.length+' 筆')+list.map(([p,i])=>`<div class="card"><div class="ct" style="align-items:center"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span class="bdg ${p.type==='off'?'poff':'pon'}">${p.type==='off'?'必休':'必上'}</span><span style="font-size:10px;font-weight:600">${p.name}</span><span style="font-size:9px;color:#666">${pinText(p)}</span></div><div class="sa"><button class="bi" onclick="editP(${i})">✏️</button><button class="bi" onclick="delP(${i})">🗑</button></div></div>${ePIdx===i?renderEP(i):''}</div>`).join('');}).join('');}
+function renderEP(i){return`<div class="ei">${pinFields('ep',pins[i])}<div style="display:flex;gap:4px;margin-top:7px"><button class="badd" style="flex:2" onclick="saveP(${i})">儲存</button><button class="badd bsec" style="flex:1" onclick="cancelEP()">取消</button></div></div>`;}
 function editP(i){ePIdx=(ePIdx===i?-1:i);renderPins();}
 function cancelEP(){ePIdx=-1;renderPins();}
-function saveP(i){pins[i]={name:document.getElementById('ep-s').value,type:document.getElementById('ep-t').value,dates:document.getElementById('ep-d').value.trim(),weeks:document.getElementById('ep-w').value.trim()};ePIdx=-1;renderPins();}
-function delP(i){if(ePIdx===i)ePIdx=-1;pins.splice(i,1);renderPins();}
-function addPin(){const dates=document.getElementById('p-dates').value.trim(),weeks=document.getElementById('p-weeks').value.trim();if(!dates&&!weeks)return;pins.push({name:document.getElementById('p-staff').value,type:document.getElementById('p-type').value,dates,weeks});document.getElementById('p-dates').value='';document.getElementById('p-weeks').value='';renderPins();}
+function saveP(i){const o=readPinFields('ep');if(!o.dates&&!o.weeks){alert('要勾星期幾或選日期');return;}pins[i]=o;ePIdx=-1;renderPins();}
+function delP(i){const p=pins[i];if(!p||!confirm(`確定刪除「${p.name} ${p.type==='off'?'必休':'必上'} ${pinText(p)}」？`))return;if(ePIdx===i)ePIdx=-1;else if(ePIdx>i)ePIdx--;pins.splice(i,1);renderPins();}
+function addPin(){const o=readPinFields('pn');if(!o.dates&&!o.weeks){alert('要勾星期幾或選日期');return;}pins.push(o);togglePinAdd(false);renderPins();}
 let pkState=null;
 const PK_WN=['一','二','三','四','五','六','日'];
 function openDatePicker(targetId){
@@ -1089,6 +1189,9 @@ function savePk(){
   const el=document.getElementById(targetId);
   if(mode==='date')el.value=[...selected].sort((a,b)=>a-b).join(',');
   else el.value=PK_WN.filter(w=>selected.has(w)).map(w=>'星期'+w).join(',');
+  if(targetId==='hols')renderHolList();   // 國定假日欄：下面的清單跟著更新
+  const nm=/^note-d-(\d)$/.exec(targetId);   // 特殊日備註五格：日期寫回去，選了日子就順便打勾
+  if(nm&&noteRows){const r=noteRows[+nm[1]];r.dates=el.value;if(el.value)r.on=true;renderNoteRows();}
   closePk();
 }
 let curAdjType=1;
@@ -1141,16 +1244,15 @@ function renderSelects(){
   const crCp=document.getElementById('cr-cond-person');if(crCp)crCp.innerHTML=allStaff.map(s=>`<option>${s.name}</option>`).join('');
   const crLr=document.getElementById('cr-linked-rest');if(crLr)crLr.innerHTML='<option value="">— 無 —</option>'+allStaff.map(s=>`<option>${s.name}</option>`).join('');
 }
-renderNeedTabs();renderNeedTable();renderOpenConds();renderStaff();renderPins();renderAdj();
-renderStoreRules();renderSelects();checkHint();renderStoreGroups();renderScopeBtns();
-renderStaffRules();renderCross();
+renderNoteRows();renderNeedTabs();renderNeedTable();renderOpenConds();renderStaff();renderPins();renderAdj();
+renderStoreRules();renderSelects();holsDefault();checkHint();renderStoreGroups();renderScopeBtns();
+renderStaffRules();renderCross();renderSchedOpts();
 
 // 覆蓋夥伴規則相關函式
 const RULE_TYPE_DESC={'同步休假':'觸發人休假→夥伴同步休假','同步出勤':'觸發人出勤→夥伴同步出勤','其他':'自訂規則'};
 
-function renderStaffRules(){
-  document.getElementById('staff-rule-list').innerHTML=staffRules.length?staffRules.map((r,i)=>`<div class="card"><div class="ct"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:3px;margin-bottom:2px"><span style="font-size:10px;font-weight:600">${r.name}</span><span class="rtag">${r.type}</span>${r.triggerPerson?`<span style="font-size:8px;color:#888">← ${r.triggerPerson}</span>`:''}</div><div style="font-size:9px;color:#555">${r.desc}</div></div><div class="sa"><button class="bi" onclick="editStR(${i})">✏️</button><button class="bi" onclick="delStR(${i})">🗑</button></div></div>${eStRIdx===i?renderEStR(i):''}</div>`).join(''):`<div style="font-size:9px;color:#888;padding:2px 0 4px">尚無夥伴規則</div>`;
-}
+// 2026-11-01：夥伴規則、跨店支援合成一區，兩邊都改畫「支援／連動規則」
+function renderStaffRules(){renderRules();}
 function renderEStR(i){
   const r=staffRules[i];
   const typeOpts=['同步休假','同步出勤','其他'].map(t=>`<option value="${t}"${t===r.type?' selected':''}>${t}</option>`).join('');
@@ -1169,9 +1271,7 @@ function addStaffRule(){
 }
 
 // 覆蓋跨店支援規則相關函式（新增 linkedRest 欄位）
-function renderCross(){
-  document.getElementById('cross-list').innerHTML=crossRules.map((r,i)=>`<div class="card"><div class="ct"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin-bottom:2px"><span style="font-size:10px;font-weight:600">${r.staff}</span><span style="font-size:9px;color:#888">→</span><span class="bdg" style="background:${SB[r.store]||'#eee'};color:${SC[r.store]||'#333'}">${r.store}</span><span class="rtag">${r.trigger}</span>${r.linkedRest?`<span style="font-size:8px;color:#A32D2D">連動休:${r.linkedRest}</span>`:''}</div><div style="font-size:9px;line-height:1.4">${r.cond}${r.condPerson?` (${r.condPerson}休假時)`:''}</div></div><div class="sa"><button class="bi" onclick="editC(${i})">✏️</button><button class="bi" onclick="delC(${i})">🗑</button></div></div>${eCIdx===i?renderEC(i):''}</div>`).join('');
-}
+function renderCross(){renderRules();}
 function renderEC(i){
   const r=crossRules[i];
   const isSpec=r.trigger==='特定人休假時';
@@ -1180,8 +1280,14 @@ function renderEC(i){
 function toggleCondPerson(v){const el=document.getElementById('ec-cond-person-row');if(el)el.style.display=v==='特定人休假時'?'block':'none';}
 function editC(i){eCIdx=(eCIdx===i?-1:i);renderCross();}
 function cancelEC(){eCIdx=-1;renderCross();}
+// 2026-11-01（v）：「固定星期」「其他」沒填星期＝整個月每天都去支援，存之前先問
+function crossCondOk(trigger,cond){
+  if((trigger==='固定星期'||trigger==='其他')&&!String(cond||'').trim())return confirm('星期說明是空白的，這樣會整個月每天都去支援。\n確定要這樣存嗎？');
+  return true;
+}
 function saveC(i){
   const trigger=document.getElementById('ec-tr').value;
+  if(!crossCondOk(trigger,document.getElementById('ec-c').value))return;
   crossRules[i]={
     staff:document.getElementById('ec-s').value,
     store:document.getElementById('ec-st').value,
@@ -1195,6 +1301,7 @@ function saveC(i){
 function delC(i){if(eCIdx===i)eCIdx=-1;crossRules.splice(i,1);renderCross();}
 function addCrossRule(){
   const trigger=document.getElementById('cr-trigger').value;
+  if(!crossCondOk(trigger,document.getElementById('cr-cond').value))return;
   crossRules.push({
     staff:document.getElementById('cr-staff').value,
     store:document.getElementById('cr-store').value,
@@ -1210,6 +1317,45 @@ function toggleNewCondPerson(){
   const el=document.getElementById('cr-cond-person-row');
   if(el)el.style.display=v==='特定人休假時'?'block':'none';
 }
+// ── 支援／連動規則（2026-11-01 老闆：夥伴規則＋跨店支援合成一區，只留 4 種；星期用勾的）──
+// 資料照舊分兩份存（crossRules、staffRules），排班第 4、6、8D 步照舊讀；舊的其他種類（某人必休時去支援、其他、連動排休）只顯示、可刪，照樣會跑
+function ruleKindOf(src,r){if(src==='c')return r.trigger==='固定星期'?'fix':r.trigger==='人力不足時'?'short':'';return r.type==='同步休假'?'off':r.type==='同步出勤'?'on':'';}
+function ruleList(){return crossRules.map((r,i)=>({src:'c',i,r,k:ruleKindOf('c',r)})).concat(staffRules.map((r,i)=>({src:'s',i,r,k:ruleKindOf('s',r)})));}
+function ruleText(x){const r=x.r;
+  if(x.src==='c'){const lr=r.linkedRest?`，連動休 ${r.linkedRest}`:'';
+    if(x.k==='fix')return`<b>${r.staff}</b> 每${r.cond} → 支援 ${r.store}${lr}`;
+    if(x.k==='short')return`${r.store} 缺人時 → <b>${r.staff}</b> 去支援${r.cond?`（限${r.cond}）`:''}${lr}`;
+    return`<b>${r.staff}</b> → ${r.store}（${r.trigger}${r.cond?' '+r.cond:''}${r.condPerson?'，'+r.condPerson+' 休假時':''}${lr}）`;}
+  if(x.k==='off')return`${r.triggerPerson} 休 → <b>${r.name}</b> 也休`;
+  if(x.k==='on')return`${r.triggerPerson} 上班 → <b>${r.name}</b> 也上`;
+  return`${r.triggerPerson||''} → <b>${r.name}</b>（${r.type}${r.desc?'：'+r.desc:''}）`;}
+function renderRules(){
+  const el=document.getElementById('ru-list');if(!el)return;const list=ruleList();
+  if(!list.length){el.innerHTML='<div style="font-size:9px;color:#888;padding:2px 0 4px">還沒有規則</div>';return;}
+  el.innerHTML=list.map(x=>{const key=x.src+x.i,lab=(RULE_KINDS.find(k=>k[0]===x.k)||[0,'舊規則'])[1];return`<div class="card"><div class="ct" style="align-items:center"><div style="flex:1;min-width:0;font-size:10px"><span class="rtag">${lab}</span> ${ruleText(x)}</div><div class="sa">${x.k?`<button class="bi" onclick="editRule('${key}')">✏️</button>`:''}<button class="bi" onclick="delRule('${x.src}',${x.i})">🗑</button></div></div>${ruEdit===key?ruleEditHtml(x):''}</div>`;}).join('');
+}
+function ruleFormHtml(p,x){const k=x?x.k:'fix',r=x?x.r:{};const sup=x&&x.src==='c',sel=(id,cur)=>`<select id="${p}-${id}">${allStaff.map(s=>`<option${s.name===cur?' selected':''}>${s.name}</option>`).join('')}</select>`;
+  const stores=[...scopeStoreNames(),...ALL_STORE_NAMES.filter(x=>!scopeStoreNames().includes(x))];
+  return`<div class="fg" style="margin-top:0"><label>種類</label><select id="${p}-k" onchange="ruleFormSwitch('${p}')">${RULE_KINDS.map(([v,l])=>`<option value="${v}"${v===k?' selected':''}>${l}</option>`).join('')}</select></div>`+
+    `<div id="${p}-gs"><div class="r2"><div class="fg"><label>誰去支援</label>${sel('ps',sup?r.staff:'')}</div><div class="fg"><label>去哪家店</label><select id="${p}-st">${stores.map(st=>`<option${sup&&st===r.store?' selected':''}>${st}</option>`).join('')}</select></div></div><div class="fg"><label id="${p}-wl"></label>${weekChecks(p,sup?r.cond:'')}</div></div>`+
+    `<div id="${p}-gl"><div class="r2"><div class="fg"><label id="${p}-al"></label>${sel('a',!sup&&x?r.triggerPerson:'')}</div><div class="fg"><label id="${p}-bl"></label>${sel('b',!sup&&x?r.name:'')}</div></div></div>`;}
+// 換種類：只顯示這一種要填的欄位
+function ruleFormSwitch(p){const k=document.getElementById(p+'-k').value,sup=k==='fix'||k==='short';document.getElementById(p+'-gs').style.display=sup?'':'none';document.getElementById(p+'-gl').style.display=sup?'none':'';
+  document.getElementById(p+'-wl').textContent=k==='fix'?'每星期幾去':'只看星期幾（不勾＝每天都看）';document.getElementById(p+'-al').textContent=k==='off'?'當這個人休假':'當這個人上班';document.getElementById(p+'-bl').textContent=k==='off'?'這個人也跟著休':'這個人也跟著上';}
+function readRuleForm(p){const k=document.getElementById(p+'-k').value,v=id=>document.getElementById(p+'-'+id).value;
+  if(k==='fix'||k==='short'){const cond=readWeeks(p);if(k==='fix'&&!cond){alert('固定星期去支援要勾星期幾');return null;}
+    if(staffStoreOf(v('ps'))===v('st')){alert(`${v('ps')} 本來就是 ${v('st')} 的人，不用設支援`);return null;}
+    return{src:'c',obj:{staff:v('ps'),store:v('st'),trigger:k==='fix'?'固定星期':'人力不足時',cond,condPerson:''}};}
+  if(v('a')===v('b')){alert('兩個人要選不一樣的');return null;}
+  return{src:'s',obj:{name:v('b'),type:k==='off'?'同步休假':'同步出勤',triggerPerson:v('a'),triggerState:k==='off'?'off':'work',desc:''}};}
+function ruleEditHtml(x){return`<div class="ei">${ruleFormHtml('eru',x)}<div style="display:flex;gap:4px;margin-top:7px"><button class="badd" style="flex:2" onclick="saveRule('${x.src}',${x.i})">儲存</button><button class="badd bsec" style="flex:1" onclick="ruEdit=null;renderRules()">取消</button></div></div>`;}
+function editRule(key){ruEdit=ruEdit===key?null:key;renderRules();if(ruEdit)ruleFormSwitch('eru');}
+function saveRule(src,i){const res=readRuleForm('eru');if(!res)return;const arr=src==='c'?crossRules:staffRules;
+  if(res.src===src)arr[i]=Object.assign({},arr[i],res.obj);else{arr.splice(i,1);(res.src==='c'?crossRules:staffRules).push(res.obj);}
+  ruEdit=null;renderRules();}
+function delRule(src,i){const arr=src==='c'?crossRules:staffRules,x={src,i,r:arr[i],k:ruleKindOf(src,arr[i])};if(!confirm('確定刪除這條規則？\n'+ruleText(x).replace(/<[^>]+>/g,'')))return;arr.splice(i,1);ruEdit=null;renderRules();}
+function addRule(){const res=readRuleForm('ru');if(!res)return;(res.src==='c'?crossRules:staffRules).push(res.obj);toggleRuleAdd(false);renderRules();}
+function toggleRuleAdd(open){const box=document.getElementById('ru-box'),btn=document.getElementById('ru-open');if(!box)return;if(open){document.getElementById('ru-form').innerHTML=ruleFormHtml('ru',null);ruleFormSwitch('ru');}box.style.display=open?'':'none';btn.style.display=open?'none':'';}
 
 // ── 核心生成邏輯 v26 ── 同 v24，修正預覽+Excel格式
 const RANK={'丙':0,'乙':1,'甲':2};
@@ -1230,7 +1376,79 @@ function matchReq(s,req,supInStore){
   return true;
 }
 
+// ── 排班：時段＋人力（2026-11-01 老闆定）──
+// 每天出勤人力上限：管「量」，人力＝時數÷標準工時（9.5），四捨五入到小數一位，超過就主動排休。
+// 開店條件：管「時段有沒有人」，每店每段（開早／尖峰／收尾）勾了就要至少幾人、其中正職幾位。
+// 夥伴：每人時數＋上哪幾段；班表點格子可以設某天的時數／時段。舊排法（人數上限＋開店條件組）保留，設定頁可以切回去。
+// （時段＋人力的設定變數放在 needsData 旁邊：開頁就要畫設定畫面，要先宣告）
+function isSegMode(){return schedMode!=='old';}
+// 時段預設：計時做滿 8 小時以上算整天三段（老闆 11-01：計時 9.5 勾開早、尖峰、收尾），短的算開早＋尖峰；其他身分三段
+function typeDefaultSeg(t,h){return t==='計時'&&!(+h>=8)?{e:true,p:true,c:false}:{e:true,p:true,c:true};}
+function typeDefaultHrs(t){return t==='八小時全職'?8:t==='計時'?null:9.5;}
+function staffHrsOf(s){return s&&s.hrs!=null&&s.hrs!==''?+s.hrs:typeDefaultHrs(s&&s.type);}
+function staffSegOf(s){return(s&&s.seg)||typeDefaultSeg(s&&s.type,staffHrsOf(s));}
+function forceOfHrs(h){return Math.round((+h||0)/(+fteBase||9.5)*10)/10;}
+function fmtForce(x){return(Math.round(x*10)/10).toFixed(1);}
+function segText(seg){return SEGS.filter(([k])=>seg&&seg[k]).map(([,l])=>l).join('＋')||'沒有勾時段';}
+function curYM(){return generatedData?{y:generatedData.y,m:generatedData.m}:{y:+document.getElementById('yr').value,m:+document.getElementById('mo').value};}
+// 從舊設定搬一次：上限整數直接當人力；開店條件三段都勾，人數、正職數照最寬鬆那組
+function ensureSegData(){
+  if(!forceData){forceData={};ALL_STORE_NAMES.forEach(st=>{forceData[st]=(needsData[st]||[0,0,0,0,0,0,0]).map(n=>+n||0);});}
+  if(!segConds){
+    segConds={};
+    ALL_STORE_NAMES.forEach(st=>{
+      const gs=(openConds[st]||[]).map(g=>({tot:g.rows.reduce((a,r)=>a+(+r.count||0),0),reg:g.rows.filter(r=>r.type==='正職').reduce((a,r)=>a+(+r.count||0),0)}));
+      const min=gs.length?Math.min(...gs.map(g=>g.tot)):1,reg=gs.length?Math.min(...gs.map(g=>g.reg)):0;
+      segConds[st]={};SEGS.forEach(([k])=>{segConds[st][k]={on:true,min,reg};});
+    });
+  }
+  ALL_STORE_NAMES.forEach(st=>{
+    if(!forceData[st])forceData[st]=[0,0,0,0,0,0,0];
+    if(!segConds[st]){segConds[st]={};SEGS.forEach(([k])=>{segConds[st][k]={on:true,min:1,reg:0};});}
+  });
+}
+// 某人某天的時數：點格子設的 → 人資假表寫的計時時數 → 名單上的時數 → 計時沒填先當 4.5
+function dayShiftEntry(name,d,y,m){return dayShifts.find(x=>x.y===y&&x.m===m&&x.name===name&&x.d===d)||null;}
+function dayHrsOf(s,d,y,m){
+  const ds=dayShiftEntry(s.name,d,y,m);
+  if(ds&&ds.hrs!=null&&ds.hrs!=='')return +ds.hrs;
+  if(hrImport&&hrImport.y===y&&hrImport.m===m){const h=(hrImport.hours||[]).find(x=>x.name===s.name&&x.d===d&&x.kind==='計時');if(h&&h.hours)return +h.hours;}
+  const h=staffHrsOf(s);return h==null?HOURLY_UNSET_HRS:h;
+}
+function daySegOf(s,d,y,m){const ds=dayShiftEntry(s.name,d,y,m);return(ds&&ds.seg)||staffSegOf(s);}
+function personForce(s,d){const{y,m}=curYM();return forceOfHrs(dayHrsOf(s,d,y,m));}
+// 這天在這間店上班的人（本店沒休、沒去支援＋來支援的人）
+function presentAt(store,d,sched,supMap){
+  const home=staff.filter(s=>s.store===store&&sched[s.name]&&sched[s.name][d]!=='off'&&sched[s.name][d]!=='sup');
+  const sup=((supMap||{})[store+'_'+d]||[]).map(n=>staff.find(s=>s.name===n)).filter(Boolean);
+  return[...new Map([...home,...sup].map(s=>[s.name,s])).values()];
+}
+function dayForceAt(store,d,sched,supMap){return Math.round(presentAt(store,d,sched,supMap).reduce((a,s)=>a+personForce(s,d),0)*10)/10;}
+function forceLimitOf(store,wd){ensureSegData();return +((forceData[store]||[])[wd])||0;}
+// 開店條件（新）：有勾的每一段，人數、正職數夠不夠；回傳不夠的地方（空的＝夠）
+function segShortOf(store,d,sched,supMap){
+  ensureSegData();
+  const{y,m}=curYM(),c=segConds[store]||{},ppl=presentAt(store,d,sched,supMap),out=[];
+  SEGS.forEach(([k,label])=>{
+    const r=c[k];if(!r||!r.on)return;
+    const inSeg=ppl.filter(s=>{const sg=daySegOf(s,d,y,m);return sg&&sg[k];});
+    const n=inSeg.length,reg=inSeg.filter(s=>s.type==='正職').length;
+    if(n<(+r.min||0))out.push(`${label}少 ${(+r.min||0)-n} 人`);
+    else if(reg<(+r.reg||0))out.push(`${label}少 ${(+r.reg||0)-reg} 位正職`);
+  });
+  return out;
+}
+// 網頁版第一次打開：名單上還沒填時數的人，用骨架頁「預設工時」帶一次（0 或沒設的不帶）；回傳帶了哪些人
+function v8NeedsHours(){return allStaff.some(s=>s.hrs==null||s.hrs==='');}
+function v8FillStaffHours(map){
+  const done=[];
+  allStaff.forEach(s=>{if((s.hrs==null||s.hrs==='')&&+map[s.name]>0){s.hrs=+map[s.name];done.push(s.name+' '+s.hrs+'h');}});
+  if(done.length){renderStaff();if(generatedData)rerenderPreview();}
+  return done;
+}
+
 function checkOpen(store,d,sched,supMap){
+  if(isSegMode())return segShortOf(store,d,sched,supMap).length===0;
   const conds=openConds[store]||[];
   if(!conds.length)return true;
   const supInStore=supMap[store+'_'+d]||[];
@@ -1244,10 +1462,22 @@ function getOnDuty(store,d,sched){
   return staff.filter(s=>s.store===store&&sched[s.name][d]!=='off'&&sched[s.name][d]!=='sup').length;
 }
 
+// 排休名額換成「大概要休幾個人」：舊排法本來就是人數；新排法多 0.5 人力也算要休 1 人
+function slotPersons(x){return isSegMode()?Math.ceil((+x||0)-0.05):(+x||0);}
+
 function usedDays(name,sched,cal){
   return cal.filter(({d})=>sched[name][d]==='off').length;
 }
 
+// 2026-11-01（t）：按鈕才問；匯入人資假表的月份再按生成，先講清楚只會重排自動的店（還原存檔、匯入時內部呼叫 genSchedule 不問）
+function genScheduleBtn(){
+  const{y,m}={y:+document.getElementById('yr').value,m:+document.getElementById('mo').value};
+  if(hrImport&&hrImport.y===y&&hrImport.m===m&&hrImport.scope===curScope){
+    const auto=SCOPE_STORES[curScope].filter(st=>modeOf(st)==='auto'&&!isLocked(st));
+    if(!confirm(`這個月已經匯入人資假表（${hrImport.stores.join('、')}），不用再生成。\n再生成只會重排「⚡自動」的店${auto.length?`（${auto.join('、')}）`:'（現在沒有自動的店，等於不會變）'}，匯入的店不會動。\n確定要生成嗎？`))return;
+  }
+  genSchedule();
+}
 function genSchedule(){
   if(!holYearReady_(+document.getElementById('yr').value)){alert('系統還沒有 '+document.getElementById('yr').value+' 年的國定假日資料，請聯繫小保補上後再排班');return;}
   if(!curScope){alert('請先選擇門市範圍（溪湖埤頭／伸港）');return;}
@@ -1367,6 +1597,13 @@ function genSchedule(){
   cal.forEach(({d,wd})=>{
     STORES.forEach(store=>{
       if(frozenSet.has(store))return; // v8：v7不排的店不算排休名額
+      if(isSegMode()){
+        // 新排法：人力超過上限多少，就排休到不超過（每休一人扣他的人力，8C 處理）
+        const fl=forceLimitOf(store,wd);if(!fl)return;
+        const over=Math.round((dayForceAt(store,d,sched,supMap)-fl)*10)/10;
+        if(over>0.05)slotMap[store+'_'+d]=over;
+        return;
+      }
       let lim=needsData[store]?needsData[store][wd]:0;
       if(store==='忠孝店'&&(wd===1||wd===3)){
         const hasLockedOff=staff.filter(s=>s.store==='忠孝店'&&locked[s.name+'_'+d]&&sched[s.name][d]==='off').length>0;
@@ -1382,7 +1619,7 @@ function genSchedule(){
   STORES.forEach(store=>{
     const ss=staff.filter(s=>s.store===store&&s.type!=='機動人員');
     if(!ss.length)return;
-    const totalSlots=cal.filter(({d,isHol})=>!isHol&&slotMap[store+'_'+d]>0).reduce((sum,{d})=>sum+(slotMap[store+'_'+d]||0),0);
+    const totalSlots=cal.filter(({d,isHol})=>!isHol&&slotMap[store+'_'+d]>0).reduce((sum,{d})=>sum+slotPersons(slotMap[store+'_'+d]),0);
     const wdNeeds=ss.map(s=>{
       const alreadyWd=cal.filter(({d,isHol})=>!isHol&&sched[s.name][d]==='off').length;
       const alreadyHd=cal.filter(({d,isHol})=>isHol&&sched[s.name][d]==='off').length;
@@ -1391,7 +1628,7 @@ function genSchedule(){
     });
     const totalNeed=wdNeeds.reduce((a,b)=>a+b,0);
     let adjusted=[...wdNeeds];
-    if(totalNeed>0&&totalSlots!==totalNeed){
+    if(schedOpts.manpower!==false&&totalNeed>0&&totalSlots!==totalNeed){
       const ratio=totalSlots/totalNeed;
       adjusted=wdNeeds.map(n=>Math.max(0,Math.round(n*ratio)));
       let diff=totalSlots-adjusted.reduce((a,b)=>a+b,0);
@@ -1402,7 +1639,7 @@ function genSchedule(){
   // Step8B: 假日休
   staff.forEach(s=>{
     if(!STORES.includes(s.store))return;
-    if(s.type==='計時'||s.type==='機動人員')return;
+    if(s.type==='機動人員'||(s.type==='計時'&&schedOpts.holiday!==false))return;
     const alreadyHd=cal.filter(({d,isHol})=>isHol&&sched[s.name][d]==='off').length;
     let needHd=Math.max(0,s.hd-alreadyHd);if(needHd<=0)return;
     const avail=cal.filter(({d,isHol})=>isHol&&sched[s.name][d]==='work'&&!locked[s.name+'_'+d]);
@@ -1410,6 +1647,7 @@ function genSchedule(){
     let lastIdx=-1;
     for(let i=0;i<avail.length&&needHd>0;i++){
       if(lastIdx>=0&&i-lastIdx<Math.max(1,step-1))continue;
+      if(gapNear(s.name,avail[i].d,sched))continue; // 休假間距：第一輪先跳過離其他休假太近的，第二輪再補
       const {d}=avail[i];if(usedDays(s.name,sched,cal)>=s.days)break;
       sched[s.name][d]='off';if(!checkOpen(s.store,d,sched,supMap)){sched[s.name][d]='work';continue;}needHd--;lastIdx=i;
     }
@@ -1426,14 +1664,14 @@ function genSchedule(){
     const wdSlotDays=cal.filter(({d,isHol})=>!isHol&&slotMap[store+'_'+d]>0);
     for(const {d} of wdSlotDays){
       let daySlots=slotMap[store+'_'+d]||0;
-      while(daySlots>0){
+      while(daySlots>(isSegMode()?0.05:0)){
         const eligible=ss.filter(s=>sched[s.name][d]==='work'&&!locked[s.name+'_'+d]&&needs[s.name]>0&&usedDays(s.name,sched,cal)<s.days);
         if(!eligible.length)break;
-        eligible.sort((a,b)=>needs[b.name]!==needs[a.name]?needs[b.name]-needs[a.name]:usedDays(a.name,sched,cal)-usedDays(b.name,sched,cal));
+        eligible.sort((a,b)=>gapNear(a.name,d,sched)!==gapNear(b.name,d,sched)?gapNear(a.name,d,sched)-gapNear(b.name,d,sched):needs[b.name]!==needs[a.name]?needs[b.name]-needs[a.name]:usedDays(a.name,sched,cal)-usedDays(b.name,sched,cal));
         let assigned=false;
         for(const s of eligible){
           sched[s.name][d]='off';
-          if(checkOpen(store,d,sched,supMap)){needs[s.name]--;daySlots--;assigned=true;break;}
+          if(checkOpen(store,d,sched,supMap)){needs[s.name]--;daySlots-=isSegMode()?personForce(s,d):1;assigned=true;break;}
           sched[s.name][d]='work';
         }
         if(!assigned)break;
@@ -1478,11 +1716,16 @@ function genSchedule(){
     if(frozenSet.has(cr.store))return; // v8：v7不排的店，不再塞新的支援進去
     cal.forEach(({d,wd,wn})=>{
       if(cr.cond&&!hasWeekday(cr.cond,wn))return;
-      const minNeed=needsData[cr.store]?needsData[cr.store][wd]:0;
-      if(!minNeed||getOnDuty(cr.store,d,sched)>=minNeed)return;
+      if(isSegMode()){if(checkOpen(cr.store,d,sched,supMap))return;}
+      else{const minNeed=needsData[cr.store]?needsData[cr.store][wd]:0;if(!minNeed||getOnDuty(cr.store,d,sched)>=minNeed)return;}
       if(!sched[cr.staff]||locked[cr.staff+'_'+d]||sched[cr.staff][d]!=='work')return;
       sched[cr.staff][d]='sup';
       const k=cr.store+'_'+d;if(!supMap[k])supMap[k]=[];if(!supMap[k].includes(cr.staff))supMap[k].push(cr.staff);
+      if(isSegMode()){
+        // 調走之前先確認本店三段還夠，不夠就不調（不要補了別店、空了自己店）
+        const home=(staff.find(x=>x.name===cr.staff)||{}).store;
+        if(home&&STORES.includes(home)&&!checkOpen(home,d,sched,supMap)){sched[cr.staff][d]='work';supMap[k]=supMap[k].filter(n=>n!==cr.staff);return;}
+      }
       if(cr.linkedRest&&sched[cr.linkedRest]&&!locked[cr.linkedRest+'_'+d]&&sched[cr.linkedRest][d]==='work'){
         const lr=staff.find(s=>s.name===cr.linkedRest);
         if(lr&&usedDays(cr.linkedRest,sched,cal)<lr.days){sched[cr.linkedRest][d]='off';locked[cr.linkedRest+'_'+d]=true;}
@@ -1530,7 +1773,8 @@ function computeConflicts(sched,cal,supMap){
     if(!STORES.includes(s.store))return;
     const actHd=cal.filter(({d,isHol})=>isHol&&sched[s.name][d]==='off').length;
     const actWd=cal.filter(({d,isHol})=>!isHol&&sched[s.name][d]==='off').length;
-    if(actHd<s.hd)conflicts.push({type:'warn',msg:`${s.name}：假日休下限${s.hd}天，實際排到${actHd}天`});
+    // 計時人員的假日休自動排不排（老闆 11-01 定：保留警告，用必休／必上自己調）
+    if(actHd<s.hd)conflicts.push({type:'warn',msg:`${s.name}：假日休下限${s.hd}天，實際排到${actHd}天${s.type==='計時'&&schedOpts.holiday!==false?'（計時人員的假日休不自動排，請用必休／必上調整，或到排班規則關掉「假日避休」）':''}`});
     if(actWd<s.wd)conflicts.push({type:'warn',msg:`${s.name}：平日休下限${s.wd}天，實際排到${actWd}天`});
   });
   const pinNames=[...new Set(pins.map(p=>p.name))];
@@ -1539,6 +1783,26 @@ function computeConflicts(sched,cal,supMap){
     const ons=pins.filter(p=>p.name===name&&p.type==='on'&&p.weeks);
     offs.forEach(o=>ons.forEach(n=>{WN.forEach(w=>{if(o.weeks&&n.weeks&&hasWeekday(o.weeks,w)&&hasWeekday(n.weeks,w))conflicts.push({type:'error',msg:`${name}：必休/必上在星期${w}衝突`});});}));
   });
+  if(schedOpts.gap&&schedOpts.minGap>0){
+    const mo=(generatedData&&generatedData.mandatoryOff)||{};
+    STORES.forEach(store=>{
+      const near=[];
+      staff.filter(p=>p.store===store&&sched[p.name]).forEach(p=>{const offs=cal.filter(({d})=>sched[p.name][d]==='off').map(({d})=>d);for(let i=1;i<offs.length;i++){const a=offs[i-1],b=offs[i];if(b-a<=schedOpts.minGap&&!(mo[p.name+'_'+a]&&mo[p.name+'_'+b]))near.push(`${p.name} ${a}、${b}日`);}});
+      if(near.length)conflicts.push({type:'warn',msg:`${store}：休假中間上班不到 ${schedOpts.minGap} 天 ${near.length} 處——${near.slice(0,5).join('；')}${near.length>5?'…':''}`});
+    });
+  }
+  if(isSegMode()){
+    // 新排法：每店合併成兩行——開店條件哪幾天哪一段不夠、人力哪幾天超過上限
+    const noHrs=staff.filter(s=>STORES.includes(s.store)&&s.type==='計時'&&(s.hrs==null||s.hrs==='')).map(s=>s.name);
+    if(noHrs.length)conflicts.push({type:'warn',msg:`${noHrs.join('、')}：計時人員還沒填時數，先當 ${HOURLY_UNSET_HRS} 小時算（到夥伴管理填）`});
+    STORES.forEach(store=>{
+      const short=cal.map(({d,wn})=>({d,wn,s:segShortOf(store,d,sched,supMap)})).filter(x=>x.s.length);
+      if(short.length)conflicts.push({type:'warn',msg:`${store}：開店條件不夠 ${short.length} 天——${short.slice(0,4).map(x=>`${x.d}日(星期${x.wn})${x.s.join('、')}`).join('；')}${short.length>4?'…':''}`});
+      const over=cal.map(({d,wd})=>({d,f:dayForceAt(store,d,sched,supMap),l:forceLimitOf(store,wd)})).filter(x=>x.l&&x.f>x.l+0.05);
+      if(over.length)conflicts.push({type:'warn',msg:`${store}：人力超過上限 ${over.length} 天——${over.slice(0,5).map(x=>`${x.d}日 ${fmtForce(x.f)}／${fmtForce(x.l)}`).join('、')}${over.length>5?'…':''}（休假天數用完排不掉）`});
+    });
+    return conflicts;
+  }
   STORES.forEach(store=>{
     const failDays=cal.filter(({d})=>!checkOpen(store,d,sched,supMap));
     if(failDays.length)conflicts.push({type:'warn',msg:`${store}：${failDays.slice(0,4).map(({d,wn})=>`${d}(${wn})`).join('、')}${failDays.length>4?`…等共${failDays.length}天`:''}無法滿足開店條件`});
@@ -1637,7 +1901,18 @@ function renderPreview(sched,cal,supMap,conflicts,mandatoryOff){
       }).join('');
       supRow=`<tr><td style="font-size:7px;color:#3C3489;padding:2px 5px;font-weight:600;white-space:nowrap;border-right:2px solid #ccc;position:sticky;left:0;background:#EDE8FF;z-index:1">支援↑</td>${cells}</tr>`;
     }
-    return`<div style="overflow-x:auto;border:1px solid #e0e0e0;border-radius:6px"><table class="ptbl" style="border-collapse:collapse;width:100%"><thead><tr><th style="text-align:left;min-width:32px;padding:3px 5px;position:sticky;left:0;background:#f5f5f5;z-index:2;border-right:2px solid #ccc">簡稱</th>${cols}</tr></thead><tbody>${rows}${supRow}</tbody></table></div>`;
+    // 新排法：每天人力／上限，超過標紅；開店條件不夠標橘（滑鼠停上去看哪一段）
+    let forceRow='';
+    if(storeName&&isSegMode()){
+      const cells=cal.map(({d,wd})=>{
+        const f=dayForceAt(storeName,d,sched,supMap),l=forceLimitOf(storeName,wd),sh=segShortOf(storeName,d,sched,supMap);
+        const st=sh.length?'background:#FDEBD3;color:#8A4B08;font-weight:700;':(l&&f>l+0.05)?'background:#FADBD8;color:#A32D2D;font-weight:700;':'color:#555;';
+        const tip=`人力 ${fmtForce(f)}／上限 ${l?fmtForce(l):'沒設'}${sh.length?'｜開店條件：'+sh.join('、'):''}`;
+        return`<td title="${tip}" style="${st}font-size:7px;padding:2px 1px;text-align:center">${fmtForce(f)}${sh.length?'⚠':''}</td>`;
+      }).join('');
+      forceRow=`<tr><td title="人力＝時數÷${fteBase}；紅＝超過上限、橘＝開店條件不夠" style="font-size:7px;color:#555;padding:2px 5px;font-weight:600;white-space:nowrap;border-right:2px solid #ccc;position:sticky;left:0;background:#fafafa;z-index:1">人力</td>${cells}</tr>`;
+    }
+    return`<div style="overflow-x:auto;border:1px solid #e0e0e0;border-radius:6px"><table class="ptbl" style="border-collapse:collapse;width:100%"><thead><tr><th style="text-align:left;min-width:32px;padding:3px 5px;position:sticky;left:0;background:#f5f5f5;z-index:2;border-right:2px solid #ccc">簡稱</th>${cols}</tr></thead><tbody>${rows}${supRow}${forceRow}</tbody></table></div>`;
   };
   const mobStaff=staff.filter(s=>s.type==='機動人員');
   const storeGroups=STORES.map(store=>({store,members:staff.filter(s=>s.store===store)}));
@@ -1669,6 +1944,12 @@ function buildWeeks(cal){
   if(cur.some(x=>x))weeks.push(cur);
   return weeks;
 }
+function ensureNoteRows(){if(!noteRows)noteRows=NOTE_PRESETS.map(t=>({on:false,text:t,dates:''}));while(noteRows.length<5)noteRows.push({on:false,text:'',dates:''});}
+function renderNoteRows(){
+  ensureNoteRows();const el=document.getElementById('note-rows');if(!el)return;
+  const q=v=>String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  el.innerHTML=noteRows.map((r,i)=>`<div style="display:flex;align-items:center;gap:4px;margin-top:4px"><input type="checkbox"${r.on?' checked':''} title="打勾才會顯示在假表上" onchange="noteRows[${i}].on=this.checked" style="width:auto;flex-shrink:0"><input type="text" value="${q(r.text)}" placeholder="${i===4?'OO節氣或其他（自填）':'備註文字'}" oninput="noteRows[${i}].text=this.value" style="flex:1;min-width:0"><input type="text" id="note-d-${i}" value="${q(r.dates)}" placeholder="點選日期" readonly onclick="openDatePicker('note-d-${i}')" style="width:78px;flex-shrink:0;cursor:pointer"><button class="badd bsec pk-btn" onclick="openDatePicker('note-d-${i}')" style="flex-shrink:0">📅</button></div>`).join('');
+}
 function parseLunarNotes(){
   const raw=(document.getElementById('lunar-notes')&&document.getElementById('lunar-notes').value)||'';
   const map={};
@@ -1676,6 +1957,11 @@ function parseLunarNotes(){
     const idx=pair.indexOf(':');if(idx<0)return;
     const dd=pair.slice(0,idx).trim(),txt=pair.slice(idx+1).trim();
     if(dd&&txt)map[+dd]=txt;
+  });
+  ensureNoteRows();
+  noteRows.forEach(r=>{
+    const txt=String(r.text||'').trim();if(!r.on||!txt)return;
+    String(r.dates||'').split(',').map(x=>+x.trim()).filter(x=>x>0).forEach(dd=>{map[dd]=map[dd]?map[dd]+'、'+txt:txt;});
   });
   return map;
 }
@@ -2059,9 +2345,18 @@ function applyLinkChange(oldLink,newLink,d,selfName){
     generatedData.sched[newLink][d]='off';
   }
 }
+// 2026-11-01（q）：上下班時間一樣（例如沒選、都還是 00:00）會被當成跨日算成 24 小時，不給存；超過 14 小時再確認一次（真的跨日照樣可以存）
+function shiftTimeOk(prefix){
+  const v=id=>document.getElementById(`${prefix}-${id}`).value;
+  if(v('sh')===v('eh')&&v('sm')===v('em')){alert('上班和下班時間一樣，請選好上下班時間再存');return false;}
+  const h=calcShiftHrs(prefix);
+  if(h>14&&!confirm(`實際工時 ${h.toFixed(1)} 小時，超過 14 小時。確定時間沒選錯嗎？`))return false;
+  return true;
+}
 function saveShiftModal(){
   const {personType,name,d}=modalCtx;
   const target=document.getElementById('sm-target-store').value;
+  if(!SHIFT_TARGET_SPECIAL.includes(target)&&!shiftTimeOk('sm'))return;
   const newLink=shiftModalLink();
   if(personType==='temp'){
     const oldEntry=supportSchedule[name]&&supportSchedule[name][d];
@@ -2986,6 +3281,9 @@ function v7CollectSaveData(){
     // v8：手動／鎖定的店要靠「上次結果」才能還原，所以連目前班表一起存（v7自動的店還原時照樣重新算）
     storeMode,storeLocks,cellEdits,
     hrImport, // 2026-10-27 匯入人資假表：要確認的黃格、復原用的匯入前樣子
+    schedMode,fteBase,forceData,segConds,dayShifts, // 2026-11-01 時段＋人力
+    schedOpts, // 2026-11-01 排班技能開關
+    noteRows, // 2026-11-01 特殊日備註五格
     lastGen:generatedData?{y:generatedData.y,m:generatedData.m,scope:generatedData.scope,sched:generatedData.sched,supMap:generatedData.supMap,mandatoryOff:generatedData.mandatoryOff}:null
   };
 }
@@ -3002,10 +3300,31 @@ function v7HideSaveWarn(){
 }
 // 健檢發現：存檔失敗（例如無痕模式/瀏覽器擋localStorage/儲存空間爆掉）原本會被try/catch靜靜吞掉，
 // 使用者完全不知道其實沒在存，關網頁才會發現整份資料消失。改成失敗時在頁首跳出紅字警示。
+// 開店條件、夥伴管理、必休必上：標題上看得到有沒有存好（2026-11-01 老闆）。改了就自動存，不用按儲存：
+// 網頁版看雲端（window.HR_SAVE_STATE，雲端存檔.js 提供），本機版看瀏覽器存檔；這一區有改、還沒存好＝「儲存中…」，存好＝「✓ 已儲存 時間」
+const SEC_SAVE_DATA={'s-open':()=>JSON.stringify([segConds,forceData,openConds,needsData,schedMode,fteBase]),'s-staff':()=>JSON.stringify(allStaff),'s-pin':()=>JSON.stringify(pins)};
+let secSaved=null,secSavedAt='';
+function secNowTxt(){const t=new Date();return String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');}
+function markSecSaved(at){secSaved={};Object.keys(SEC_SAVE_DATA).forEach(id=>{secSaved[id]=SEC_SAVE_DATA[id]();});secSavedAt=at||secNowTxt();renderSecSave();}
+function renderSecSave(){
+  const cloud=window.HR_SAVE_STATE?window.HR_SAVE_STATE():null;
+  Object.keys(SEC_SAVE_DATA).forEach(id=>{
+    const el=document.getElementById('ss-'+id);if(!el)return;
+    let cls='ok',txt='✓ 已儲存'+(secSavedAt?' '+secSavedAt:'');
+    if(cloud&&cloud.state==='readonly'){cls='ro';txt='👁 只能看';}
+    else if(cloud&&cloud.state==='offline'){cls='bad';txt='⚠ 沒網路，先存在這台';}
+    else if(cloud&&cloud.state==='error'){cls='bad';txt='⚠ 存檔失敗';}
+    else if(!secSaved||SEC_SAVE_DATA[id]()!==secSaved[id]){cls='busy';txt='儲存中…';}
+    el.className='sec-save '+cls;el.textContent=txt;
+  });
+}
+// 網頁版：雲端存好了就算存好；本機版：每 4 秒存瀏覽器成功就算存好（v7AutoSave 裡）
+setInterval(()=>{try{const c=window.HR_SAVE_STATE&&window.HR_SAVE_STATE();if(c&&c.state==='saved')markSecSaved(c.at);else renderSecSave();}catch(e){}},1000);
 function v7AutoSave(){
   if(v7SaveSuspended)return;
   try{
     localStorage.setItem(V7_SAVE_KEY,JSON.stringify(v7CollectSaveData()));
+    if(!window.HR_SAVE_STATE)markSecSaved();
     v7HideSaveWarn();
   }catch(e){
     v7ShowSaveWarn('⚠️本機自動存檔失敗，關閉網頁資料會消失，請自行截圖/下載Excel備份');
@@ -3057,11 +3376,15 @@ function v7RestoreAutoSave(){
   maxUnlocked=d.maxUnlocked||1;
   storeMode=d.storeMode||{};storeLocks=d.storeLocks||{};cellEdits=d.cellEdits||[];
   hrImport=d.hrImport||null;
+  noteRows=d.noteRows||null; // 舊存檔沒有：用預設五格（都沒打勾）
+  // 2026-11-01 時段＋人力：舊存檔沒有這幾樣，ensureSegData 從舊的人數上限、開店條件組搬一次
+  schedOpts=Object.assign({},SCHED_OPTS_DEFAULT,d.schedOpts||{});
+  schedMode=d.schedMode||'seg';fteBase=+d.fteBase||9.5;forceData=d.forceData||null;segConds=d.segConds||null;dayShifts=d.dayShifts||[];ensureSegData();
   // 讓genSchedule()把存起來的班表當成「上次結果」，手動／鎖定的店才能原樣還原
   if(maxUnlocked>=2&&d.lastGen&&d.lastGen.sched)generatedData=Object.assign({mandatoryOff:{},supMap:{}},d.lastGen);
 
-  renderScopeBtns();renderNeedTabs();renderNeedTable();renderOpenConds();renderStaff();renderPins();renderAdj();
-  renderStoreRules();renderStaffRules();renderCross();renderSelects();renderStoreGroups();checkHint();
+  renderScopeBtns();renderNoteRows();renderNeedTabs();renderNeedTable();renderOpenConds();renderStaff();renderPins();renderAdj();
+  renderStoreRules();renderStaffRules();renderCross();renderSchedOpts();renderSelects();renderStoreGroups();holsDefault();checkHint();
 
   try{
     if(maxUnlocked>=2)genSchedule();
@@ -3100,7 +3423,10 @@ v7RestoreAutoSave();
     '排班': ['yr', 'mo', 'sat', 'sun', 'hols', 'lunarNotes', 'bottomNotes', 'needsData', 'openConds', 'allStaff', 'pins', 'adjustments',
       'storeRules', 'staffRules', 'crossRules', 'storeGroups', 'manualAdjustments', 'supportStaff', 'supportSchedule',
       'attendanceAdjustments', 'page2Generated', 'maxUnlocked', 'storeMode', 'storeLocks', 'cellEdits', 'lastGen',
-      'hrImport'],   // 10-27 第 1 頁匯入人資假表：要確認的黃格、復原用的匯入前樣子
+      'hrImport',    // 10-27 第 1 頁匯入人資假表：要確認的黃格、復原用的匯入前樣子
+      'schedMode', 'fteBase', 'forceData', 'segConds', 'dayShifts',   // 11-01 排班改時段＋人力
+      'noteRows',    // 11-01 特殊日備註五格
+      'schedOpts'],  // 11-01 排班技能開關
     '薪資': ['p5HP', 'p5Route', 'p5OtherBonus', 'p5InsuranceOverride', 'p5InsuranceMap', 'p5ManualRate', 'p5Generated',
       'p5BaseSalary', 'p5BaseHourly', 'p5CrossRateOverride']
   };
@@ -3114,6 +3440,16 @@ v7RestoreAutoSave();
   const S = {};   // 份別 → { write, mine, lock, version, synced, savedAt, saving, offline, pending, timer, lastSeen }
   let lastActive = Date.now(), lastTouch = Date.now(), started = false;
   const $ = id => document.getElementById(id);
+  // 11-01 v8 左邊開店條件／夥伴管理／必休必上標題的「儲存中…／✓ 已儲存」：照排班份的雲端狀態
+  window.HR_SAVE_STATE = () => {
+    const s = S['排班'];
+    if (!started || !s) return null;
+    if (!s.write || !s.mine) return { state: 'readonly' };
+    if (s.offline) return { state: 'offline' };
+    if (s.error) return { state: 'error' };
+    if (s.saving || s.pending || partStr('排班') !== s.synced) return { state: 'saving' };
+    return { state: 'saved', at: String(s.savedAt || '').split(' ').pop() };
+  };
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   const call = (op, part, extra) => window.HR_CALL(op, Object.assign({ token: window.HR_TOKEN(), part: part, editor: editor }, extra || {}));
@@ -3245,11 +3581,22 @@ v7RestoreAutoSave();
     started = true;
     render();
     Object.keys(S).forEach(p => { if (S[p].uploadNow) { S[p].uploadNow = false; S[p].synced = S[p].synced || ''; doSave(p); } });
+    fillHours();
     setInterval(tick, 4000);
     setInterval(poll, POLL_MS);
     ['pointerdown', 'keydown', 'input'].forEach(t => document.addEventListener(t, () => { lastActive = Date.now(); }, true));
     window.addEventListener('online', () => { flushStash(); Object.keys(S).forEach(p => { if (S[p].offline) doSave(p); }); });
     window.addEventListener('pagehide', releaseAll);
+  }
+
+  // ── 11-01 時段＋人力：名單上還沒填時數的人，用骨架頁「預設工時」帶一次（有編輯權才帶；帶了之後照常自動存） ──
+  async function fillHours() {
+    const s = S['排班'];
+    if (!s || !s.write || !s.mine || typeof v8FillStaffHours !== 'function' || !v8NeedsHours()) return;
+    try {
+      const r = await call('staffHours', '排班');
+      if (r.ok && r.hours) { const done = v8FillStaffHours(r.hours); if (done.length) console.log('從骨架頁帶入時數：' + done.join('、')); }
+    } catch (e) { /* 沒網路：下次打開再帶 */ }
   }
 
   // ── 自動存 ──
