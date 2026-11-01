@@ -363,7 +363,7 @@ button[onclick="v7ClearAutoSave()"]{display:none!important}
 <div class="page" id="page-4" style="padding:16px;background:#f0f0f0;min-height:680px">
 <div style="background:#fff;border-radius:8px;padding:14px;margin-bottom:12px">
 <div style="font-size:12px;font-weight:700;margin-bottom:8px">📤 上傳次假表（選用・覆蓋）</div>
-<div style="font-size:9px;color:#666;margin-bottom:6px">資料已自動由第二頁帶入。若手動微調（例如把計時人員名字改成「小美9.5」表示當天上班9.5小時），上傳「次假表Excel」並進行覆蓋。</div>
+<div style="font-size:9px;color:#666;margin-bottom:6px">資料已自動由第二頁帶入。若手動微調（例如把計時人員名字改成「小美4.5h」表示當天上班 4.5 小時），上傳「次假表Excel」並進行覆蓋。</div>
 <input type="file" id="p4-file" accept=".xlsx" onchange="handleP4Upload(event)">
 <div id="p4-upload-status" style="font-size:9px;color:#888;margin-top:6px">尚未上傳覆蓋檔案（目前使用第二頁自動帶入的資料）</div>
 </div>
@@ -767,7 +767,7 @@ function hriShowCheck(){
     ${skipped.length?`<div style="font-size:9px;color:#888;margin-bottom:4px">沒讀的頁：${skipped.map(s=>`${s.name.trim()}（${s.skipped}）`).join('、')}</div>`:''}
     <div style="font-size:9px;color:#555;line-height:1.6;margin-bottom:4px">
       ・排休來貼班 ${shiftN} 筆：寫進第 2 頁出勤紀錄（貼班）<br>
-      ・計時時數 ${hourN} 筆、跨區支援時數 ${crossN} 筆：先讀出來，第二段才帶進骨架（現在第 4、5 頁照舊算 9.5 小時）
+      ・計時時數 ${hourN} 筆、跨區支援時數 ${crossN} 筆：計時時數已用在匯出 Excel 和第 4 頁；跨區支援時數第二段才帶進骨架
       ${res.crossVisits.length?`<br>・別區來支援 ${res.crossVisits.length} 筆（${[...new Set(res.crossVisits.map(v=>v.name))].join('、')}）：照支援填進去`:''}
     </div>
     ${issues?`<div style="font-size:10px;font-weight:700;color:#9A6B00;margin:6px 0 2px">⚠️ 要確認的（匯入後這些格子標黃，點一下改好就不黃）</div><div style="max-height:180px;overflow:auto;font-size:9px;line-height:1.5;border:1px solid #F0E0A0;background:#FFFCEB;border-radius:6px;padding:4px 6px">${issues}</div>`:'<div class="ok-box" style="margin:4px 0">✅ 每一格都讀得懂</div>'}
@@ -1998,6 +1998,9 @@ function findHomeLinkSource(staffName,d){
   const adj=attendanceAdjustments.find(a=>a.y===y&&a.m===m&&a.d===d&&a.personType==='home'&&a.link===staffName&&a.statEffect==='shift');
   return adj?adj.staffName:null;
 }
+// 匯出 Excel、第 4 頁用的當天工時（2026-11-01：計時不再一律 9.5h）：點格子設的當天時數 → 人資假表匯入的計時時數 → 夥伴設定時數 → 計時沒填當 4.5
+function exportHrsOf(name,d){const p=(staff||[]).find(x=>x.name===name)||allStaff.find(x=>x.name===name);if(!p)return 9.5;const g=generatedData||{};return dayHrsOf(p,d,g.y,g.m);}
+function hrsTxt(h){return String(Math.round((+h||0)*10)/10);}
 function buildCalendarWorkbookSheet(wb,sheetName,home,cal,sched,supMap,lunarMap,bottomNotes,linkFn,includeOverlay,mandatoryOff){
   const isStore=STORES.includes(sheetName);
   let visitors=[];
@@ -2055,8 +2058,8 @@ function buildCalendarWorkbookSheet(wb,sheetName,home,cal,sched,supMap,lunarMap,
           // 若該筆貼班紀錄有設定連動請假對象（含連動對象＝自己），套用與貼班人員（暫班/temp）一致的「補YY」顯示慣例。
           setCell(r,c,`${s.name}貼班${adj.hours.toFixed(1)}h${adj.link?`\n補${adj.link}`:''}`,'FFFAEEDA','FF633806',false);
         }else if(adj&&adj.statEffect==='work_plus'&&s.type==='計時'){
-          // Rule 2：計時人員休→出勤，純狀態覆寫（無真實時段），固定9.5h且計入貼班時數，不計入計時時數。
-          setCell(r,c,`${s.name}貼班9.5h`,'FFFAEEDA','FF633806',false);
+          // Rule 2：計時人員休→出勤，純狀態覆寫（無真實時段），計入貼班時數，不計入計時時數。時數照當天工時（11-01 起不再固定 9.5h）
+          setCell(r,c,`${s.name}貼班${hrsTxt(exportHrsOf(s.name,day.d))}h`,'FFFAEEDA','FF633806',false);
         }else if(st==='off'){
           // 連動請假來源：先看貼班人員（temp staff，跨店支援的「跨店時數」不在此 linkFn 範圍內），
           // 再看本店夥伴互相連動（含連動對象＝自己）的貼班紀錄，兩者皆用同一套「休→XX補」顯示慣例。
@@ -2064,9 +2067,9 @@ function buildCalendarWorkbookSheet(wb,sheetName,home,cal,sched,supMap,lunarMap,
           const isMust=mandatoryOff&&mandatoryOff[s.name+'_'+day.d];setCell(r,c,linked?`${s.name}休\n→${linked}補`:`${s.name}休`,linked?LEAVE_COVERED_FILL:offFillFor(s.name),'FFFFFFFF',!!linked||!!isMust);
         }
         else if(st==='sup'){const target=findSupTargetStore(supMap,s.name,day.d);setCell(r,c,`${s.name}支援${target}`,'FFFAEEDA','FF633806',false);}
-        else if(st==='must')setCell(r,c,s.name,'FFF5ECD7',undefined,false);
+        else if(st==='must')setCell(r,c,s.type==='計時'?`${s.name}${hrsTxt(exportHrsOf(s.name,day.d))}h`:s.name,'FFF5ECD7',undefined,false); // 計時必上那天也要寫時數（11-01 補）
         else if(st==='mob')setCell(r,c,s.name,undefined,'FF185FA5',false);
-        else setCell(r,c,s.type==='計時'?`${s.name}9.5h`:s.name,undefined,undefined,false);
+        else setCell(r,c,s.type==='計時'?`${s.name}${hrsTxt(exportHrsOf(s.name,day.d))}h`:s.name,undefined,undefined,false);
       });
       r++;
     });
@@ -2076,7 +2079,7 @@ function buildCalendarWorkbookSheet(wb,sheetName,home,cal,sched,supMap,lunarMap,
       week.forEach((day,c)=>{
         if(!day){setCell(r,c,'',undefined);return;}
         const isHere=(supMap[sheetName+'_'+day.d]||[]).includes(vname);
-        setCell(r,c,isHere?(isExternal?`${vname}9.5h`:vname):'',undefined,isHere?'FF185FA5':undefined,false);
+        setCell(r,c,isHere?(isExternal?`${vname}${hrsTxt(exportHrsOf(vname,day.d))}h`:vname):'',undefined,isHere?'FF185FA5':undefined,false);
       });
       r++;
     });
@@ -2634,7 +2637,7 @@ function computeStoreStatsFromMemory(store,home,mobileMode){
         return;
       }
       if(adj&&adj.statEffect==='work_plus'&&s.type==='計時'){
-        stats[s.name].tempHrs+=9.5;
+        stats[s.name].tempHrs+=exportHrsOf(s.name,d);
         return;
       }
       if(st==='off'){
@@ -2645,7 +2648,7 @@ function computeStoreStatsFromMemory(store,home,mobileMode){
         stats[s.name].selfSup++;
       }else if(st==='work'||st==='must'||st==='mob'){
         if(s.type==='計時'){
-          stats[s.name].hourEntries.push({d,hours:9.5,cross:false});
+          stats[s.name].hourEntries.push({d,hours:exportHrsOf(s.name,d),cross:false});
         }
       }
     });
@@ -2670,7 +2673,7 @@ function computeStoreStatsFromMemory(store,home,mobileMode){
         // 2026-10-17修正：支援表排了，但當天已改成休／出勤（sched不再是sup）就不算支援薪資，
         // 否則本店記休、被支援的店又照付一天（多付）。跟生命值骨架stillSupporting同一條規則。
         if(sched[vname]&&sched[vname][d]!=='sup')return;
-        if(isExternal)visitorEntries[vname].hours+=9.5;
+        if(isExternal)visitorEntries[vname].hours+=exportHrsOf(vname,d);
         else visitorEntries[vname].days.add(d);
       });
     });
