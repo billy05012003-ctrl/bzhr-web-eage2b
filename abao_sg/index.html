@@ -530,13 +530,8 @@ button[onclick="v7ClearAutoSave()"]{display:none!important}
 </div>
 
 <div class="page" id="page-4" style="padding:16px;background:#f0f0f0;min-height:680px">
-<div style="background:#fff;border-radius:8px;padding:14px;margin-bottom:12px">
-<div style="font-size:12px;font-weight:700;margin-bottom:8px">📤 上傳次假表（選用・覆蓋）</div>
-<div style="font-size:9px;color:#666;margin-bottom:6px">資料已自動由第二頁帶入。若手動微調（例如把計時人員名字改成「小美4.5h」表示當天上班 4.5 小時），上傳「次假表Excel」並進行覆蓋。</div>
-<input type="file" id="p4-file" accept=".xlsx" onchange="handleP4Upload(event)">
-<div id="p4-upload-status" style="font-size:9px;color:#888;margin-top:6px">尚未上傳覆蓋檔案（目前使用第二頁自動帶入的資料）</div>
-</div>
-<div class="main-hdr" style="background:#fff;border-radius:8px 8px 0 0;border:1px solid #e0e0e0;border-bottom:none"><div style="font-size:11px;font-weight:600">📑 薪資假表預覽</div><div style="font-size:9px;color:#666">上傳檔案內容＋統計欄位疊加</div></div>
+<!-- 2026-11-02 功能 C：天數、時數改用生命值骨架同一套算法（實際＝骨架頁資料、試算＝次假表換算），不再上傳次假表覆蓋 -->
+<div class="main-hdr" style="background:#fff;border-radius:8px 8px 0 0;border:1px solid #e0e0e0;border-bottom:none"><div style="font-size:11px;font-weight:600">📑 薪資假表預覽</div><div style="font-size:9px;color:#666">天數、時數跟生命值骨架同一套算法</div></div>
 <div id="page4-preview" style="background:#fff;border:1px solid #e0e0e0;border-radius:0 0 8px 8px;padding:10px;min-height:200px"><div class="ph"><div style="font-size:30px">📑</div><div style="font-size:12px;font-weight:600">尚未生成薪資假表</div><div style="font-size:9px;line-height:1.6">請先到「次假表」頁<br>按「⚡ 生成次假表」<br>（或於此頁按「⚡ 生成薪資假表」手動觸發）</div></div></div>
 <div class="bottom-btns" style="background:#fff;border-radius:8px;margin-top:12px">
 <button class="btn-gen" onclick="genPage4()">⚡ 生成薪資假表</button>
@@ -545,12 +540,7 @@ button[onclick="v7ClearAutoSave()"]{display:none!important}
 </div>
 
 <div class="page" id="page-5" style="padding:16px;background:#f0f0f0;min-height:680px">
-<div style="background:#fff;border-radius:8px;padding:14px;margin-bottom:12px">
-<div style="font-size:12px;font-weight:700;margin-bottom:8px">📤 上傳勞健保自付額Excel（選用）</div>
-<div style="font-size:9px;color:#666;margin-bottom:6px">依「出勤紀錄的簡稱有沒有出現在勞健保名單的全名裡」自動比對門市夥伴（例如「小明」可配對「王小明02」），只套用在本店夥伴，跨店支援／機動人員不扣保費</div>
-<input type="file" id="p5-ins-file" accept=".xlsx" onchange="handleP5InsuranceUpload(event)">
-<div id="p5-ins-status" style="font-size:9px;color:#888;margin-top:6px">尚未上傳，目前以手動輸入</div>
-</div>
+<!-- 2026-11-02 功能 C：勞健保、HP 次數等薪資設定一律在生命值骨架頁改（老闆定：v8 這裡只能看） -->
 <div id="page5-panel"></div>
 <div class="bottom-btns" style="background:#fff;border-radius:8px;margin-top:12px">
 <button class="btn-gen" onclick="genPage5()">⚡ 生成薪資試算</button>
@@ -3025,6 +3015,7 @@ function linkPage2DataToPage4(){
   });
   p4Results=results;
   p4Generated=true;
+  salLoadSoon(); // 2026-11-02 功能 C：次假表變了就重讀生命值骨架資料（試算要重算）
   const dlBtn=document.getElementById('btn-dl4');if(dlBtn)dlBtn.disabled=false;
   renderPage4Preview();
   if(maxUnlocked<5){maxUnlocked=5;renderTopnav();}
@@ -3128,7 +3119,7 @@ function parseStoreSheet(ws,homeNames,mobileMode){
 }
 function genPage4(){
   if(!generatedData){alert('請先完成第一頁初假表');return;}
-  if(!p4Workbook){
+  if(true){ // 2026-11-02 功能 C：不再讀上傳的次假表覆蓋，一律重讀生命值骨架資料（下面 p4Workbook 那段不會跑到）
     // 尚未上傳覆蓋檔：沿用第二頁自動帶入的記憶體資料重新計算一次（手動重新觸發）。
     linkPage2DataToPage4();
     return;
@@ -3151,38 +3142,41 @@ function genPage4(){
   if(maxUnlocked<5){maxUnlocked=5;renderTopnav();}
   genPage5();
 }
+// 2026-11-02 功能 C：第 4 頁每一列＝SalEngine（生命值骨架同一套 attendanceStatsFor／visitorEntriesFor）算的；下載 Excel 也用這份
+// c＝[平日休, 假日休, 請假, 他店支援, 來店支援, 出勤天數, 計時時數, 跨店時數, 貼班時數]；key＝手機卡片右上大字是 c 的第幾格
+function p4Num(v){return Math.round((Number(v)||0)*10)/10;}
+function p4RowsFor(store){
+  const v=SalEngine.storeView(store),out=[];
+  const sumObj=o=>Object.keys(o||{}).reduce((a,k)=>a+(Number(o[k])||0),0);
+  v.reg.forEach(({s,st})=>out.push({name:s.name,type:s.type,key:5,c:[st.wdOff,st.hdOff,st.coveredLeave,st.selfSup,'—',st.outDays,0,p4Num(st.crossHrs),p4Num(st.tempHrs)]}));
+  v.hourly.forEach(({s,st,r})=>out.push({name:s.name,type:r.special?'計時・特殊':'計時',key:6,c:[st.wdOff,st.hdOff,st.coveredLeave,st.selfSup,'—','—',p4Num(st.hourlyHrs),p4Num(st.crossHrs+sumObj(st.otherAreaHrs)),p4Num(st.tempHrs)]}));
+  v.visitors.forEach(x=>{
+    if(x.kind==='days')out.push({name:x.name,type:'來店支援',vis:1,key:5,c:['—','—','—','—',x.days,x.days,0,0,'—']});
+    else if(x.kind==='hours')out.push({name:x.name,type:'跨區支援',vis:1,key:7,c:['—','—','—','—','—','—',0,p4Num(x.hours),'—']});
+    else out.push({name:x.name,type:'計時・同區支援',vis:1,key:6,c:['—','—','—','—','—','—',p4Num(x.hours),0,'—']});
+  });
+  v.temps.forEach(x=>out.push({name:x.name,type:'貼班',vis:1,key:8,c:['—','—','—','—','—','—','—','—',p4Num(x.hours)]}));
+  return out;
+}
+function p4MobRows(){return SalEngine.mobileView().map(({s,st})=>({name:s.name,type:'機動人員',key:7,c:[st.wdOff,st.hdOff,st.coveredLeave,st.selfSup,'—','—',0,p4Num(st.crossHrs),p4Num(st.tempHrs)]}));}
 function renderPage4Preview(){
-  const blocks=p4Results.map(({store,homeNames,parsed,dim})=>{
-    const rows=homeNames.map(name=>{
-      const s=parsed.stats[name];
-      const selfHrs=s.hourEntries.filter(e=>!e.cross).reduce((a,e)=>a+e.hours,0);
-      const crossHrs=s.hourEntries.filter(e=>e.cross).reduce((a,e)=>a+e.hours,0);
-      const st=staff.find(x=>x.name===name);
-      const noAttendance=store==='機動人員'||(st&&st.type==='計時');
-      const outDays=noAttendance?'—':dim-s.wdOff-s.hdOff-s.coveredLeave-s.selfSup;
-      // 2026-11-02 排版：多一欄類別；手機卡片右上大字（p4-key）＝計時看計時時數，其他看出勤天數
-      const type=store==='機動人員'?'機動人員':(st?st.type:'');
-      const hourly=st&&st.type==='計時';
-      return `<tr><td>${name}</td><td>${type}</td><td>${p5z(s.wdOff)}</td><td>${p5z(s.hdOff)}</td><td>${p5z(s.coveredLeave)}</td><td>${p5z(s.selfSup)}</td><td>${p5z('—')}</td><td${hourly?'':' class="p4-key"'}>${p5z(outDays)}</td><td${hourly?' class="p4-key"':''}>${p5z(selfHrs||0)}</td><td>${p5z(crossHrs||0)}</td><td>${p5z(s.tempHrs||0)}</td></tr>`;
-    });
-    Object.keys(parsed.visitorEntries).forEach(name=>{
-      const v=parsed.visitorEntries[name];
-      const days=v.days.size;const hrs=v.hours;
-      rows.push(`<tr class="p4-vis"><td>${name}</td><td>來店支援</td><td>${p5z('—')}</td><td>${p5z('—')}</td><td>${p5z('—')}</td><td>${p5z('—')}</td><td>${p5z(days||'—')}</td><td${days?' class="p4-key"':''}>${p5z(days||'—')}</td><td>${p5z(0)}</td><td${days?'':' class="p4-key"'}>${p5z(hrs||0)}</td><td>${p5z('—')}</td></tr>`);
-    });
-    Object.keys(parsed.tempEntries).forEach(name=>{
-      rows.push(`<tr class="p4-vis"><td>${name}</td><td>貼班</td><td>${p5z('—')}</td><td>${p5z('—')}</td><td>${p5z('—')}</td><td>${p5z('—')}</td><td>${p5z('—')}</td><td>${p5z('—')}</td><td>${p5z('—')}</td><td>${p5z('—')}</td><td class="p4-key">${parsed.tempEntries[name].toFixed(1)}</td></tr>`);
-    });
-    return `<div class="p4-card"><div class="p4-card-hdr"><i style="background:${SB[store]||'#f0f0f0'}"></i><span>${store}</span><small>${homeNames.length} 人</small></div><div style="overflow-x:auto"><table class="p5tbl p4tbl"><colgroup><col style="width:96px"><col style="width:84px"></colgroup><thead>
+  const pv=document.getElementById('page4-preview');
+  salEnsure();
+  if(!salReady()){pv.innerHTML=salBanner();return;}
+  const groups=SalEngine.stores().map(store=>({store,rows:p4RowsFor(store)}));
+  const mob=p4MobRows();if(mob.length)groups.push({store:'機動人員',rows:mob});
+  const blocks=groups.map(({store,rows:list})=>{
+    const rows=list.map(r=>`<tr${r.vis?' class="p4-vis"':''}><td>${r.name}</td><td>${r.type}</td>${r.c.map((x,i)=>`<td${i===r.key?' class="p4-key"':''}>${p5z(x)}</td>`).join('')}</tr>`);
+    return `<div class="p4-card"><div class="p4-card-hdr"><i style="background:${SB[store]||'#f0f0f0'}"></i><span>${store}</span><small>${list.filter(r=>!r.vis).length} 人</small></div><div style="overflow-x:auto"><table class="p5tbl p4tbl"><colgroup><col style="width:96px"><col style="width:84px"></colgroup><thead>
       <tr class="p5-grp"><th colspan="2"></th><th colspan="3" class="g-add">休假</th><th colspan="2" class="g-month">支援</th><th class="g-tot">出勤</th><th colspan="3" class="g-base">時數</th></tr>
       <tr><th>簡稱</th><th>類別</th><th>平日休</th><th>假日休</th><th>請假</th><th>他店支援</th><th>來店支援</th><th class="p5-tot">出勤天數</th><th>計時時數</th><th>跨店時數</th><th>貼班時數</th></tr></thead><tbody>${rows.join('')}</tbody></table></div></div>`;
   }).join('');
-  const pv=document.getElementById('page4-preview');
-  pv.innerHTML=`<div class="p5-legend" style="margin:0 2px 8px"><span><span class="p5z">0／—</span>＝沒有</span><span>手機上只列有數字的項目</span></div>`+blocks;
+  pv.innerHTML=salBanner()+`<div class="p5-legend" style="margin:0 2px 8px"><span><span class="p5z">0／—</span>＝沒有</span><span>手機上只列有數字的項目</span></div>`+blocks;
   p5LabelCells(pv);
 }
 function downloadExcel4(){
   if(!p4Generated){alert('請先生成薪資假表');return;}
+  if(!salReady()){alert('天數、時數要等生命值骨架資料讀好才能下載（網頁版登入，看上方說明）');return;}
   // 若使用者尚未上傳覆蓋用 Excel II，p4Workbook 會是 null（資料是自動從第二頁帶入的）。
   // 此時下載 Excel III 前，先用與 downloadExcel2() 相同的邏輯就地生成一份 Excel II 工作簿當底，再疊加統計欄。
   let wb=p4Workbook;
@@ -3196,7 +3190,10 @@ function downloadExcel4(){
       buildCalendarWorkbookSheet(wb,name,home,cal,sched,supMap,lunarMap,bottomNotes,findLinkSupport,true,mandatoryOff);
     });
   }
-  p4Results.forEach(({store,homeNames,parsed,dim})=>{
+  // 2026-11-02 功能 C：統計欄改用 SalEngine（跟第 4 頁畫面、生命值骨架同一套）
+  const p4Groups=SalEngine.stores().map(store=>({store,rows:p4RowsFor(store)}));
+  const p4Mob=p4MobRows();if(p4Mob.length)p4Groups.push({store:'機動人員',rows:p4Mob});
+  p4Groups.forEach(({store,rows:p4Rows})=>{
     const sheetName=store.replace('店','');
     const ws=wb.worksheets.find(w=>w.name===sheetName);
     if(!ws)return;
@@ -3210,28 +3207,494 @@ function downloadExcel4(){
       c.border={top:STAT_BORDER,left:STAT_BORDER,bottom:STAT_BORDER,right:STAT_BORDER};
     });
     let row=2;
-    homeNames.forEach(name=>{
-      const s=parsed.stats[name];
-      const selfHrs=s.hourEntries.filter(e=>!e.cross).reduce((a,e)=>a+e.hours,0);
-      const crossHrs=s.hourEntries.filter(e=>e.cross).reduce((a,e)=>a+e.hours,0);
-      const st=staff.find(x=>x.name===name);
-      const noAttendance=store==='機動人員'||(st&&st.type==='計時');
-      const outDays=noAttendance?'—':dim-s.wdOff-s.hdOff-s.coveredLeave-s.selfSup;
-      [name,s.wdOff,s.hdOff,s.coveredLeave,s.selfSup,'',outDays,selfHrs||0,crossHrs||0,s.tempHrs||0].forEach((v,i)=>{const c=ws.getCell(row,8+i);c.value=v;c.font={name:'微軟正黑體'};c.alignment={horizontal:'center',vertical:'middle'};c.border={top:STAT_BORDER,left:STAT_BORDER,bottom:STAT_BORDER,right:STAT_BORDER};});
-      row++;
-    });
-    Object.keys(parsed.visitorEntries).forEach(name=>{
-      const v=parsed.visitorEntries[name];
-      const days=v.days.size;const hrs=v.hours;
-      [name+'（來店支援）','','','','',days||'',days||'',0,hrs||0,''].forEach((val,i)=>{const c=ws.getCell(row,8+i);c.value=val;c.font={name:'微軟正黑體'};c.alignment={horizontal:'center',vertical:'middle'};c.border={top:STAT_BORDER,left:STAT_BORDER,bottom:STAT_BORDER,right:STAT_BORDER};});
-      row++;
-    });
-    Object.keys(parsed.tempEntries).forEach(name=>{
-      [name+'（貼班）','','','','','','','','',parsed.tempEntries[name].toFixed(1)].forEach((val,i)=>{const c=ws.getCell(row,8+i);c.value=val;c.font={name:'微軟正黑體'};c.alignment={horizontal:'center',vertical:'middle'};c.border={top:STAT_BORDER,left:STAT_BORDER,bottom:STAT_BORDER,right:STAT_BORDER};});
+    p4Rows.forEach(r=>{
+      [r.vis?`${r.name}（${r.type}）`:r.name,...r.c.map(x=>x==='—'?'':x)].forEach((val,i)=>{const c=ws.getCell(row,8+i);c.value=val;c.font={name:'微軟正黑體'};c.alignment={horizontal:'center',vertical:'middle'};c.border={top:STAT_BORDER,left:STAT_BORDER,bottom:STAT_BORDER,right:STAT_BORDER};});
       row++;
     });
   });
   downloadWorkbook(wb,`${scopeFileTag()}排班_${generatedData.y}年${generatedData.m}月_薪資假表.xlsx`);
+}
+
+// ── 算薪引擎（功能 C，2026-11-02 老闆定：算法只有一套）──
+// 中間「算薪原稿複製」那段＝生命值骨架頁的算薪原稿原封不動複製（node 網頁版/同步算薪原稿.js），不要在這裡改；要改去骨架頁改再同步。
+// 包在自己的小盒子裡：裡面的 p5HP、calcRegular… 跟 v8 外面同名的變數互不影響。第 4、5 頁一律用這裡算。
+const SalEngine=(function(){
+  var skeleton=null,attendance={},staffSettings={},tempStaff=[],tempSchedule={};
+// ==算薪原稿複製:開始==（網頁版/同步算薪原稿.js 產生，不要手改）
+function applyAttendanceRows(rows){
+  attendance = {};
+  rows.forEach(function(r){
+    attendance[r.name] = attendance[r.name] || {};
+    attendance[r.name][r.day] = { plannedStatus:r.plannedStatus, actualStatus:r.actualStatus, actualHours:r.actualHours, link:r.link, statEffect:r.statEffect, source:r.source };
+  });
+}
+function applyTempScheduleRows(rows){
+  tempSchedule = {};
+  (rows || []).forEach(function(r){
+    tempSchedule[r.name] = tempSchedule[r.name] || {};
+    tempSchedule[r.name][r.day] = r.hours;
+  });
+}
+function dayList(){
+  var days = [];
+  for(var name in attendance){ for(var d in attendance[name]) days.push(Number(d)); }
+  var uniq = Array.from(new Set(days)).sort(function(a,b){return a-b;});
+  return uniq;
+}
+var WN = ['一','二','三','四','五','六','日'];
+var WD_MAP = [6,0,1,2,3,4,5];
+// 支援↑：讀取v7一起匯出的supMap（"門市_日期"→[姓名,...]），跟v7的supportNamesFor()同義
+function supportNamesFor(store, d){
+  var supMap = skeleton.supMap || {};
+  return supMap[store+'_'+d] || [];
+}
+
+// 這天支援表排他去哪間「同區別店」支援（沒有＝''）。2026-11-01 計時人員同區支援：時數 × 本人時薪，算在被支援的店
+function sameAreaSupStore(name, home, d){
+  var hit = '';
+  skeleton.stores.some(function(st){ if(st!==home && sameGroup(home, st) && supportNamesFor(st, d).indexOf(name)>=0){ hit = st; return true; } return false; });
+  return hit;
+}
+// 是否為假日（給平日休/假日休分類用），優先用v7匯出的holidays（含自訂假日），沒有就用星期六、日預設規則
+function isHolFor(d){
+  var holidays = (skeleton && skeleton.holidays) || [];
+  var rec = holidays.find(function(h){ return h.d===d; });
+  if(rec) return !!rec.isHol;
+  var wd = WD_MAP[new Date(skeleton.year, skeleton.month-1, d).getDay()];
+  return wd===5 || wd===6;
+}
+var p5HP={}, p5Route={}, p5OtherBonus={}, p5InsuranceOverride={}, p5ManualRate={}, p5CrossRateOverride={};
+var p5CrossPlus={}; // 2026-10-28 個人跨店費率＝基本時薪＋這個數字（跟著基本時薪連動）；p5CrossRateOverride 是舊格式死金額，載入時換掉
+var p5ManualPlus={}; // 2026-10-28 計時人員手動時薪（⇄）＝基本時薪＋這個數字（跟著基本時薪連動）；p5ManualRate 是舊格式死金額，載入時換掉
+var p5InsuranceMap={}; // 上傳勞健保Excel比對出來的{姓名:自付額}，逐行搬自v7的handleP5InsuranceUpload
+var p5BaseSalary=29500, p5BaseHourly=196, curP5Store='全部';
+
+var ROUTE_FIXED={counter:{丙:1000,乙:1500,甲:2500},grill:{丙:1000,乙:1500,甲:2500},drink:1500,coffee:500};
+var ROUTE_HOURLY={counter:{丙:1,乙:2,甲:3},grill:{丙:1,乙:2,甲:3},drink:2,coffee:1};
+var ROUTE_CATS=[['counter','櫃檯','🧾'],['drink','包飲','🥤'],['grill','煎台','🍳'],['coffee','品咖啡','☕']];
+
+function overtimeAmt(){ return Math.ceil(p5BaseSalary/30/8*4/3*1.5*22); }
+var CROSS_PLUS_DEFAULT=10; // 跨店費率＝基本時薪＋10（2026-10-28 老闆：跨店是基本時薪＋10，不能寫死）
+function crossRate(){ return p5BaseHourly+CROSS_PLUS_DEFAULT; }
+function crossPlusOf(name){
+  if(p5CrossPlus[name]!=null) return Number(p5CrossPlus[name]);
+  return p5CrossRateOverride[name]!=null ? p5CrossRateOverride[name]-p5BaseHourly : CROSS_PLUS_DEFAULT;
+}
+function getCrossRate(name){
+  if(p5CrossPlus[name]!=null) return p5BaseHourly+Number(p5CrossPlus[name]);
+  return p5CrossRateOverride[name]!=null ? p5CrossRateOverride[name] : crossRate();
+}
+// 計時人員手動時薪（⇄）：沒開＝null；開了＝基本時薪＋加給（舊格式死金額照用，載入時已換掉）
+function manualRateOf(name){
+  if(p5ManualPlus[name]!=null) return p5BaseHourly+Number(p5ManualPlus[name]);
+  return p5ManualRate[name]!=null ? p5ManualRate[name] : null;
+}
+function manualPlusOf(name){
+  if(p5ManualPlus[name]!=null) return Number(p5ManualPlus[name]);
+  return p5ManualRate[name]!=null ? p5ManualRate[name]-p5BaseHourly : 0;
+}
+// ====== 特殊人員（2026-10-28 老闆定，例：小美、小芳、阿德） ======
+// 計時人員勾「特殊人員」後，不用一般計時時薪（基本時薪＋定性加給＋計時動線），改成依「上班的區」各自設費率：
+//   special＝特殊費率：基本時薪＋（HP 10次以上 10／1～9次 3／0次 0），不加定性、不加動線，HP 看上班那間店
+//   cross＝跨店費率（getCrossRate，可被個人跨店費率覆寫）／custom＝自填：基本時薪＋自填加給（例：小芳在埤頭區＋30，基本時薪 196 時＝226）
+//   全部跟著上方「基本時薪」連動，不存死金額（2026-10-28 老闆：基本時薪要連動、不能寫死）
+// 區＝storeGroups 的區名（溪湖區／埤頭區／伸港區）；每頁只設本頁門市所在的區（兩區骨架頁各自存在薪資設定）。
+// 某區沒設定時：本人本店那一區＝特殊費率，其他區＝跨店費率（一般夥伴跨區都是跨店費率）。
+var p5Special = {}; // p5Special[姓名] = { 溪湖區:{mode:'special'|'cross'|'custom', plus:30}, ... }
+function areaOf(store){
+  var g = (skeleton.storeGroups||[]).find(function(g){ return g.stores.indexOf(store)>=0; });
+  return g ? g.name : store;
+}
+function pageAreas(){
+  var out = [];
+  skeleton.stores.forEach(function(s){ var a = areaOf(s); if(out.indexOf(a)<0) out.push(a); });
+  return out;
+}
+function specialHpRate(hp){ return p5BaseHourly + (hp>=10 ? 10 : hp>=1 ? 3 : 0); }
+function specialAreaCfg(name, area){
+  var cfg = p5Special[name]; if(!cfg) return null;
+  if(cfg[area]) return cfg[area];
+  var meta = skeleton.staff.find(function(s){ return s.name===name; });
+  return { mode: meta && areaOf(meta.store)===area ? 'special' : 'cross' };
+}
+// 特殊人員在某間店上班的時薪；不是特殊人員回傳 null（照原本算法）
+function specialRateAt(name, store){
+  var a = specialAreaCfg(name, areaOf(store)); if(!a) return null;
+  if(a.mode==='special') return specialHpRate(getStoreHP(store));
+  if(a.mode==='custom') return a.plus!=null ? p5BaseHourly + Number(a.plus) : (Number(a.rate)||0); // rate＝舊格式（死金額），只為了讀得懂
+  return getCrossRate(name);
+}
+// 來本店支援（跨區、算小時）的時薪：特殊人員照他在這一區的設定，其他人照跨店費率
+function visitorRate(name, store){
+  var sp = specialRateAt(name, store);
+  return sp!=null ? sp : getCrossRate(name);
+}
+function hpMultiplier(hp){ if(hp<=0)return 0; if(hp<=9)return .5; if(hp<=14)return 1; if(hp<=21)return 1.3; return 1.5; }
+function hpMultiplierLabel(hp){ if(hp<=0)return'0次・×0%'; if(hp<=9)return'1~9次・×50%'; if(hp<=14)return'10~14次・×100%'; if(hp<=21)return'15~21次・×130%'; return'22次以上・×150%'; }
+function hpRate(hp){ return hp>=10?p5BaseHourly+20:p5BaseHourly+10; }
+function qualAllowance(hp){ if(hp<=0)return 0; if(hp<=9)return 3; if(hp<=14)return 5; if(hp<=21)return 8; return 10; }
+function getStoreHP(store){ return p5HP[store]||0; }
+function routeSel(name){ if(!p5Route[name]) p5Route[name]={counter:null,drink:false,grill:null,coffee:false}; return p5Route[name]; }
+function routeFixedAmount(name){ var sel=routeSel(name),t=0; if(sel.counter)t+=ROUTE_FIXED.counter[sel.counter]; if(sel.drink)t+=ROUTE_FIXED.drink; if(sel.grill)t+=ROUTE_FIXED.grill[sel.grill]; if(sel.coffee)t+=ROUTE_FIXED.coffee; return t; }
+function routeHourlyAddon(name){ var sel=routeSel(name),t=0; if(sel.counter)t+=ROUTE_HOURLY.counter[sel.counter]; if(sel.drink)t+=ROUTE_HOURLY.drink; if(sel.grill)t+=ROUTE_HOURLY.grill[sel.grill]; if(sel.coffee)t+=ROUTE_HOURLY.coffee; return t; }
+function otherBonusObj(name){ if(!p5OtherBonus[name]) p5OtherBonus[name]={manage:0,train:0,hp:0,red:0,rent:0,traffic:0,other:0}; return p5OtherBonus[name]; }
+function otherBonusTotal(name){ var o=otherBonusObj(name); return (o.manage||0)+(o.train||0)+(o.hp||0)+(o.red||0)+(o.rent||0)+(o.traffic||0)+(o.other||0); }
+function getInsurance(name){
+  if(p5InsuranceOverride[name]!=null) return {amt:p5InsuranceOverride[name],manual:true};
+  for(var k in p5InsuranceMap){ if(k.indexOf(name)>=0) return {amt:p5InsuranceMap[k],manual:false}; }
+  return {amt:0,manual:false};
+}
+// 是否有人連動請假覆蓋了name在第d天的休假（逐行搬自v7 findHomeLinkSource：
+// 只看statEffect==='shift'＋link===name的紀錄，off_plus/work_plus的link不算覆蓋來源）
+function linkedCoverFor(name, d){
+  for(var n in attendance){
+    var e = attendance[n][d];
+    if(e && e.statEffect==='shift' && e.link===name) return true;
+  }
+  return false;
+}
+
+// 出勤天數／貼班時數：邏輯逐行搬自v7 computeStoreStatsFromMemory，避免跟主系統算法漂移。
+// outDays改成「扣除式」：當月總天數 − 平日休(wdOff) − 假日休(hdOff) − 連動請假覆蓋(coveredLeave) − 自己被排支援(selfSup)。
+// 計時人員的一般上班日(work)沒有逐日工時可讀，改用「預設工時」（staffSettings）當該天工時，
+// 這是生命值骨架特有的補強（v7原始排班本身就沒有逐日工時資料，原因見README），跟outDays公式本身無關。
+function attendanceStatsFor(name){
+  var staffMeta = skeleton.staff.find(function(s){ return s.name===name; });
+  var isHourly = staffMeta && staffMeta.type==='計時';
+  var isMob = staffMeta && staffMeta.type==='機動人員';
+  var defaultHours = Number(staffSettings[name]) || 0;
+  var rec = attendance[name] || {};
+  var wdOff=0, hdOff=0, coveredLeave=0, selfSup=0, tempHrs=0, hourlyHrs=0, crossHrs=0;
+  var otherAreaHrs = {}; // 計時人員「選店＋時段」選到別區的店：{門市: 時數}，照那一區的費率算（calcHourly）
+  var sameAreaSup = {};  // 計時人員同區支援：{被支援的店: 時數}，算在那間店（visitorEntriesFor），不進本店計時h（老闆 11-01）
+  Object.keys(rec).forEach(function(dKey){
+    var d = Number(dKey);
+    var a = rec[dKey];
+    var st = a.actualStatus;
+    if(a.statEffect==='shift'){
+      var hrs = Number(a.actualHours) || 0;
+      // 2026-10-28 老闆定：計時人員（含特殊人員）不用貼班費率——同區的店算進計時h（本人時薪），別區的店照那一區費率
+      if(isMob) crossHrs += hrs;
+      else if(isHourly){
+        if(skeleton.stores.indexOf(st)>=0 && !sameGroup(staffMeta.store, st)) otherAreaHrs[st] = (otherAreaHrs[st]||0) + hrs;
+        else hourlyHrs += hrs;
+      }
+      else tempHrs += hrs;
+      if(a.link===name) coveredLeave++; // 連動對象＝自己：本人只到班部分時段，其餘以本人名義請假抵充
+      return;
+    }
+    if(a.statEffect==='work_plus'){
+      // 休→出勤，固定9.5h，逐行搬自v7（v7對這個情境一律寫死9.5h，不分計時/正職）
+      if(isHourly) hourlyHrs += (Number(a.actualHours) || defaultHours || 9.5);
+      return;
+    }
+    if(st==='off' || st==='休'){
+      if(linkedCoverFor(name, d)){ coveredLeave++; return; }
+      if(isHolFor(d)) hdOff++; else wdOff++;
+      return;
+    }
+    if(st==='sup'){
+      selfSup++;
+      // 2026-11-01 老闆定：計時人員同區支援算進計時h（本人時薪），被支援的店不再算日薪；跨區照舊在被支援的店按小時算
+      if(isHourly){ var supTo = sameAreaSupStore(name, staffMeta.store, d); if(supTo) sameAreaSup[supTo] = (sameAreaSup[supTo]||0) + (Number(a.actualHours) || defaultHours); }
+      return;
+    }
+    if(st==='work' || st==='must' || st==='mob' || st==='出勤'){
+      if(isHourly) hourlyHrs += (Number(a.actualHours) || defaultHours);
+    }
+  });
+  // 沒有出勤紀錄、但支援表排了同區支援的天（被支援的店照 stillSupporting 會算支援）：計時人員一樣算預設工時
+  if(isHourly){
+    dayList().forEach(function(d){
+      if(rec[d]) return;
+      var supTo = sameAreaSupStore(name, staffMeta.store, d);
+      if(supTo) sameAreaSup[supTo] = (sameAreaSup[supTo]||0) + defaultHours;
+    });
+  }
+  var dim = new Date(skeleton.year, skeleton.month, 0).getDate();
+  var outDays = dim - wdOff - hdOff - coveredLeave - selfSup;
+  return { wdOff, hdOff, coveredLeave, selfSup, outDays, tempHrs, hourlyHrs, crossHrs, otherAreaHrs, sameAreaSup };
+}
+
+function calcRegular(s, hp, outDays, tempHrs){
+  var isFull8 = s.type==='八小時全職';
+  var base=p5BaseSalary, ot=isFull8?0:overtimeAmt();
+  var routeAmt=isFull8?0:Math.round(routeFixedAmount(s.name)*hpMultiplier(hp));
+  var capped=Math.min(outDays,22);
+  var baseAmt=Math.round((base+ot+routeAmt)/22*capped);
+  var extraDays=Math.max(0,outDays-22);
+  var dayUnit=isFull8?8:9.5;
+  var extraAmt=Math.round(extraDays*hpRate(hp)*dayUnit);
+  var tempAmt=Math.round(tempHrs*hpRate(hp));
+  var ob=otherBonusTotal(s.name);
+  var ins=getInsurance(s.name);
+  var total=baseAmt+extraAmt+tempAmt+ob-ins.amt;
+  return {base,ot,routeAmt,baseAmt,extraAmt,tempAmt,ob,ins,total,outDays};
+}
+
+// otherAreaHrs（2026-10-28）：計時人員「選店＋時段」選到別區的店 {門市: 時數}，照 visitorRate 那一區的費率算，顯示併進跨店h
+function calcHourly(name, hp, calcHrs, tempHrs, crossHrs, otherAreaHrs){
+  var manual=manualRateOf(name);
+  var meta = skeleton.staff.find(function(s){ return s.name===name; });
+  var special = meta ? specialRateAt(name, meta.store) : null;
+  var rate, qual=0, addon=0;
+  if(special!=null){ rate=special; manual=null; } // 特殊人員優先，手動時薪不用
+  else if(manual!=null){ rate=manual; }
+  else { qual=qualAllowance(hp); addon=hp>=10?routeHourlyAddon(name):0; rate=p5BaseHourly+qual+addon; }
+  // 貼班時數一律用HP費率(hpRate)算，不管本人原本職別，跟正職/八小時全職的貼班算法一致；
+  // 個人時薪(基本時薪+定性加給+計時動線獎金)只適用於計時人員自己的「計時h」。逐行搬自v7修正過的calcHourly。
+  var amt=Math.round(rate*calcHrs)+Math.round(tempHrs*hpRate(hp));
+  var otherHrs=0, otherAmt=0;
+  Object.keys(otherAreaHrs||{}).forEach(function(st){
+    otherHrs += otherAreaHrs[st];
+    otherAmt += Math.round(otherAreaHrs[st]*visitorRate(name, st));
+  });
+  amt += otherAmt;
+  var crossAmt=Math.round(crossHrs*crossRate());
+  var ins=getInsurance(name);
+  var total=amt+crossAmt-ins.amt;
+  return {rate,qual,addon,manual,special:special!=null,otherHrs,otherAmt,amt,crossAmt,ins,total};
+}
+
+// 計時同區支援的錢（2026-11-01）：時數 × 本人時薪，時薪跟本店那一列同一個（本店 HP）
+function hourlySupAmount(vstaff, hrs){
+  var r = calcHourly(vstaff.name, getStoreHP(vstaff.store), hrs, 0, 0, {});
+  return { rate: r.rate, special: r.special, amt: Math.round(r.rate*hrs) };
+}
+
+// 機動人員／跨店支援regular staff來這間店支援的天數薪資，搬自v7 calcVisitorDays（日薪制，沒有貼班/其他獎金/勞健保）
+function calcVisitorDays(vstaff, hp, days){
+  var isFull8 = vstaff.type==='八小時全職';
+  var base=p5BaseSalary, ot=isFull8?0:overtimeAmt();
+  var routeAmt=isFull8?0:Math.round(routeFixedAmount(vstaff.name)*hpMultiplier(hp));
+  var capped=Math.min(days,22);
+  var baseAmt=Math.round((base+ot+routeAmt)/22*capped);
+  var extraDays=Math.max(0,days-22);
+  var dayUnit=isFull8?8:9.5;
+  var extraAmt=Math.round(extraDays*hpRate(hp)*dayUnit);
+  return { baseAmt, extraAmt, routeAmt, total: baseAmt+extraAmt };
+}
+
+// 門市分區判斷，逐行搬自v7 sameGroup()：同店一定同組；否則查storeGroups設定
+function sameGroup(storeA, storeB){
+  if(!storeA || !storeB) return false;
+  if(storeA === storeB) return true;
+  var groups = skeleton.storeGroups || [];
+  return groups.some(function(g){ return g.stores.indexOf(storeA)>=0 && g.stores.indexOf(storeB)>=0; });
+}
+
+// 跨區支援當天實際時數：支援↑列點格子存的覆寫值（tempSchedule，跟貼班人員共用同一套儲存）優先，
+// 沒填就用該人「預設時數」（staffSettings，網頁可再設定），沒設預設值就固定9.5h
+function supportHoursFor(name, d){
+  var override = tempSchedule[name] && tempSchedule[name][d];
+  if(override) return Number(override);
+  return Number(staffSettings[name]) || 9.5;
+}
+
+// 支援表排了某人某天去支援，但當天出勤紀錄已改掉（LINE／網頁改成休、出勤、貼班），就不算支援薪資。
+// 2026-10-17修正：原本只看supMap，本店記休、被支援的店又照付一天支援薪資（多付）。
+// 沒有出勤紀錄的那天照支援表算（維持原本做法）。
+function stillSupporting(name, d){
+  var a = attendance[name] && attendance[name][d];
+  return !a || a.actualStatus === 'sup';
+}
+
+// 本店在supMap裡，哪些機動人員/跨店支援staff出現過，依v7 isExternal邏輯分成「天」（同區，日薪制）跟「小時」（跨區，9.5h/天＋跨店費率）
+// isExternal = 支援者所屬門市跟被支援門市不同區
+function visitorEntriesFor(store){
+  var days = dayList();
+  var names = new Set();
+  days.forEach(function(d){ supportNamesFor(store, d).forEach(function(n){ names.add(n); }); });
+
+  var entries = {};
+  names.forEach(function(name){
+    var vstaff = skeleton.staff.find(function(s){ return s.name===name; });
+    if(!vstaff) return; // 不是本系統員工（理論上不會發生，supMap只會記skeleton.staff裡的人）
+    var isExternal = !sameGroup(vstaff.store, store);
+    if(vstaff.type==='計時' && !isExternal){
+      // 2026-11-01 老闆：計時同區支援算在被支援的店——時數 × 本人時薪（不是日薪），時數跟 attendanceStatsFor 同一套
+      var sh = attendanceStatsFor(name).sameAreaSup[store] || 0;
+      if(sh) entries[name] = { vstaff: vstaff, days: 0, hours: 0, hourlyHrs: sh, isExternal: false };
+      return;
+    }
+    var dayCount = 0, hours = 0;
+    days.forEach(function(d){
+      if(supportNamesFor(store, d).indexOf(name) < 0) return;
+      if(!stillSupporting(name, d)) return;
+      if(isExternal) hours += supportHoursFor(name, d);
+      else dayCount++;
+    });
+    entries[name] = { vstaff: vstaff, days: dayCount, hours: hours, isExternal: isExternal };
+  });
+  return entries;
+}
+function collectMonthlyCloseRows(){
+  var header = ['門市','簡稱','類別','出勤天數','平日休','假日休','計時時數','貼班時數','跨店支援時數','其他獎金','勞健保自付額','應發金額'];
+  var rows = [];
+  var grand = 0;
+  skeleton.stores.forEach(function(store){
+    var home = skeleton.staff.filter(function(s){ return s.store===store; });
+    var hp = getStoreHP(store);
+    var subtotal = 0;
+
+    home.filter(function(s){ return s.type==='正職'||s.type==='八小時全職'; }).forEach(function(s){
+      var st = attendanceStatsFor(s.name);
+      var r = calcRegular(s, hp, st.outDays, st.tempHrs);
+      subtotal += r.total;
+      rows.push([store, s.name, s.type, r.outDays, st.wdOff, st.hdOff, '', st.tempHrs, '', r.ob, r.ins.amt, r.total]);
+    });
+
+    home.filter(function(s){ return s.type==='計時'; }).forEach(function(s){
+      var st = attendanceStatsFor(s.name);
+      var r = calcHourly(s.name, hp, st.hourlyHrs, st.tempHrs, st.crossHrs, st.otherAreaHrs);
+      subtotal += r.total;
+      rows.push([store, s.name, r.special ? '計時・特殊' : '計時', '', st.wdOff, st.hdOff, st.hourlyHrs, st.tempHrs, st.crossHrs + r.otherHrs, '', r.ins.amt, r.total]);
+    });
+
+    // 來店支援（同區＝天數日薪制／跨區＝小時制），跟renderStoreCardP5的visitorDayRows/visitorHourRows一致
+    var visitorEntries = visitorEntriesFor(store);
+    Object.keys(visitorEntries).forEach(function(name){
+      var v = visitorEntries[name];
+      if(v.days > 0){
+        var r = calcVisitorDays(v.vstaff, hp, v.days);
+        subtotal += r.total;
+        rows.push([store, name+'（來店支援）', v.vstaff.type, v.days, '', '', '', '', '', '', '', r.total]);
+      }
+      if(v.hours > 0){
+        var amt = Math.round(v.hours*visitorRate(name, store));
+        subtotal += amt;
+        rows.push([store, name+'（來店支援，跨區）', '跨店支援', '', '', '', '', '', v.hours, '', '', amt]);
+      }
+      if(v.hourlyHrs > 0){
+        var hs = hourlySupAmount(v.vstaff, v.hourlyHrs);
+        subtotal += hs.amt;
+        rows.push([store, name+'（來店支援）', hs.special ? '計時・特殊・同區支援' : '計時・同區支援', '', '', '', v.hourlyHrs, '', '', '', '', hs.amt]);
+      }
+    });
+
+    // 貼班人員（網頁新增的臨時夥伴），跟renderStoreCardP5的tempRows一致
+    tempStaff.filter(function(s){ return s.store===store; }).forEach(function(s){
+      var hrs = 0;
+      var sch = tempSchedule[s.name] || {};
+      Object.keys(sch).forEach(function(d){ hrs += Number(sch[d]) || 0; });
+      if(!hrs) return;
+      var amt = Math.round(hrs*getCrossRate(s.name));
+      subtotal += amt;
+      rows.push([store, s.name+'（貼班）', '跨店支援', '', '', '', '', hrs, '', '', '', amt]);
+    });
+
+    rows.push([store, '— 本店小計 —', '', '', '', '', '', '', '', '', '', subtotal]);
+    grand += subtotal;
+  });
+  rows.push(['全公司', '— 總計 —', '', '', '', '', '', '', '', '', '', grand]);
+  return { header: header, rows: rows };
+}
+// ==算薪原稿複製:結束==
+  // 資料進來：格式＝骨架頁開頁讀的那 6 樣（getSkeletonForWeb／getAttendanceForWeb／getTempStaffForWeb／getTempScheduleForWeb／getStaffSettingsForWeb／getSalarySettings）。
+  // 薪資設定欄位照骨架頁 loadSalarySettings 對照；舊格式死金額不用先換：manualRateOf／getCrossRate／specialRateAt 本來就讀得懂。
+  function load(inp){
+    skeleton=inp.skeleton;
+    applyAttendanceRows(inp.attendance||[]);
+    tempStaff=inp.tempStaff||[];
+    applyTempScheduleRows(inp.tempSchedule||[]);
+    staffSettings=inp.staffSettings||{};
+    var s={};
+    try{s=typeof inp.salarySettings==='string'?(inp.salarySettings?JSON.parse(inp.salarySettings):{}):(inp.salarySettings||{});}catch(e){s={};}
+    p5HP=s.hp||{};p5Route=s.route||{};p5OtherBonus=s.otherBonus||{};
+    p5InsuranceOverride=s.insOverride||{};p5ManualRate=s.manualRate||{};
+    p5CrossRateOverride=s.crossRateOverride||{};p5InsuranceMap=s.insMap||{};
+    p5Special=s.special||{};p5CrossPlus=s.crossPlus||{};p5ManualPlus=s.manualPlus||{};
+    p5BaseSalary=s.baseSalary||29500;p5BaseHourly=s.baseHourly||196;
+    return{settingsYM:s.year?(s.year+'年'+s.month+'月'):''};
+  }
+  // 一間店畫表要的每一列（第 4、5 頁共用）；每個數字都是原稿函式算的，列的種類跟 collectMonthlyCloseRows 一樣
+  function storeView(store){
+    var hp=getStoreHP(store),home=skeleton.staff.filter(function(s){return s.store===store;});
+    var reg=home.filter(function(s){return s.type==='正職'||s.type==='八小時全職';}).map(function(s){
+      var st=attendanceStatsFor(s.name);return{s:s,st:st,r:calcRegular(s,hp,st.outDays,st.tempHrs)};});
+    var hourly=home.filter(function(s){return s.type==='計時';}).map(function(s){
+      var st=attendanceStatsFor(s.name);return{s:s,st:st,r:calcHourly(s.name,hp,st.hourlyHrs,st.tempHrs,st.crossHrs,st.otherAreaHrs)};});
+    var visitors=[],ve=visitorEntriesFor(store);
+    Object.keys(ve).forEach(function(name){
+      var v=ve[name];
+      if(v.days>0)visitors.push({kind:'days',name:name,vstaff:v.vstaff,days:v.days,r:calcVisitorDays(v.vstaff,hp,v.days)});
+      if(v.hours>0){var rate=visitorRate(name,store);visitors.push({kind:'hours',name:name,vstaff:v.vstaff,hours:v.hours,rate:rate,special:specialRateAt(name,store)!=null,amt:Math.round(v.hours*rate)});}
+      if(v.hourlyHrs>0){var hs=hourlySupAmount(v.vstaff,v.hourlyHrs);visitors.push({kind:'hourlySup',name:name,vstaff:v.vstaff,hours:v.hourlyHrs,rate:hs.rate,special:hs.special,amt:hs.amt});}
+    });
+    var temps=[];
+    tempStaff.filter(function(s){return s.store===store;}).forEach(function(s){
+      var hrs=0,sch=tempSchedule[s.name]||{};Object.keys(sch).forEach(function(d){hrs+=Number(sch[d])||0;});
+      if(hrs)temps.push({name:s.name,hours:hrs,rate:getCrossRate(s.name),amt:Math.round(hrs*getCrossRate(s.name))});
+    });
+    var mob=home.filter(function(s){return s.type==='機動人員';}).map(function(s){return{s:s,st:attendanceStatsFor(s.name)};});
+    var subtotal=0;
+    reg.forEach(function(x){subtotal+=x.r.total;});hourly.forEach(function(x){subtotal+=x.r.total;});
+    visitors.forEach(function(x){subtotal+=x.kind==='days'?x.r.total:x.amt;});temps.forEach(function(x){subtotal+=x.amt;});
+    return{store:store,hp:hp,hpLabel:hpMultiplierLabel(hp),hpRate:hpRate(hp),reg:reg,hourly:hourly,visitors:visitors,temps:temps,mob:mob,subtotal:subtotal};
+  }
+  // 機動人員（不屬於任何門市）的出勤統計，給第 4 頁「機動人員」那張卡
+  function mobileView(){return skeleton.staff.filter(function(s){return s.type==='機動人員';}).map(function(s){return{s:s,st:attendanceStatsFor(s.name)};});}
+  return{
+    load:load,storeView:storeView,mobileView:mobileView,
+    rows:function(){return collectMonthlyCloseRows();},   // 月結匯出同一份 12 欄（店小計、總計＝骨架頁）
+    stores:function(){return skeleton?skeleton.stores.slice():[];},
+    ym:function(){return skeleton?{y:Number(skeleton.year),m:Number(skeleton.month)}:null;},
+    base:function(){return{salary:p5BaseSalary,hourly:p5BaseHourly,ot:overtimeAmt()};},
+    loaded:function(){return !!skeleton;}
+  };
+})();
+
+// 第 4、5 頁資料從哪來（功能 C，2026-11-02 老闆定）：
+//   實際＝生命值骨架這區雲端資料（骨架＋出勤紀錄＋貼班＋預設工時＋薪資設定）當場用 SalEngine 算＝骨架頁「實際計算薪資」
+//   試算＝骨架頁還沒有這個月：這裡的次假表照「送到骨架」同一套換成骨架格式（後端只算不寫），再用 SalEngine 算
+// 讀取通道 salaryInputs／salaryTrial 在後端網頁登入.gs（子任務02）；只有網頁版登入、看得到第 4、5 頁的人（老闆、區行政）讀得到。
+let salMode={mode:''},salTimer=null,salSeq=0;
+function salCanRead(){const me=window.HR_ME;return !!(window.HR_CALL&&me&&(me.boss||(me.pages||[]).some(p=>p===4||p===5)));}
+function salLoadSoon(){clearTimeout(salTimer);salTimer=setTimeout(salLoad,300);}
+async function salLoad(){
+  if(!generatedData)return;
+  if(!window.HR_CALL){salMode={mode:'local'};salRender();return;}
+  if(!salCanRead()){salMode={mode:'noright'};salRender();return;}
+  const{y,m}=generatedData,seq=++salSeq;
+  salMode={mode:'loading',y,m};salRender();
+  const call=(op,x)=>window.HR_CALL(op,Object.assign({token:window.HR_TOKEN(),year:y,month:m},x||{}));
+  let next;
+  try{
+    const r=await call('salaryInputs');
+    if(!r||!r.ok)throw new Error(salReason(r));
+    if(!r.noSkeleton){const info=SalEngine.load(r);next={mode:'actual',y,m,readAt:r.readAt,settingsYM:info.settingsYM};}
+    else{
+      const t=await call('salaryTrial',{data:JSON.stringify(buildSkeletonData(STORES.slice()))});
+      if(!t||!t.ok)throw new Error(salReason(t));
+      if(t.blocks&&t.blocks.length)throw new Error('次假表名單有問題，先修好才能試算：'+t.blocks.map(b=>typeof b==='string'?b:(b.msg||b.reason||JSON.stringify(b))).join('；'));
+      const info=SalEngine.load(Object.assign({tempStaff:[],tempSchedule:[]},t));
+      next={mode:'trial',y,m,readAt:t.readAt||new Date().toISOString(),settingsYM:info.settingsYM};
+    }
+  }catch(e){next={mode:'error',y,m,msg:String(e&&e.message||e)};}
+  if(seq!==salSeq)return; // 讀的中間又重讀了：用後面那次
+  salMode=next;salRender();
+}
+function salReason(r){const k=r&&r.reason;return k==='bad_op'?'後台還沒有這個功能（等部署）':k==='no_right'?'沒有看薪資的權限':k==='login'?'登入過期，請重新整理':k==='bad_data'?'次假表資料讀不懂':(k||'讀不到');}
+function salReady(){return salMode.mode==='actual'||salMode.mode==='trial';}
+// 還沒讀過、或次假表換了月份：排一次重讀（畫面先顯示讀取中）
+function salEnsure(){
+  if(!generatedData||salMode.mode==='loading')return;
+  if(!salMode.mode||(salMode.y&&(salMode.y!==generatedData.y||salMode.m!==generatedData.m)))salLoadSoon();
+}
+function salRender(){if(p4Generated)renderPage4Preview();if(p5Generated)renderPage5();}
+// 後端 readAt 是「yyyy/MM/dd HH:mm」（台北時間），直接取時分；ISO 格式才用 Date 換成這台的時間
+function salHHMM(s){const m=String(s||'').match(/^\d{4}\/\d{1,2}\/\d{1,2} (\d{1,2}:\d{2})/);if(m)return m[1];const d=new Date(s);return isNaN(d)?'':('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
+function salBanner(){
+  const s=salMode,ym=s.y?`${s.y}年${s.m}月`:'';
+  const box=(bg,bd,html)=>`<div class="sal-banner" style="background:${bg};border:1px solid ${bd};border-radius:8px;padding:8px 10px;margin:0 2px 10px;font-size:11px;line-height:1.7">${html}</div>`;
+  const btn=`<button onclick="salLoad()" style="margin-left:8px;font-size:11px;padding:1px 8px;border:1px solid #bbb;border-radius:6px;background:#fff;cursor:pointer">↻ 重新讀取</button>`;
+  const sub=t=>`<div style="font-size:10px;color:#666">${t}</div>`;
+  if(s.mode==='actual')return box('#EAF6EC','#B7DFC0',`<b>✅ 實際</b>：生命值骨架 ${ym} 的出勤紀錄＋薪資設定，跟骨架頁「實際計算薪資」同一套算法（讀取 ${salHHMM(s.readAt)}）${btn}`+sub(`HP 次數、動線、其他獎金、勞健保、基本工資這裡只能看；要改請到生命值骨架頁改，改完回來按「↻ 重新讀取」${s.settingsYM&&s.settingsYM!==ym?`・⚠️ 骨架頁的薪資設定是 ${s.settingsYM} 存的`:''}`));
+  if(s.mode==='trial')return box('#FFF8E1','#F0DCA0',`<b>🧮 試算</b>：生命值骨架還沒有 ${ym}，先用這裡的次假表照「送到骨架」同一套規則換算，算法跟骨架頁同一套（讀取 ${salHHMM(s.readAt)}）${btn}`+sub(`計時時數用人資假表／當天時數，沒寫的用骨架頁預設工時；薪資設定用骨架頁現在存的${s.settingsYM?`（${s.settingsYM}）`:''}。送到生命值骨架後這裡就變成「實際」`));
+  if(s.mode==='loading')return box('#F5F5F5','#E0E0E0','⏳ 讀取生命值骨架資料中…');
+  if(s.mode==='error')return box('#FDECEC','#F2B8B8',`⚠️ 讀不到生命值骨架資料：${s.msg}${btn}`);
+  if(s.mode==='noright')return box('#F5F5F5','#E0E0E0','這兩頁給老闆、區行政看（薪資資料在生命值骨架）');
+  return box('#F5F5F5','#E0E0E0','💡 這兩頁的數字要用網頁版（hr.bzhouse.tw）登入才算得出來：算薪資料在生命值骨架雲端，算法跟骨架頁同一套');
 }
 
 // ── 第五頁：薪資系統 ──
@@ -3306,45 +3769,8 @@ async function handleP5InsuranceUpload(e){
   reader.readAsArrayBuffer(file);
 }
 function getP4Entry(store){return p4Results&&p4Results.find(r=>r.store===store);}
-function calcRegular(s,hp,outDays,tempHrs){
-  const isFull8=s.type==='八小時全職';
-  const base=p5BaseSalary,ot=isFull8?0:overtimeAmt();
-  const routeAmt=isFull8?0:Math.round(routeFixedAmount(s.name)*hpMultiplier(hp));
-  const capped=Math.min(outDays,22);
-  const baseAmt=Math.round((base+ot+routeAmt)/22*capped);
-  const extraDays=Math.max(0,outDays-22);
-  const dayUnit=isFull8?8:9.5;
-  const extraAmt=Math.round(extraDays*hpRate(hp)*dayUnit);
-  const tempAmt=Math.round(tempHrs*hpRate(hp));
-  const ob=otherBonusTotal(s.name);
-  const ins=getInsurance(s.name);
-  const total=baseAmt+extraAmt+tempAmt+ob-ins.amt;
-  return{base,ot,routeAmt,baseAmt,extraAmt,tempAmt,ob,ins,total};
-}
-function calcHourly(name,hp,calcHrs,tempHrs,crossHrs){
-  const manual=p5ManualRate[name];
-  let rate,qual=0,addon=0;
-  if(manual!=null){rate=manual;}
-  else{qual=qualAllowance(hp);addon=hp>=10?routeHourlyAddon(name):0;rate=p5BaseHourly+qual+addon;}
-  // 貼班時數一律用HP費率(hpRate)，不管本人原本職別，跟正職/八小時全職的貼班算法一致；
-  // 個人時薪(基本時薪+定性加給+計時動線獎金)只適用於計時人員自己的「計時h」。
-  const amt=Math.round(rate*calcHrs)+Math.round(tempHrs*hpRate(hp));
-  const crossAmt=Math.round(crossHrs*crossRate());
-  const ins=getInsurance(name);
-  const total=amt+crossAmt-ins.amt;
-  return{rate,qual,addon,manual,amt,crossAmt,ins,total};
-}
-function calcVisitorDays(vstaff,hp,days){
-  const isFull8=vstaff.type==='八小時全職';
-  const base=p5BaseSalary,ot=isFull8?0:overtimeAmt();
-  const routeAmt=isFull8?0:Math.round(routeFixedAmount(vstaff.name)*hpMultiplier(hp));
-  const capped=Math.min(days,22);
-  const baseAmt=Math.round((base+ot+routeAmt)/22*capped);
-  const extraDays=Math.max(0,days-22);
-  const dayUnit=isFull8?8:9.5;
-  const extraAmt=Math.round(extraDays*hpRate(hp)*dayUnit);
-  return{baseAmt,extraAmt,routeAmt,total:baseAmt+extraAmt};
-}
+// 2026-11-02 功能 C：v8 自己的 calcRegular／calcHourly／calcVisitorDays 拿掉了（停在 10 月、少了特殊人員、計時同區支援等規則），
+// 第 4、5 頁一律用 SalEngine（生命值骨架算薪原稿）。上面 p5HP、overtimeAmt… 是舊單機版的設定，第 5 頁已經不用。
 function genPage5(){
   if(!p4Generated){alert('請先完成第四頁薪資假表');return;}
   p5Generated=true;
@@ -3356,29 +3782,39 @@ function renderPage5(){
   const panel=document.getElementById('page5-panel');
   if(!panel)return;
   if(!p5Generated){panel.innerHTML='<div class="ph"><div style="font-size:30px">💰</div><div style="font-size:12px;font-weight:600">尚未生成薪資試算</div><div style="font-size:9px;line-height:1.6">請先完成第四頁「薪資假表」<br>再按「⚡ 生成薪資試算」</div></div>';return;}
-  let grand=0;const storeSubtotals={};
-  const cards=STORES.map(store=>{
+  salEnsure();
+  if(!salReady()){panel.innerHTML=salBanner();return;}
+  // 2026-11-02 功能 C：每一格都是 SalEngine 算的；店小計再跟月結表（collectMonthlyCloseRows）對一次，對不上就紅字
+  const stores=SalEngine.stores();
+  if(curP5Store!=='全部'&&!stores.includes(curP5Store))curP5Store='全部';
+  const mrows=SalEngine.rows().rows,subOf=st=>(mrows.find(r=>r[0]===st&&r[1]==='— 本店小計 —')||[])[11]||0;
+  let grand=0;const storeSubtotals={},bad=[];
+  const cards=stores.map(store=>{
     const r=renderStoreCardP5(store);
     storeSubtotals[store]=r.subtotal;grand+=r.subtotal;
+    if(r.subtotal!==subOf(store))bad.push(store);
     return{store,html:r.html};
   });
-  const tabsHtml=`<div class="store-tabs">${['全部',...STORES].map(s=>`<button class="stab${s===curP5Store?' active':''}" onclick="curP5Store='${s}';renderPage5()">${s}</button>`).join('')}</div>`;
+  const b=SalEngine.base(),actual=salMode.mode==='actual';
+  const warnHtml=bad.length?`<div class="sal-banner" style="background:#FDECEC;border:1px solid #F2B8B8;border-radius:8px;padding:8px 10px;margin:0 2px 10px;font-size:11px">⚠️ ${bad.join('、')} 畫面小計跟月結表對不上，請截圖給小才</div>`:'';
+  const tabsHtml=`<div class="store-tabs">${['全部',...stores].map(s=>`<button class="stab${s===curP5Store?' active':''}" onclick="curP5Store='${s}';renderPage5()">${s}</button>`).join('')}</div>`;
   const settingsHtml=`<div class="p5-summary" style="align-items:center">
     <div style="display:flex;flex-direction:column;gap:8px;min-width:150px">
-      <div style="display:flex;align-items:center;gap:6px"><span style="font-size:9px;color:#666;width:48px">基本工資</span><input type="number" min="0" value="${p5BaseSalary}" style="width:90px" onchange="p5BaseSalary=+this.value;renderPage5()"></div>
-      <div style="display:flex;align-items:center;gap:6px"><span style="font-size:9px;color:#666;width:48px">基本時薪</span><input type="number" min="0" value="${p5BaseHourly}" style="width:90px" onchange="p5BaseHourly=+this.value;renderPage5()"></div>
+      <div style="display:flex;align-items:center;gap:6px"><span style="font-size:9px;color:#666;width:48px">基本工資</span><b>${fmt(b.salary)}</b></div>
+      <div style="display:flex;align-items:center;gap:6px"><span style="font-size:9px;color:#666;width:48px">基本時薪</span><b>${fmt(b.hourly)}</b></div>
+      <div style="font-size:9px;color:#999">在生命值骨架頁改</div>
     </div>
     <div style="width:1px;background:#e0e0e0;align-self:stretch"></div>
     <div style="flex:1;min-width:220px">
-      <div class="p5-sum-label">全公司本月薪資試算總計</div>
+      <div class="p5-sum-label">${actual?'全公司本月薪資（實際）':'全公司本月薪資試算總計'}</div>
       <div class="p5-sum-total">${fmt(grand)}</div>
-      <div class="p5-sum-stores" style="margin-top:6px">${STORES.map(s=>`<div class="p5-sum-store${s===curP5Store?' on':''}" title="只看${s}（再點一次看全部）" onclick="curP5Store=curP5Store==='${s}'?'全部':'${s}';renderPage5()"><div>${s.replace('店','')}</div><div>${fmt(storeSubtotals[s])}</div></div>`).join('')}</div>
+      <div class="p5-sum-stores" style="margin-top:6px">${stores.map(s=>`<div class="p5-sum-store${s===curP5Store?' on':''}" title="只看${s}（再點一次看全部）" onclick="curP5Store=curP5Store==='${s}'?'全部':'${s}';renderPage5()"><div>${s.replace('店','')}</div><div>${fmt(storeSubtotals[s])}</div></div>`).join('')}</div>
     </div>
   </div>`;
-  const shown=curP5Store==='全部'?STORES:[curP5Store];
+  const shown=curP5Store==='全部'?stores:[curP5Store];
   const cardsHtml=cards.filter(c=>shown.includes(c.store)).map(c=>c.html).join('');
-  const legendHtml=`<div class="p5-legend" style="margin:0 2px 8px"><span><i style="background:#FFF8E1;border:1px solid #F0DCA0"></i>黃底＝可以改</span><span><i style="background:#F3F3F3"></i>灰底欄＝這個人實領</span><span><span class="p5z">0／—</span>＝沒有金額</span><span>點上面門市金額＝只看那間店</span></div>`;
-  panel.innerHTML=tabsHtml+settingsHtml+legendHtml+cardsHtml;
+  const legendHtml=`<div class="p5-legend" style="margin:0 2px 8px"><span><i style="background:#F3F3F3"></i>灰底欄＝這個人實領</span><span><span class="p5z">0／—</span>＝沒有金額</span><span>點上面門市金額＝只看那間店</span></div>`;
+  panel.innerHTML=salBanner()+warnHtml+tabsHtml+settingsHtml+legendHtml+cardsHtml;
   p5LabelCells(panel);
 }
 function insCellHtml(name,ins){
@@ -3398,77 +3834,55 @@ function p5LabelCells(root){
     t.querySelectorAll('tbody tr').forEach(tr=>[...tr.children].forEach((td,i)=>{td.dataset.l=names[i]||'';}));
   });
 }
+// 2026-11-02 功能 C：一間店的卡片，數字全部來自 SalEngine.storeView（生命值骨架同一套）；這裡只能看，設定去骨架頁改
 function renderStoreCardP5(store){
-  const entry=getP4Entry(store);
-  const home=staff.filter(s=>s.store===store);
-  const dim=entry?entry.dim:0;
-  const hp=getStoreHP(store);
+  const v=SalEngine.storeView(store),b=SalEngine.base();
+  const hp=v.hp,h1=x=>p4Num(x),insTxt=ins=>ins.amt?'-'+fmt(ins.amt):p5z('—');
   let subtotal=0;
-  const regRows=home.filter(s=>s.type==='正職'||s.type==='八小時全職').map(s=>{
-    const st=entry?entry.parsed.stats[s.name]:null;
-    const tempHrs=st?st.tempHrs:0;
-    const outDays=st?(dim-st.wdOff-st.hdOff-st.coveredLeave-st.selfSup):0;
-    const r=calcRegular(s,hp,outDays,tempHrs);
+  const regRows=v.reg.map(({s,st,r})=>{
     subtotal+=r.total;
-    const routeCell=s.type==='八小時全職'?p5z('—'):p5ed(`${p5z(fmt(r.routeAmt))}<button class="p5-edit-btn" onclick="openRouteModal('${s.name}','reg')">✎</button>`);
-    return`<tr><td>${s.name}</td><td>${s.type}</td><td>${outDays}</td><td>${p5z(tempHrs)}</td><td>${fmt(r.base)}</td><td>${r.ot?fmt(r.ot):p5z('—')}</td><td>${routeCell}</td><td>${p5z(fmt(r.extraAmt))}</td><td>${p5ed(`${p5z(fmt(r.ob))}<button class="p5-edit-btn" onclick="openOtherBonusModal('${s.name}')">✎</button>`)}</td><td>${insCellHtml(s.name,r.ins)}</td><td class="p5-tot">${fmt(r.total)}</td></tr>`;
+    const full8=s.type==='八小時全職';
+    return`<tr><td>${s.name}</td><td>${s.type}</td><td>${r.outDays}</td><td>${p5z(h1(st.tempHrs))}</td><td>${fmt(r.base)}</td><td>${r.ot?fmt(r.ot):p5z('—')}</td><td>${full8?p5z('—'):p5z(fmt(r.routeAmt))}</td><td>${p5z(fmt(r.extraAmt))}</td><td>${p5z(fmt(r.ob))}</td><td>${insTxt(r.ins)}</td><td class="p5-tot">${fmt(r.total)}</td></tr>`;
   }).join('');
-  const hourRows=home.filter(s=>s.type==='計時').map(s=>{
-    const st=entry?entry.parsed.stats[s.name]:null;
-    const calcHrs=st?st.hourEntries.filter(e=>!e.cross).reduce((a,e)=>a+e.hours,0):0;
-    const crossHrs=st?st.hourEntries.filter(e=>e.cross).reduce((a,e)=>a+e.hours,0):0;
-    const tempHrs=st?st.tempHrs:0;
-    const r=calcHourly(s.name,hp,calcHrs,tempHrs,crossHrs);
+  const hourRows=v.hourly.map(({s,st,r})=>{
     subtotal+=r.total;
-    const isManual=r.manual!=null;
-    const rateVal=isManual?r.manual:p5BaseHourly;
-    const rateCell=`<input type="number" min="0" value="${rateVal}" style="width:48px;text-align:right" onchange="p5ManualRate['${s.name}']=+this.value;renderPage5()">`;
-    const qualCell=isManual?p5z('—'):p5z(fmt(r.qual));
-    const routeCell=isManual?p5z('—'):p5ed(`${r.addon?'+'+r.addon:p5z('0')}<button class="p5-edit-btn" onclick="openRouteModal('${s.name}','hourly')">✎</button>`);
-    return`<tr><td>${s.name}</td><td>計時${isManual?'（手動）':''}</td><td>${calcHrs||0}</td><td>${p5z(tempHrs||0)}</td><td>${p5z(crossHrs||0)}</td><td>${rateCell}</td><td>${qualCell}</td><td>${routeCell}</td><td class="p5-tot">${fmt(r.total)}</td></tr>`;
+    const manual=r.manual!=null,fixed=r.special||manual;
+    const type=r.special?'計時・特殊':manual?'計時（手動）':'計時';
+    const rateCell=r.special?`${r.rate}<span style="font-size:9px;color:#999"> 特殊</span>`:manual?`${b.hourly}＋${r.rate-b.hourly}＝${r.rate}`:fmt(b.hourly);
+    return`<tr><td>${s.name}</td><td>${type}</td><td>${h1(st.hourlyHrs)}</td><td>${p5z(h1(st.tempHrs))}</td><td>${p5z(h1(st.crossHrs+(r.otherHrs||0)))}</td><td>${rateCell}</td><td>${fixed?p5z('—'):p5z(fmt(r.qual))}</td><td>${fixed?p5z('—'):(r.addon?'+'+r.addon:p5z('0'))}</td><td>${insTxt(r.ins)}</td><td class="p5-tot">${fmt(r.total)}</td></tr>`;
   }).join('');
-  // 來店支援（按日、按時數、機動／貼班）集中成一張表，預設收起來
+  // 來店支援（按日、跨區按時數、計時同區支援、貼班）集中成一張表，預設收起來
   let visitorRows='',visCount=0,visSubtotal=0;const visNames=[];
-  if(entry){
-    Object.keys(entry.parsed.visitorEntries).forEach(name=>{
-      const v=entry.parsed.visitorEntries[name];
-      const vstaff=staff.find(x=>x.name===name);
-      if(v.days.size>0&&vstaff){
-        const r=calcVisitorDays(vstaff,hp,v.days.size);
-        subtotal+=r.total;visCount++;visSubtotal+=r.total;visNames.push(name);
-        const routeCell=vstaff.type==='八小時全職'?p5z('—'):p5ed(`${p5z(fmt(r.routeAmt))}<button class="p5-edit-btn" onclick="openRouteModal('${name}','reg')">✎</button>`);
-        visitorRows+=`<tr><td>${name}</td><td>${vstaff.type}</td><td>${v.days.size}</td><td>${p5z('—')}</td><td><span class="p5z" title="正職／八小時全職來店支援：基本工資＋超時加班＋動線獎金按天數折算">按日折算</span></td><td>${routeCell}</td><td>${p5z(fmt(r.extraAmt))}</td><td class="p5-tot">${fmt(r.total)}</td></tr>`;
-      }else if(v.hours>0){
-        const rate=getCrossRate(name);
-        const amt=Math.round(v.hours*rate);
-        subtotal+=amt;visCount++;visSubtotal+=amt;visNames.push(name);
-        const rateCell=`<input type="number" min="0" value="${rate}" style="width:56px;text-align:right" onchange="p5CrossRateOverride['${name}']=+this.value;renderPage5()">`;
-        visitorRows+=`<tr><td>${name}</td><td>跨店支援</td><td>${p5z('—')}</td><td>${v.hours}</td><td>${rateCell}</td><td>${p5z('—')}</td><td>${p5z('—')}</td><td class="p5-tot">${fmt(amt)}</td></tr>`;
-      }
-    });
-    Object.keys(entry.parsed.tempEntries).forEach(name=>{
-      const hrs=entry.parsed.tempEntries[name];
-      const rate=getCrossRate(name);
-      const amt=Math.round(hrs*rate);
-      subtotal+=amt;visCount++;visSubtotal+=amt;visNames.push(name);
-      const rateCell=`<input type="number" min="0" value="${rate}" style="width:56px;text-align:right" onchange="p5CrossRateOverride['${name}']=+this.value;renderPage5()">`;
-      visitorRows+=`<tr><td>${name}（機動／貼班）</td><td>跨店支援</td><td>${p5z('—')}</td><td>${hrs}</td><td>${rateCell}</td><td>${p5z('—')}</td><td>${p5z('—')}</td><td class="p5-tot">${fmt(amt)}</td></tr>`;
-    });
-  }
+  v.visitors.forEach(x=>{
+    if(x.kind==='days'){
+      subtotal+=x.r.total;visSubtotal+=x.r.total;
+      visitorRows+=`<tr><td>${x.name}</td><td>${x.vstaff.type}</td><td>${x.days}</td><td>${p5z('—')}</td><td><span class="p5z" title="正職／八小時全職來店支援：基本工資＋超時加班＋動線獎金按天數折算">按日折算</span></td><td>${x.vstaff.type==='八小時全職'?p5z('—'):p5z(fmt(x.r.routeAmt))}</td><td>${p5z(fmt(x.r.extraAmt))}</td><td class="p5-tot">${fmt(x.r.total)}</td></tr>`;
+    }else{
+      subtotal+=x.amt;visSubtotal+=x.amt;
+      const type=x.kind==='hours'?(x.special?'跨區支援・特殊':'跨區支援'):(x.special?'計時・特殊・同區支援':'計時・同區支援');
+      visitorRows+=`<tr><td>${x.name}</td><td>${type}</td><td>${p5z('—')}</td><td>${h1(x.hours)}</td><td>${fmt(x.rate)}</td><td>${p5z('—')}</td><td>${p5z('—')}</td><td class="p5-tot">${fmt(x.amt)}</td></tr>`;
+    }
+    visCount++;if(!visNames.includes(x.name))visNames.push(x.name);
+  });
+  v.temps.forEach(x=>{
+    subtotal+=x.amt;visSubtotal+=x.amt;visCount++;visNames.push(x.name);
+    visitorRows+=`<tr><td>${x.name}（貼班）</td><td>跨店支援</td><td>${p5z('—')}</td><td>${h1(x.hours)}</td><td>${fmt(x.rate)}</td><td>${p5z('—')}</td><td>${p5z('—')}</td><td class="p5-tot">${fmt(x.amt)}</td></tr>`;
+  });
+  const home=v.reg.map(x=>x.s).concat(v.hourly.map(x=>x.s));
   const cols='<colgroup><col style="width:96px"><col style="width:84px"></colgroup>';
   const regTbl=regRows?`<div style="overflow-x:auto"><table class="p5tbl">${cols}<thead>
     <tr class="p5-grp"><th colspan="2"></th><th colspan="2" class="g-base">依據</th><th colspan="3" class="g-month">月薪基準（按出勤天折算）</th><th colspan="2" class="g-add">另加</th><th class="g-sub">扣</th><th class="g-tot">實領</th></tr>
     <tr><th>正職／八小時</th><th>類別</th><th>出勤天</th><th>貼班h</th><th>基本工資</th><th>超時加班</th><th>動線獎金</th><th>23天起</th><th>其他獎金</th><th>勞健保</th><th class="p5-tot">小計</th></tr></thead><tbody>${regRows}</tbody></table></div>`:'';
   const hourTbl=hourRows?`<div style="overflow-x:auto"><table class="p5tbl">${cols}<thead>
-    <tr class="p5-grp"><th colspan="2"></th><th colspan="3" class="g-base">時數</th><th colspan="3" class="g-month">時薪組成</th><th class="g-tot">實領</th></tr>
-    <tr><th>計時</th><th>類別</th><th>計時h</th><th>貼班h</th><th>跨店h</th><th>基本時薪</th><th>定性加給</th><th>計時動線獎金</th><th class="p5-tot">小計</th></tr></thead><tbody>${hourRows}</tbody></table></div>`:'';
+    <tr class="p5-grp"><th colspan="2"></th><th colspan="3" class="g-base">時數</th><th colspan="3" class="g-month">時薪組成</th><th class="g-sub">扣</th><th class="g-tot">實領</th></tr>
+    <tr><th>計時</th><th>類別</th><th>計時h</th><th>貼班h</th><th>跨店h</th><th>基本時薪</th><th>定性加給</th><th>計時動線獎金</th><th>勞健保</th><th class="p5-tot">小計</th></tr></thead><tbody>${hourRows}</tbody></table></div>`:'';
   const visOpen=!!p5VisOpen[store];
-  const visTbl=visCount?`<button class="p5-vis-hdr" onclick="p5VisOpen['${store}']=!p5VisOpen['${store}'];renderPage5()"><span>${visOpen?'▼':'▶'} 來店支援 ${visCount} 人</span><span style="color:#999">${visNames.join('、')}</span><b>${fmt(visSubtotal)}</b></button>${visOpen?`<div style="overflow-x:auto"><table class="p5tbl">${cols}<thead><tr><th>來店支援</th><th>類別</th><th>天數</th><th>時數</th><th>時薪</th><th>動線獎金</th><th>23天起</th><th class="p5-tot">小計</th></tr></thead><tbody>${visitorRows}</tbody></table></div>`:''}`:'';
+  const visTbl=visCount?`<button class="p5-vis-hdr" onclick="p5VisOpen['${store}']=!p5VisOpen['${store}'];renderPage5()"><span>${visOpen?'▼':'▶'} 來店支援 ${visNames.length} 人</span><span style="color:#999">${visNames.join('、')}</span><b>${fmt(visSubtotal)}</b></button>${visOpen?`<div style="overflow-x:auto"><table class="p5tbl">${cols}<thead><tr><th>來店支援</th><th>類別</th><th>天數</th><th>時數</th><th>時薪</th><th>動線獎金</th><th>23天起</th><th class="p5-tot">小計</th></tr></thead><tbody>${visitorRows}</tbody></table></div>`:''}`:'';
   const html=`<div class="p5-card">
     <div class="p5-card-hdr">
-      <div style="display:flex;align-items:baseline;gap:8px"><span style="font-weight:700;font-size:15px">${store}</span><span style="font-size:10px;color:#888">本店 ${home.filter(s=>s.type==='正職'||s.type==='八小時全職'||s.type==='計時').length} 人${visCount?`・來店支援 ${visCount} 人`:''}</span></div>
+      <div style="display:flex;align-items:baseline;gap:8px"><span style="font-weight:700;font-size:15px">${store}</span><span style="font-size:10px;color:#888">本店 ${home.length} 人${visCount?`・來店支援 ${visNames.length} 人`:''}</span></div>
       <div class="p5-hdr-right">
-        <div class="p5-hp-box"><span style="font-size:10px;color:#666">本店HP次數</span><input type="number" min="0" value="${hp}" onchange="p5HP['${store}']=+this.value;renderPage5()"><span class="p5-hp-tag">${hpMultiplierLabel(hp)}・${hpRate(hp)}</span></div>
+        <div class="p5-hp-box"><span style="font-size:10px;color:#666">本店HP次數</span><b style="font-size:14px;padding:0 4px">${hp}</b><span class="p5-hp-tag">${v.hpLabel}・${v.hpRate}</span></div>
         <div class="p5-subtotal">本店小計 <b>${fmt(subtotal)}</b></div>
       </div>
     </div>
@@ -3536,44 +3950,16 @@ function openInsuranceEdit(name){
 }
 function downloadExcel5(){
   if(!p5Generated){alert('請先生成薪資試算');return;}
+  if(!salReady()){alert('薪資要等生命值骨架資料讀好才能下載（網頁版登入，看上方說明）');return;}
+  // 2026-11-02 功能 C：直接用月結表那 12 欄（＝生命值骨架「月結匯出」同一份），實際／試算寫在檔名和第一列
+  const{header,rows}=SalEngine.rows(),actual=salMode.mode==='actual';
   const wb=new ExcelJS.Workbook();
-  STORES.forEach(store=>{
-    const ws=wb.addWorksheet(store.replace('店',''));
-    ws.addRow(['簡稱','類別','基本工資/時薪','超時加班','動線獎金','出勤天/計時h','23天起/貼班h','貼班h/跨店h','其他獎金','勞健保','小計']);
-    const entry=getP4Entry(store);const home=staff.filter(s=>s.store===store);const dim=entry?entry.dim:0;const hp=getStoreHP(store);
-    home.filter(s=>s.type==='正職'||s.type==='八小時全職').forEach(s=>{
-      const st=entry?entry.parsed.stats[s.name]:null;
-      const tempHrs=st?st.tempHrs:0;
-      const outDays=st?(dim-st.wdOff-st.hdOff-st.coveredLeave-st.selfSup):0;
-      const r=calcRegular(s,hp,outDays,tempHrs);
-      ws.addRow([s.name,s.type,r.base,r.ot,r.routeAmt,outDays,r.extraAmt,tempHrs,r.ob,-r.ins.amt,r.total]);
-    });
-    if(entry){
-      Object.keys(entry.parsed.visitorEntries).forEach(name=>{
-        const v=entry.parsed.visitorEntries[name];
-        const vstaff=staff.find(x=>x.name===name);
-        if(v.days.size>0&&vstaff){const r=calcVisitorDays(vstaff,hp,v.days.size);ws.addRow([name+'（來店支援）',vstaff.type,p5BaseSalary,vstaff.type==='八小時全職'?'—':overtimeAmt(),r.routeAmt,v.days.size,r.extraAmt,'—','—','—',r.total]);}
-      });
-    }
-    ws.addRow([]);ws.addRow(['簡稱','類別','基本時薪','定性加給','計時動線獎金','計時h','貼班h','跨店h','小計']);
-    home.filter(s=>s.type==='計時').forEach(s=>{
-      const st=entry?entry.parsed.stats[s.name]:null;
-      const calcHrs=st?st.hourEntries.filter(e=>!e.cross).reduce((a,e)=>a+e.hours,0):0;
-      const crossHrs=st?st.hourEntries.filter(e=>e.cross).reduce((a,e)=>a+e.hours,0):0;
-      const tempHrs=st?st.tempHrs:0;
-      const r=calcHourly(s.name,hp,calcHrs,tempHrs,crossHrs);
-      ws.addRow([s.name,'計時',r.manual!=null?r.manual:p5BaseHourly,r.qual,r.addon,calcHrs,tempHrs,crossHrs,r.total]);
-    });
-    if(entry){
-      Object.keys(entry.parsed.visitorEntries).forEach(name=>{
-        const v=entry.parsed.visitorEntries[name];
-        if(v.hours>0){const rate=getCrossRate(name);const amt=Math.round(v.hours*rate);ws.addRow([name+'（來店支援）','跨店支援',rate,'—','—',0,0,v.hours,amt]);}
-      });
-      Object.keys(entry.parsed.tempEntries).forEach(name=>{const hrs=entry.parsed.tempEntries[name];const rate=getCrossRate(name);const amt=Math.round(hrs*rate);ws.addRow([name+'（機動／貼班）','跨店支援',rate,'—','—',0,0,hrs,amt]);});
-    }
-    ws.columns.forEach(c=>c.width=12);
-  });
-  downloadWorkbook(wb,`${scopeFileTag()}排班_${generatedData.y}年${generatedData.m}月_薪資表.xlsx`);
+  const ws=wb.addWorksheet(actual?'實際':'試算');
+  ws.addRow([`${salMode.y}年${salMode.m}月 薪資${actual?'（實際：生命值骨架資料）':'（試算：次假表換算）'}・讀取 ${salHHMM(salMode.readAt)}・算法跟生命值骨架同一套`]);
+  ws.addRow(header);
+  rows.forEach(r=>ws.addRow(r));
+  ws.columns.forEach(c=>c.width=12);
+  downloadWorkbook(wb,`${scopeFileTag()}排班_${salMode.y}年${salMode.m}月_薪資表${actual?'':'_試算'}.xlsx`);
 }
 
 // ── 頁籤導覽 ──
