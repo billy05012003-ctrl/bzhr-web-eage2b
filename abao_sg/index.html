@@ -146,24 +146,100 @@ input[type=text],input[type=number],select{border:1px solid #ccc;border-radius:5
 .pk-week{display:flex;flex-wrap:wrap;gap:6px}
 .pk-wbtn{flex:1;min-width:40px;padding:8px 0;text-align:center;border-radius:6px;font-size:11px;cursor:pointer;background:#f9f9f9;border:1px solid #ddd;color:#1a1a1a}
 .pk-wbtn.sel{background:#534AB7;color:#fff;border-color:#534AB7;font-weight:600}
+/* 第 5 頁：2026-11-02 排版改版（欄位分組、0 變淡、可改的格子黃底、本店小計移到標題、來店支援收合、最寬 1240px） */
+#page-5>*{max-width:1240px;margin-left:auto;margin-right:auto}
 .p5-summary{background:#fff;border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
-.p5-sum-label{font-size:9px;color:#666}
-.p5-sum-total{font-size:18px;font-weight:700;margin-top:2px}
-.p5-sum-stores{display:flex;gap:14px;flex-wrap:wrap}
-.p5-sum-store{text-align:right}
-.p5-sum-store div:first-child{font-size:9px;color:#888}
-.p5-sum-store div:last-child{font-size:11px;font-weight:600}
-.p5-card{background:#fff;border-radius:8px;padding:10px 12px;margin-bottom:12px}
-.p5-card-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.p5-sum-label{font-size:10px;color:#666}
+.p5-sum-total{font-size:22px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums}
+.p5-sum-stores{display:flex;gap:8px;flex-wrap:wrap}
+.p5-sum-store{text-align:left;cursor:pointer;padding:3px 8px;border-radius:6px;border:1px solid transparent}
+.p5-sum-store:hover{background:#f5f5f5}
+.p5-sum-store.on{border-color:#534AB7;background:#EEEDFE}
+.p5-sum-store div:first-child{font-size:10px;color:#888}
+.p5-sum-store div:last-child{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.p5-card{background:#fff;border-radius:8px;padding:12px 14px;margin-bottom:12px}
+.p5-card-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.p5-card-hdr .p5-subtotal{border-top:none;padding-top:0;font-size:11px;color:#666}
+.p5-card-hdr .p5-subtotal b{font-size:20px;color:#1a1a1a;font-variant-numeric:tabular-nums}
+.p5-hdr-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .p5-hp-box{display:flex;align-items:center;gap:5px;background:#f5f5f5;border-radius:6px;padding:3px 6px}
-.p5-hp-box input[type=number]{width:42px;text-align:center;font-size:10px}
-.p5-hp-tag{font-size:8px;color:#534AB7;background:#EEEDFE;padding:1px 6px;border-radius:4px}
-.p5tbl{width:100%;border-collapse:collapse;font-size:9px;table-layout:fixed;margin-bottom:8px}
-.p5tbl th,.p5tbl td{border:1px solid #eee;padding:3px 2px;text-align:right;overflow:hidden}
-.p5tbl th{background:#f5f5f5;color:#666;font-weight:500}
-.p5tbl td:first-child,.p5tbl th:first-child{text-align:left;padding-left:4px}
-.p5tbl td:nth-child(2),.p5tbl th:nth-child(2){text-align:left;color:#888}
-.p5-sub-label{font-size:9px;color:#888;margin:6px 0 3px}
+.p5-hp-box input[type=number]{width:46px;text-align:center;font-size:11px;background:#FFF8E1;border-color:#E5C76B}
+.p5-hp-tag{font-size:9px;color:#534AB7;background:#EEEDFE;padding:1px 6px;border-radius:4px}
+.p5tbl{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed;margin-bottom:10px;font-variant-numeric:tabular-nums}
+.p5tbl th,.p5tbl td{border-bottom:1px solid #eee;padding:5px 6px;text-align:right;overflow:hidden;white-space:nowrap}
+.p5tbl th{background:#f7f7f7;color:#666;font-weight:500;font-size:10px}
+.p5tbl tr.p5-grp th{background:#fff;font-size:9px;text-align:center;padding:3px 4px;border-bottom:none}
+.p5tbl tr.p5-grp th.g-base{background:#F1F1F1;color:#555}
+.p5tbl tr.p5-grp th.g-month{background:#EEEDFE;color:#3C3489}
+.p5tbl tr.p5-grp th.g-add{background:#E4F3E8;color:#1E6B3A}
+.p5tbl tr.p5-grp th.g-sub{background:#FCEBEB;color:#A32D2D}
+.p5tbl tr.p5-grp th.g-tot{background:#E8E8E8;color:#1a1a1a}
+.p5tbl tbody tr:hover td{background:#F7F6FE}
+.p5tbl td:first-child,.p5tbl th:first-child{text-align:left;padding-left:6px;font-weight:600}
+.p5tbl td:nth-child(2),.p5tbl th:nth-child(2){text-align:left;color:#888;font-weight:400}
+.p5tbl td.p5-tot,.p5tbl th.p5-tot{background:#F3F3F3;font-weight:700;color:#1a1a1a}
+.p5tbl tbody tr:hover td.p5-tot{background:#ECEAFB}
+.p5z{color:#C4C4C4}
+.p5-ed{display:inline-flex;align-items:center;gap:2px;background:#FFF8E1;border:1px solid #F0DCA0;border-radius:4px;padding:0 2px 0 5px}
+.p5tbl input[type=number],.p5-summary input[type=number]{background:#FFF8E1;border-color:#E5C76B;font-size:11px}
+.p5-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:9px;color:#888;margin:-4px 0 6px}
+.p5-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:3px;font-style:normal}
+.p5-vis-hdr{display:flex;align-items:center;gap:8px;width:100%;background:#f7f7f7;border:none;border-radius:6px;padding:6px 8px;font-size:11px;color:#555;cursor:pointer;text-align:left;margin-bottom:6px}
+.p5-vis-hdr:hover{background:#EEEDFE}
+.p5-vis-hdr b{margin-left:auto;font-variant-numeric:tabular-nums}
+.p5-sub-label{font-size:10px;color:#888;margin:6px 0 3px}
+/* 第 5 頁手機版（2026-11-02）：網頁版只有第 5 頁會把畫面寬度改成手機寬（v8Viewport），其他頁照舊 980 寬，所以這段只會在第 5 頁用到。
+   表格不另外做一份：每一列變一張卡片，欄名由 p5LabelCells() 寫進 data-l */
+@media (max-width:767px){
+  .topnav{overflow-x:auto}
+  .tnitem{flex:0 0 auto;padding:11px 14px;font-size:13px}
+  .sys-hdr{flex-wrap:wrap;row-gap:6px}
+  .sys-hdr>div:last-child{flex-wrap:wrap;row-gap:4px}
+  .sys-title{font-size:14px}.sys-sub{font-size:11px}
+  .modal-bg{position:fixed}
+  .modal-box{max-width:calc(100vw - 24px)}
+  .modal-box input,.modal-box select{font-size:16px}
+  #page-5{padding:10px!important;min-height:0!important}
+  #page-5>div:first-child{padding:10px 12px!important}
+  #page-5 input[type=number]{font-size:16px!important;padding:6px 8px}
+  #page-5 .store-tabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
+  #page-5 .stab{flex:0 0 auto;padding:6px 14px;font-size:13px}
+  .p5-summary{flex-direction:column;align-items:stretch;padding:12px}
+  .p5-summary>div[style*="width:1px"]{display:none}
+  .p5-summary>div:last-child{order:-1;min-width:0!important}
+  .p5-summary>div:first-child{flex-direction:row!important;flex-wrap:wrap;gap:10px!important}
+  .p5-summary>div:first-child input{width:100px!important}
+  .p5-sum-label{font-size:12px}
+  .p5-sum-total{font-size:28px}
+  .p5-sum-stores{flex-wrap:nowrap;overflow-x:auto}
+  .p5-sum-store{flex:0 0 auto;border-color:#e4e4e4}
+  .p5-sum-store div:first-child{font-size:11px}.p5-sum-store div:last-child{font-size:15px}
+  .p5-legend{font-size:11px;gap:10px}
+  .p5-card{padding:12px 10px}
+  .p5-card-hdr{flex-direction:column;align-items:stretch}
+  .p5-hdr-right{justify-content:space-between}
+  .p5-hp-box span{font-size:11px!important}
+  .p5-card-hdr .p5-subtotal{font-size:12px}.p5-card-hdr .p5-subtotal b{font-size:22px}
+  #page-5 .p5tbl{display:block;margin-bottom:4px}
+  #page-5 .p5tbl colgroup,#page-5 .p5tbl thead{display:none}
+  #page-5 .p5tbl tbody{display:block}
+  #page-5 .p5tbl tr{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;border:1px solid #e4e4e4;border-radius:10px;padding:10px 12px;margin-bottom:8px;background:#fff}
+  #page-5 .p5tbl tbody tr:hover td{background:none}
+  #page-5 .p5tbl td{display:flex;justify-content:space-between;align-items:center;gap:8px;grid-column:1/-1;border:none;padding:5px 0;text-align:right;white-space:normal;font-size:14px;font-weight:400}
+  #page-5 .p5tbl td::before{content:attr(data-l);color:#888;font-size:12px;text-align:left}
+  #page-5 .p5tbl td:first-child{grid-column:1;grid-row:1;font-size:16px;font-weight:700;padding:0;justify-content:flex-start}
+  #page-5 .p5tbl td:nth-child(2){grid-column:1;grid-row:2;font-size:12px;padding:0 0 4px;justify-content:flex-start}
+  #page-5 .p5tbl td.p5-tot{grid-column:2;grid-row:1/3;font-size:20px;font-weight:700;padding:0;background:none}
+  #page-5 .p5tbl td:first-child::before,#page-5 .p5tbl td:nth-child(2)::before,#page-5 .p5tbl td.p5-tot::before{content:none}
+  #page-5 .p5tbl td:nth-child(3){border-top:1px solid #f0f0f0;margin-top:4px;padding-top:8px}
+  #page-5 .p5tbl td:has(>.p5z:only-child){display:none}
+  #page-5 .p5tbl input[type=number]{width:96px!important}
+  .p5-ed{padding:2px 4px 2px 8px}
+  .p5-edit-btn{font-size:15px;padding:4px 8px}
+  .p5-vis-hdr{flex-wrap:wrap;font-size:13px;padding:10px}
+  #page-5 .bottom-btns{position:sticky;bottom:0;z-index:5;box-shadow:0 -2px 8px rgba(0,0,0,.08)}
+  #page-5 .bottom-btns button{padding:12px 0;font-size:14px}
+}
 .p5-subtotal{display:flex;justify-content:flex-end;gap:8px;align-items:center;border-top:1px solid #eee;padding-top:6px;font-size:10px}
 .p5-subtotal b{font-size:13px}
 .p5-ins-auto{color:#0F6E56}
@@ -3040,17 +3116,31 @@ function renderPage5(){
     <div style="flex:1;min-width:220px">
       <div class="p5-sum-label">全公司本月薪資試算總計</div>
       <div class="p5-sum-total">${fmt(grand)}</div>
-      <div class="p5-sum-stores" style="margin-top:6px">${STORES.map(s=>`<div class="p5-sum-store" style="text-align:left"><div>${s.replace('店','')}</div><div>${fmt(storeSubtotals[s])}</div></div>`).join('')}</div>
+      <div class="p5-sum-stores" style="margin-top:6px">${STORES.map(s=>`<div class="p5-sum-store${s===curP5Store?' on':''}" title="只看${s}（再點一次看全部）" onclick="curP5Store=curP5Store==='${s}'?'全部':'${s}';renderPage5()"><div>${s.replace('店','')}</div><div>${fmt(storeSubtotals[s])}</div></div>`).join('')}</div>
     </div>
   </div>`;
   const shown=curP5Store==='全部'?STORES:[curP5Store];
   const cardsHtml=cards.filter(c=>shown.includes(c.store)).map(c=>c.html).join('');
-  panel.innerHTML=tabsHtml+settingsHtml+cardsHtml;
+  const legendHtml=`<div class="p5-legend" style="margin:0 2px 8px"><span><i style="background:#FFF8E1;border:1px solid #F0DCA0"></i>黃底＝可以改</span><span><i style="background:#F3F3F3"></i>灰底欄＝這個人實領</span><span><span class="p5z">0／—</span>＝沒有金額</span><span>點上面門市金額＝只看那間店</span></div>`;
+  panel.innerHTML=tabsHtml+settingsHtml+legendHtml+cardsHtml;
+  p5LabelCells(panel);
 }
 function insCellHtml(name,ins){
   const cls=ins.manual?'p5-ins-manual':'p5-ins-auto';
   const label=ins.amt?('-'+fmt(ins.amt)):'—';
-  return`<span class="${cls}">${label}</span><button class="p5-edit-btn" onclick="openInsuranceEdit('${name}')">✎</button>`;
+  return p5ed(`<span class="${cls}">${label}</span><button class="p5-edit-btn" onclick="openInsuranceEdit('${name}')">✎</button>`);
+}
+// 第 5 頁排版小工具（只管長相，不碰算法）：0／— 變淡、可改的格子黃底
+function p5z(v){const s=String(v);return(s==='0'||s==='—'||s==='+0')?`<span class="p5z">${s}</span>`:s;}
+function p5ed(inner){return`<span class="p5-ed">${inner}</span>`;}
+let p5VisOpen={};
+// 手機版每列變卡片時，每格前面要顯示欄名：照表頭最後一列抄進 data-l
+function p5LabelCells(root){
+  root.querySelectorAll('table.p5tbl').forEach(t=>{
+    const hr=t.querySelectorAll('thead tr');if(!hr.length)return;
+    const names=[...hr[hr.length-1].children].map(th=>th.textContent.trim());
+    t.querySelectorAll('tbody tr').forEach(tr=>[...tr.children].forEach((td,i)=>{td.dataset.l=names[i]||'';}));
+  });
 }
 function renderStoreCardP5(store){
   const entry=getP4Entry(store);
@@ -3064,8 +3154,8 @@ function renderStoreCardP5(store){
     const outDays=st?(dim-st.wdOff-st.hdOff-st.coveredLeave-st.selfSup):0;
     const r=calcRegular(s,hp,outDays,tempHrs);
     subtotal+=r.total;
-    const routeCell=s.type==='八小時全職'?'—':`${fmt(r.routeAmt)}<button class="p5-edit-btn" onclick="openRouteModal('${s.name}','reg')">✎</button>`;
-    return`<tr><td>${s.name}</td><td>${s.type}</td><td>${fmt(r.base)}</td><td>${r.ot?fmt(r.ot):'—'}</td><td>${routeCell}</td><td>${outDays}</td><td>${fmt(r.extraAmt)}</td><td>${tempHrs}</td><td>${fmt(r.ob)}<button class="p5-edit-btn" onclick="openOtherBonusModal('${s.name}')">✎</button></td><td>${insCellHtml(s.name,r.ins)}</td><td><b>${fmt(r.total)}</b></td></tr>`;
+    const routeCell=s.type==='八小時全職'?p5z('—'):p5ed(`${p5z(fmt(r.routeAmt))}<button class="p5-edit-btn" onclick="openRouteModal('${s.name}','reg')">✎</button>`);
+    return`<tr><td>${s.name}</td><td>${s.type}</td><td>${outDays}</td><td>${p5z(tempHrs)}</td><td>${fmt(r.base)}</td><td>${r.ot?fmt(r.ot):p5z('—')}</td><td>${routeCell}</td><td>${p5z(fmt(r.extraAmt))}</td><td>${p5ed(`${p5z(fmt(r.ob))}<button class="p5-edit-btn" onclick="openOtherBonusModal('${s.name}')">✎</button>`)}</td><td>${insCellHtml(s.name,r.ins)}</td><td class="p5-tot">${fmt(r.total)}</td></tr>`;
   }).join('');
   const hourRows=home.filter(s=>s.type==='計時').map(s=>{
     const st=entry?entry.parsed.stats[s.name]:null;
@@ -3077,47 +3167,56 @@ function renderStoreCardP5(store){
     const isManual=r.manual!=null;
     const rateVal=isManual?r.manual:p5BaseHourly;
     const rateCell=`<input type="number" min="0" value="${rateVal}" style="width:48px;text-align:right" onchange="p5ManualRate['${s.name}']=+this.value;renderPage5()">`;
-    const qualCell=isManual?'—':fmt(r.qual);
-    const routeCell=isManual?'—':`${r.addon?'+'+r.addon:'0'}<button class="p5-edit-btn" onclick="openRouteModal('${s.name}','hourly')">✎</button>`;
-    return`<tr><td>${s.name}</td><td>計時${isManual?'（手動）':''}</td><td>${rateCell}</td><td>${qualCell}</td><td>${routeCell}</td><td>${calcHrs||0}</td><td>${tempHrs||0}</td><td>${crossHrs||0}</td><td><b>${fmt(r.total)}</b></td></tr>`;
+    const qualCell=isManual?p5z('—'):p5z(fmt(r.qual));
+    const routeCell=isManual?p5z('—'):p5ed(`${r.addon?'+'+r.addon:p5z('0')}<button class="p5-edit-btn" onclick="openRouteModal('${s.name}','hourly')">✎</button>`);
+    return`<tr><td>${s.name}</td><td>計時${isManual?'（手動）':''}</td><td>${calcHrs||0}</td><td>${p5z(tempHrs||0)}</td><td>${p5z(crossHrs||0)}</td><td>${rateCell}</td><td>${qualCell}</td><td>${routeCell}</td><td class="p5-tot">${fmt(r.total)}</td></tr>`;
   }).join('');
-  let visitorDayRows='',visitorRows='';
+  // 來店支援（按日、按時數、機動／貼班）集中成一張表，預設收起來
+  let visitorRows='',visCount=0,visSubtotal=0;const visNames=[];
   if(entry){
     Object.keys(entry.parsed.visitorEntries).forEach(name=>{
       const v=entry.parsed.visitorEntries[name];
       const vstaff=staff.find(x=>x.name===name);
       if(v.days.size>0&&vstaff){
         const r=calcVisitorDays(vstaff,hp,v.days.size);
-        subtotal+=r.total;
-        const routeCell=vstaff.type==='八小時全職'?'—':`${fmt(r.routeAmt)}<button class="p5-edit-btn" onclick="openRouteModal('${name}','reg')">✎</button>`;
-        visitorDayRows+=`<tr><td>${name}（來店支援）</td><td>${vstaff.type}</td><td>${fmt(p5BaseSalary)}</td><td>${vstaff.type==='八小時全職'?'—':fmt(overtimeAmt())}</td><td>${routeCell}</td><td>${v.days.size}</td><td>${fmt(r.extraAmt)}</td><td>—</td><td>—</td><td>—</td><td><b>${fmt(r.total)}</b></td></tr>`;
+        subtotal+=r.total;visCount++;visSubtotal+=r.total;visNames.push(name);
+        const routeCell=vstaff.type==='八小時全職'?p5z('—'):p5ed(`${p5z(fmt(r.routeAmt))}<button class="p5-edit-btn" onclick="openRouteModal('${name}','reg')">✎</button>`);
+        visitorRows+=`<tr><td>${name}</td><td>${vstaff.type}</td><td>${v.days.size}</td><td>${p5z('—')}</td><td><span class="p5z" title="正職／八小時全職來店支援：基本工資＋超時加班＋動線獎金按天數折算">按日折算</span></td><td>${routeCell}</td><td>${p5z(fmt(r.extraAmt))}</td><td class="p5-tot">${fmt(r.total)}</td></tr>`;
       }else if(v.hours>0){
         const rate=getCrossRate(name);
         const amt=Math.round(v.hours*rate);
-        subtotal+=amt;
-        const rateCell=`<input type="number" min="0" value="${rate}" style="width:48px;text-align:right" onchange="p5CrossRateOverride['${name}']=+this.value;renderPage5()">`;
-        visitorRows+=`<tr><td>${name}（來店支援）</td><td>跨店支援</td><td>${rateCell}</td><td>—</td><td>—</td><td>0</td><td>0</td><td>${v.hours}</td><td><b>${fmt(amt)}</b></td></tr>`;
+        subtotal+=amt;visCount++;visSubtotal+=amt;visNames.push(name);
+        const rateCell=`<input type="number" min="0" value="${rate}" style="width:56px;text-align:right" onchange="p5CrossRateOverride['${name}']=+this.value;renderPage5()">`;
+        visitorRows+=`<tr><td>${name}</td><td>跨店支援</td><td>${p5z('—')}</td><td>${v.hours}</td><td>${rateCell}</td><td>${p5z('—')}</td><td>${p5z('—')}</td><td class="p5-tot">${fmt(amt)}</td></tr>`;
       }
     });
     Object.keys(entry.parsed.tempEntries).forEach(name=>{
       const hrs=entry.parsed.tempEntries[name];
       const rate=getCrossRate(name);
       const amt=Math.round(hrs*rate);
-      subtotal+=amt;
-      const rateCell=`<input type="number" min="0" value="${rate}" style="width:48px;text-align:right" onchange="p5CrossRateOverride['${name}']=+this.value;renderPage5()">`;
-      visitorRows+=`<tr><td>${name}（機動／貼班）</td><td>跨店支援</td><td>${rateCell}</td><td>—</td><td>—</td><td>0</td><td>0</td><td>${hrs}</td><td><b>${fmt(amt)}</b></td></tr>`;
+      subtotal+=amt;visCount++;visSubtotal+=amt;visNames.push(name);
+      const rateCell=`<input type="number" min="0" value="${rate}" style="width:56px;text-align:right" onchange="p5CrossRateOverride['${name}']=+this.value;renderPage5()">`;
+      visitorRows+=`<tr><td>${name}（機動／貼班）</td><td>跨店支援</td><td>${p5z('—')}</td><td>${hrs}</td><td>${rateCell}</td><td>${p5z('—')}</td><td>${p5z('—')}</td><td class="p5-tot">${fmt(amt)}</td></tr>`;
     });
   }
+  const cols='<colgroup><col style="width:96px"><col style="width:84px"></colgroup>';
+  const regTbl=regRows?`<div style="overflow-x:auto"><table class="p5tbl">${cols}<thead>
+    <tr class="p5-grp"><th colspan="2"></th><th colspan="2" class="g-base">依據</th><th colspan="3" class="g-month">月薪基準（按出勤天折算）</th><th colspan="2" class="g-add">另加</th><th class="g-sub">扣</th><th class="g-tot">實領</th></tr>
+    <tr><th>正職／八小時</th><th>類別</th><th>出勤天</th><th>貼班h</th><th>基本工資</th><th>超時加班</th><th>動線獎金</th><th>23天起</th><th>其他獎金</th><th>勞健保</th><th class="p5-tot">小計</th></tr></thead><tbody>${regRows}</tbody></table></div>`:'';
+  const hourTbl=hourRows?`<div style="overflow-x:auto"><table class="p5tbl">${cols}<thead>
+    <tr class="p5-grp"><th colspan="2"></th><th colspan="3" class="g-base">時數</th><th colspan="3" class="g-month">時薪組成</th><th class="g-tot">實領</th></tr>
+    <tr><th>計時</th><th>類別</th><th>計時h</th><th>貼班h</th><th>跨店h</th><th>基本時薪</th><th>定性加給</th><th>計時動線獎金</th><th class="p5-tot">小計</th></tr></thead><tbody>${hourRows}</tbody></table></div>`:'';
+  const visOpen=!!p5VisOpen[store];
+  const visTbl=visCount?`<button class="p5-vis-hdr" onclick="p5VisOpen['${store}']=!p5VisOpen['${store}'];renderPage5()"><span>${visOpen?'▼':'▶'} 來店支援 ${visCount} 人</span><span style="color:#999">${visNames.join('、')}</span><b>${fmt(visSubtotal)}</b></button>${visOpen?`<div style="overflow-x:auto"><table class="p5tbl">${cols}<thead><tr><th>來店支援</th><th>類別</th><th>天數</th><th>時數</th><th>時薪</th><th>動線獎金</th><th>23天起</th><th class="p5-tot">小計</th></tr></thead><tbody>${visitorRows}</tbody></table></div>`:''}`:'';
   const html=`<div class="p5-card">
     <div class="p5-card-hdr">
-      <div style="display:flex;align-items:center;gap:6px"><span style="font-weight:600;font-size:13px">${store}</span></div>
-      <div class="p5-hp-box"><span style="font-size:9px;color:#666">本店HP次數</span><input type="number" min="0" value="${hp}" onchange="p5HP['${store}']=+this.value;renderPage5()"><span class="p5-hp-tag">${hpMultiplierLabel(hp)}・${hpRate(hp)}</span></div>
+      <div style="display:flex;align-items:baseline;gap:8px"><span style="font-weight:700;font-size:15px">${store}</span><span style="font-size:10px;color:#888">本店 ${home.filter(s=>s.type==='正職'||s.type==='八小時全職'||s.type==='計時').length} 人${visCount?`・來店支援 ${visCount} 人`:''}</span></div>
+      <div class="p5-hdr-right">
+        <div class="p5-hp-box"><span style="font-size:10px;color:#666">本店HP次數</span><input type="number" min="0" value="${hp}" onchange="p5HP['${store}']=+this.value;renderPage5()"><span class="p5-hp-tag">${hpMultiplierLabel(hp)}・${hpRate(hp)}</span></div>
+        <div class="p5-subtotal">本店小計 <b>${fmt(subtotal)}</b></div>
+      </div>
     </div>
-    <div class="p5-sub-label">正職／八小時全職</div>
-    <div style="overflow-x:auto"><table class="p5tbl"><thead><tr><th>簡稱</th><th>類別</th><th>基本工資</th><th>超時加班</th><th>動線獎金</th><th>出勤天</th><th>23天起</th><th>貼班h</th><th>其他獎金</th><th>勞健保</th><th>小計</th></tr></thead><tbody>${regRows}${visitorDayRows}</tbody></table></div>
-    <div class="p5-sub-label">時薪人員／跨店支援</div>
-    <div style="overflow-x:auto"><table class="p5tbl"><thead><tr><th>簡稱</th><th>類別</th><th>基本時薪</th><th>定性加給</th><th>計時動線獎金</th><th>計時h</th><th>貼班h</th><th>跨店h</th><th>小計</th></tr></thead><tbody>${hourRows}${visitorRows}</tbody></table></div>
-    <div class="p5-subtotal">本店小計 <b>${fmt(subtotal)}</b></div>
+    ${regTbl}${hourTbl}${visTbl}
   </div>`;
   return{html,subtotal};
 }
@@ -3244,6 +3343,15 @@ function updateHeader(p){
   document.getElementById('sys-title').textContent=`${h.icon} ${SYS_VERSION}`;
   document.getElementById('sys-sub').textContent=h.sub;
   document.title=SYS_VERSION;
+  v8Viewport(p);
+}
+// 網頁版手機：做好手機版的頁才用手機寬度，其他頁照舊 980 寬（縮小的電腦版）。本機 v8 沒有 #hr-vp，不做事；登入畫面還開著時也不動
+const V8_MOBILE_PAGES=[5];
+function v8Viewport(p){
+  const vp=document.getElementById('hr-vp');if(!vp)return;
+  const gate=document.getElementById('hr-gate');if(gate&&gate.style.display!=='none')return;
+  const want=V8_MOBILE_PAGES.includes(p)?'width=device-width,initial-scale=1':'width=980';
+  if(vp.getAttribute('content')!==want)vp.setAttribute('content',want);
 }
 function goPage(p){
   if(p>=PERMANENT_LOCK){alert('此頁尚未開放');return;}
@@ -3930,9 +4038,10 @@ v7RestoreAutoSave();
       catch (e) { console.error(e); alert('讀取雲端資料失敗，這次先用這台瀏覽器的資料、不會存上雲端。請檢查網路後重新整理。'); }
     }
     document.getElementById('hr-gate').style.display = 'none';
-    // v8 還沒有手機版：進去後手機照舊顯示縮小的電腦版（跟現在本機 v8 一樣），手機版是待辦 2g
+    // 進去後：做好手機版的頁（v8 的 V8_MOBILE_PAGES，11-02 先有第 5 頁）用手機寬度，其他頁照舊顯示縮小的電腦版（待辦 2g）
     const vp = document.getElementById('hr-vp');
-    if (vp) vp.setAttribute('content', 'width=980');
+    if (typeof v8Viewport === 'function') v8Viewport(curPage);
+    else if (vp) vp.setAttribute('content', 'width=980');
   }
 
   async function boot() {
