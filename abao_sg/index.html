@@ -256,6 +256,11 @@ input[type=text],input[type=number],select{border:1px solid #ccc;border-radius:5
   #page-3 .main-hdr{flex-direction:column;align-items:flex-start;gap:2px}
   #page2-panel [style*="font-size:9px"]{font-size:12px!important}
   #page2-panel input[type=text]{font-size:16px;padding:6px 8px}
+  /* 還沒改成月曆的橫向表（第 2 頁支援↑、貼班人員；第 3 頁貼班人員）：每天固定寬、左右滑，不要擠成一個螢幕寬 */
+  .sptbl,.ptbl{table-layout:auto!important;width:auto!important;min-width:100%}
+  .sptbl th,.sptbl td,.ptbl th,.ptbl td{min-width:40px;white-space:nowrap;font-size:11px!important}
+  .sptbl th:first-child,.sptbl td:first-child,.ptbl th:first-child,.ptbl td:first-child{min-width:64px;position:sticky;left:0;z-index:1;background:#fff}
+  .sptbl th:first-child,.ptbl th:first-child{background:#f5f5f5}
   .bottom-btns{position:sticky;bottom:0;z-index:5;box-shadow:0 -2px 8px rgba(0,0,0,.08)}
   .bottom-btns button{padding:12px 0;font-size:14px}
   /* 點一天跳出來的視窗：改從畫面下方滑出、字和按鈕放大 */
