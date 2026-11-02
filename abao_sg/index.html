@@ -198,6 +198,76 @@ input[type=text],input[type=number],select{border:1px solid #ccc;border-radius:5
 .p4tbl td:nth-child(8){background:#F3F3F3;font-weight:700}
 .p4tbl tr.p4-vis td{background:#FAFAFA}
 .p4tbl tr.p4-vis td:nth-child(8){background:#F0F0F0}
+/* 第 1～3 頁手機版「按人看」（2026-11-02）：mvRender() 只在手機寬度才畫；電腦版這些都不出現 */
+.mv,.mv-seg{display:none}
+@media (max-width:767px){
+  .dv{display:none!important}
+  .mv{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+  .mv-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+  .mv-chip{flex:0 0 auto;border:1px solid #ddd;background:#fff;border-radius:999px;padding:7px 14px;font-size:13px;color:#555;cursor:pointer}
+  .mv-chip.on{background:#EEEDFE;border-color:#534AB7;color:#534AB7;font-weight:600}
+  .mv-chip i{font-style:normal;color:#A32D2D;font-weight:700;margin-left:3px}
+  .mv-box{background:#fff;border:1px solid #e4e4e4;border-radius:10px;padding:10px}
+  .mv-who{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}.mv-who span{font-size:17px;font-weight:700}.mv-who small{font-size:12px;color:#888}
+  .mv-st{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;text-align:center}
+  .mv-st div{background:#f7f7f7;border-radius:8px;padding:6px 0;font-size:11px;color:#666}
+  .mv-st b{display:block;font-size:18px;color:#1a1a1a}
+  .mv-st small{display:block;font-size:10px;color:#999}
+  .mv-warn{background:#FFF8E1;border:1px solid #F0DCA0;color:#7A5500;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.6}
+  .mv-cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+  .mv-wd{text-align:center;font-size:11px;color:#888;padding:2px 0}.mv-wd.we{color:#A32D2D}
+  .mv-d{min-height:50px;border:1px solid #eee;border-radius:7px;display:flex;flex-direction:column;align-items:center;padding-top:3px;font-size:12px;color:#1a1a1a;background:#fff;cursor:pointer;line-height:1.25;overflow:hidden;text-align:center;word-break:break-all}
+  .mv-d b{font-size:11px;color:#999;font-weight:500}
+  .mv-d.we{background:#FAFAFA}.mv-d.hol b{color:#A32D2D}
+  .mv-d small{display:block;font-size:9px}
+  .mv-off{background:#D4EDDA!important;color:#155724;border-color:#B5DCC0}
+  .mv-must{font-weight:700;box-shadow:inset 0 0 0 2px #7BB98A}
+  .mv-sup{background:#D8D3F5!important;color:#2D2480}
+  .mv-mob{background:#FFF3C4!important;color:#7A5500}
+  .mv-mon{background:#F5ECD7!important;color:#6B4C1E}
+  .mv-adj{background:#FAEEDA!important;color:#633806;font-weight:600}
+  .mv-link{background:#26215C!important;color:#fff}.mv-link b{color:#D6D4F0}
+  .mv-fz{opacity:.5}
+  .mv-ed{box-shadow:inset 0 0 0 2px #E8A33D}
+  .mv-hri{box-shadow:inset 0 0 0 2px #E5B800;background:#FFF3B0!important}
+  .mv-leg{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:#888}
+  .mv-leg i{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:3px}
+  .mv-more{background:#fff;border:1px solid #eee;border-radius:8px;padding:8px 10px;font-size:12px;color:#7A1A1A;line-height:1.6}
+  .mv-more summary{color:#A32D2D;font-weight:600;cursor:pointer}.mv-more div{padding:4px 0;border-top:1px solid #f5f5f5}
+  /* 第 1 頁：班表／設定 切換 */
+  .mv-seg{display:flex;gap:6px;padding:8px 10px;background:#fff;border-bottom:1px solid #eee;position:sticky;top:0;z-index:6}
+  .mv-seg button{flex:1;padding:9px 0;border:1px solid #ddd;border-radius:8px;background:#f7f7f7;font-size:14px;cursor:pointer}
+  .mv-seg button.on{background:#534AB7;color:#fff;border-color:#534AB7;font-weight:600}
+  #page-1.page.active{display:block}
+  #page-1 .panel{display:none;border-right:none}
+  body.mv-set #page-1 .panel{display:flex}
+  body.mv-set #page-1 .main{display:none}
+  #page-1 .panel-scroll{overflow:visible;padding:10px}
+  #page-1 .sh{padding:12px}
+  #page-1 .st{font-size:14px}
+  #page-1 .panel,#page-1 .fg label,#page-1 .cbr{font-size:13px}
+  #page-1 [style*="font-size:9px"],#page-1 [style*="font-size:8px"],#page-1 .sbd,#page-1 .hint,#page-1 .sub-label{font-size:12px!important}
+  #page-1 input[type=text],#page-1 input[type=number],#page-1 select{font-size:16px;padding:6px 8px}
+  #page-1 .stab,#page-1 .sctl-b{padding:6px 12px;font-size:13px}
+  #page-1 .badd{padding:10px;font-size:13px}
+  #page-1 .main-body{padding:10px}
+  #page-1 .main-hdr{flex-direction:column;align-items:flex-start;gap:2px}
+  #page-2,#page-3{padding:10px!important;min-height:0!important}
+  #page-3 .main-hdr{flex-direction:column;align-items:flex-start;gap:2px}
+  #page2-panel [style*="font-size:9px"]{font-size:12px!important}
+  #page2-panel input[type=text]{font-size:16px;padding:6px 8px}
+  .bottom-btns{position:sticky;bottom:0;z-index:5;box-shadow:0 -2px 8px rgba(0,0,0,.08)}
+  .bottom-btns button{padding:12px 0;font-size:14px}
+  /* 點一天跳出來的視窗：改從畫面下方滑出、字和按鈕放大 */
+  .v8-modal-bg,.modal-bg{align-items:flex-end!important}
+  .v8-modal-box,.modal-box{width:100%!important;max-width:none!important;border-radius:14px 14px 0 0!important;padding:16px 16px 22px!important;max-height:88vh;overflow-y:auto}
+  .v8-modal-box h4,.modal-box h4{font-size:15px}
+  .v8-modal-box [style*="font-size:9px"],.v8-modal-box [style*="font-size:10px"],.modal-box .fg label,.modal-warn{font-size:12px!important}
+  .v8-modal-box input,.v8-modal-box select,.modal-box input,.modal-box select{font-size:16px!important}
+  .ce-opt{padding:12px 0;font-size:14px}
+  #ce-hrs{width:76px!important}
+  .modal-btns button{padding:12px 0;font-size:14px}
+}
 /* 第 4、5 頁手機版（2026-11-02）：網頁版只有 V8_MOBILE_PAGES 的頁會把畫面寬度改成手機寬（v8Viewport），其他頁照舊 980 寬，所以這段只會在這兩頁用到（.p5tbl 也只有這兩頁用）。
    表格不另外做一份：每一列變一張卡片，欄名由 p5LabelCells() 寫進 data-l */
 @media (max-width:767px){
@@ -328,6 +398,7 @@ button[onclick="v7ClearAutoSave()"]{display:none!important}
 <div class="topnav" id="topnav"></div>
 <div class="sys-hdr" style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div><div class="sys-title" id="sys-title">🗓 排班薪資系統 v8</div><div class="sys-sub" id="sys-sub">設定規則 → 生成初假表 → 下載初假表Excel</div></div><div style="display:flex;align-items:center;gap:6px;flex-shrink:0"><span id="v7-save-warn" style="display:none;font-size:9px;background:#A32D2D;color:#fff;padding:3px 6px;border-radius:4px;white-space:nowrap"></span><button onclick="v7ClearAutoSave()" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:5px;padding:4px 8px;font-size:9px;cursor:pointer;white-space:nowrap" title="清除瀏覽器本機自動存檔，重新開始">🗑 重新開始</button></div></div>
 <div class="layout page active" id="page-1">
+<div class="mv-seg"><button id="mv-seg-cal" class="on" onclick="mvSeg(false)">📋 班表</button><button id="mv-seg-set" onclick="mvSeg(true)">⚙️ 設定</button></div>
 <div class="panel">
 <div class="panel-scroll">
 
@@ -1957,6 +2028,101 @@ function reapplyManualAdjustments(){
 const STATUS_TXT={off:'休',sup:'支',mob:'機',must:'上'};
 const STATUS_BG={off:'#D4EDDA',sup:'#D8D3F5',mob:'#FFF3C4',must:'#F5ECD7'};
 const STATUS_FG={off:'#155724',sup:'#2D2480',mob:'#7A5500',must:'#6B4C1E'};
+// ── 手機版「按人看」（2026-11-02 老闆定）：手機寬度時第 1～3 頁的大表換成「選門市 → 選人 → 整月月曆」，點一天開原本的視窗；
+// 電腦版照舊。只有手機寬度才畫（mvOn），電腦版畫面、測試都不會多出這些東西。只讀資料，不改任何排班／統計邏輯。
+const MV_MQ=window.matchMedia?window.matchMedia('(max-width:767px)'):null;
+function mvOn(){return!!(MV_MQ&&MV_MQ.matches);}
+const mvSel={};let mvLastConf=[];
+function mvGroups(){
+  const g=STORES.map(st=>({key:st,members:staff.filter(s=>s.store===st)})).filter(x=>x.members.length);
+  const mob=staff.filter(s=>s.type==='機動人員');if(mob.length)g.push({key:'機動人員',members:mob});
+  return g;
+}
+function mvCur(page){
+  const gs=mvGroups(),sel=mvSel[page]||{};
+  const g=gs.find(x=>x.key===sel.store)||gs[0];if(!g)return null;
+  const p=g.members.find(m=>m.name===sel.name)||g.members[0];
+  mvSel[page]={store:g.key,name:p.name};
+  return{gs,g,p};
+}
+function mvPick(page,store,name){mvSel[page]={store,name};const el=document.getElementById('mv-'+page);if(el)el.outerHTML=mvRender(page);}
+// 這個人自己的提醒（跟 computeConflicts 同樣的判斷，只挑這個人的；全店的提醒另外收在下面）
+function mvPersonWarns(s){
+  const{sched,cal,mandatoryOff}=generatedData,w=[];if(!sched[s.name])return w;
+  const used=usedDays(s.name,sched,cal);
+  if(s.days>0&&used>s.days)w.push(`實際休假 ${used} 天，超過月休上限 ${s.days} 天`);
+  if(STORES.includes(s.store)){
+    const hd=cal.filter(({d,isHol})=>isHol&&sched[s.name][d]==='off').length,wd=cal.filter(({d,isHol})=>!isHol&&sched[s.name][d]==='off').length;
+    if(hd<s.hd)w.push(`假日休下限 ${s.hd} 天，現在排到 ${hd} 天`);
+    if(wd<s.wd)w.push(`平日休下限 ${s.wd} 天，現在排到 ${wd} 天`);
+  }
+  if(schedOpts.gap&&schedOpts.minGap>0){
+    const offs=cal.filter(({d})=>sched[s.name][d]==='off').map(({d})=>d),mo=mandatoryOff||{};
+    for(let i=1;i<offs.length;i++){const a=offs[i-1],b=offs[i];if(b-a<=schedOpts.minGap&&!(mo[s.name+'_'+a]&&mo[s.name+'_'+b]))w.push(`${a}、${b} 日休假中間上班不到 ${schedOpts.minGap} 天`);}
+  }
+  return w;
+}
+function mvStatusCell(st,isMust,target){
+  if(st==='off')return{c:'mv-off'+(isMust?' mv-must':''),t:isMust?'必休':'休'};
+  if(st==='sup')return{c:'mv-sup',t:'支'+(target?`<small>${target.replace('店','')}</small>`:'')};
+  if(st==='mob')return{c:'mv-mob',t:'機'};
+  if(st==='must')return{c:'mv-mon',t:'上'};
+  return{c:'',t:''};
+}
+function mvCell(page,s,d,gkey){
+  const g=generatedData,st=g.sched[s.name]?g.sched[s.name][d]:'work',isMust=st==='off'&&g.mandatoryOff&&g.mandatoryOff[s.name+'_'+d];
+  const base=mvStatusCell(st,isMust,st==='sup'?supTargetOf(g.supMap,s.name,d):'');
+  const store=gkey==='機動人員'?s.store:gkey;
+  if(page===1){
+    const fz=!!cellFrozenReason(s.name,d),hri=hriFlagOf(s.name,d);
+    const ed=!fz&&cellEdits.some(e=>e.y===g.y&&e.m===g.m&&e.name===s.name&&e.d===d);
+    return{c:base.c+(fz?' mv-fz':'')+(ed&&!hri?' mv-ed':'')+(hri?' mv-hri':''),t:base.t,on:`openCellEdit('${s.name}',${d})`};
+  }
+  const adj=findAttendanceAdj(s.name,d);
+  if(page===2){
+    if(adj)return{c:'mv-adj',t:shiftCellText(adj),on:`openShiftModal('home','${s.name}',${d},'${store}')`};
+    return{c:base.c,t:base.t,on:`openShiftModal('home','${s.name}',${d},'${store}')`};
+  }
+  if(adj&&adj.statEffect==='shift')return{c:'mv-adj',t:`貼班<small>${adj.hours.toFixed(1)}h</small>`};
+  const linked=st==='off'?(findLinkSupport(s.name,d)||findHomeLinkSource(s.name,d)):null;
+  if(linked)return{c:'mv-link',t:`休<small>→${linked}補</small>`};
+  return base;
+}
+function mvRender(page,conflicts){
+  if(!mvOn()||!generatedData)return'';
+  if(page===1&&conflicts)mvLastConf=conflicts;
+  const cur=mvCur(page);if(!cur)return`<div class="mv" id="mv-${page}"></div>`;
+  const{gs,g,p}=cur,{sched,cal,m}=generatedData;
+  const offs=cal.filter(({d})=>sched[p.name]&&sched[p.name][d]==='off');
+  const wd=offs.filter(x=>!x.isHol).length,hd=offs.filter(x=>x.isHol).length;
+  const sup=cal.filter(({d})=>sched[p.name]&&sched[p.name][d]==='sup').length;
+  const adjs=cal.map(({d})=>findAttendanceAdj(p.name,d)).filter(Boolean);
+  const third=page===1?`<div><b>${sup}</b>支援</div>`:page===2?`<div><b>${adjs.length}</b>異動</div>`:`<div><b>${hrsTxt(adjs.filter(a=>a.statEffect==='shift').reduce((t,a)=>t+a.hours,0))}</b>貼班h</div>`;
+  const warns=page===1?mvPersonWarns(p):[];
+  const chip=(on,txt,js)=>`<button class="mv-chip${on?' on':''}" onclick="${js}">${txt}</button>`;
+  const storeChips=gs.map(x=>chip(x.key===g.key,x.key,`mvPick(${page},'${x.key}','')`)).join('');
+  const personChips=g.members.map(s=>chip(s.name===p.name,s.name+(page===1&&mvPersonWarns(s).length?'<i>!</i>':''),`mvPick(${page},'${g.key}','${s.name}')`)).join('');
+  const lead=cal.length?cal[0].wd:0;
+  let cells=['一','二','三','四','五','六','日'].map((w,i)=>`<div class="mv-wd${i>=5?' we':''}">${w}</div>`).join('')+'<div></div>'.repeat(lead);
+  cal.forEach(({d,wd:w,isHol})=>{const c=mvCell(page,p,d,g.key);cells+=`<div class="mv-d${w>=5?' we':''}${isHol?' hol':''} ${c.c}"${c.on?` onclick="${c.on}"`:''}><b>${d}</b>${c.t}</div>`;});
+  const legend=page===2?'<span><i class="mv-off"></i>休</span><span><i class="mv-adj"></i>有異動</span><span>點一天記出勤異動／貼班</span>':page===3?'<span><i class="mv-off"></i>休</span><span><i class="mv-sup"></i>支援</span><span><i class="mv-adj"></i>貼班</span><span>只能看</span>':'<span><i class="mv-off"></i>休</span><span><i class="mv-sup"></i>支援</span><span><i class="mv-mon"></i>必上</span><span>橘框＝手動設過</span><span>點一天改狀態</span>';
+  const storeConf=page===1?mvLastConf.filter(c=>!mvGroups().some(x=>x.members.some(s=>c.msg.startsWith(s.name+'：')))):[];
+  return`<div class="mv" id="mv-${page}">
+    <div class="mv-row">${storeChips}</div>
+    <div class="mv-row">${personChips}</div>
+    <div class="mv-box"><div class="mv-who"><span>${p.name}</span><small>${p.type||''}・${m} 月</small></div>
+      <div class="mv-st"><div><b>${wd}</b>平日休${page===1&&STORES.includes(p.store)?`<small>下限 ${p.wd}</small>`:''}</div><div><b>${hd}</b>假日休${page===1&&STORES.includes(p.store)?`<small>下限 ${p.hd}</small>`:''}</div>${third}<div><b>${cal.length-offs.length}</b>出勤</div></div></div>
+    ${warns.length?`<div class="mv-warn">${warns.map(x=>`⚠️ ${x}`).join('<br>')}</div>`:''}
+    <div class="mv-box"><div class="mv-cal">${cells}</div></div>
+    <div class="mv-leg">${legend}</div>
+    ${storeConf.length?`<details class="mv-more"><summary>全店提醒 ${storeConf.length} 項</summary>${storeConf.map(c=>`<div>${c.type==='error'?'❌':'⚠️'} ${c.msg}</div>`).join('')}</details>`:''}
+  </div>`;
+}
+// 手機轉橫、視窗變寬變窄時，換成對應的畫法
+if(MV_MQ){const re=()=>{if(!generatedData)return;if(curPage===1)rerenderPreview();else if(curPage===2)renderPage2();else if(curPage===3&&page2Generated)renderPage3Mv();};if(MV_MQ.addEventListener)MV_MQ.addEventListener('change',re);else if(MV_MQ.addListener)MV_MQ.addListener(re);}
+// 第 1 頁手機版：左邊設定欄跟右邊班表分成兩個切換頁
+function mvSeg(set){document.body.classList.toggle('mv-set',!!set);document.getElementById('mv-seg-cal').classList.toggle('on',!set);document.getElementById('mv-seg-set').classList.toggle('on',!!set);window.scrollTo(0,0);}
+function renderPage3Mv(){const el=document.getElementById('mv-3'),h=mvRender(3);if(el)el.outerHTML=h||'<div id="mv-3"></div>';else{const pv=document.getElementById('page3-preview');if(pv&&h)pv.insertAdjacentHTML('afterbegin',h);}}
 function supportNamesFor(store,d,supMap){return(supMap&&supMap[store+'_'+d])||[];}
 function supportLabelFor(store,d,supMap){return supportNamesFor(store,d,supMap).join(',');}
 function renderPreview(sched,cal,supMap,conflicts,mandatoryOff){
@@ -2009,7 +2175,8 @@ function renderPreview(sched,cal,supMap,conflicts,mandatoryOff){
   };
   const mobStaff=staff.filter(s=>s.type==='機動人員');
   const storeGroups=STORES.map(store=>({store,members:staff.filter(s=>s.store===store)}));
-  document.getElementById('main-body').innerHTML=`
+  // 手機寬度：上面先放「按人看」，下面的大表（.dv）藏起來；匯入人資假表的提醒兩邊都要看得到
+  document.getElementById('main-body').innerHTML=`${mvRender(1,conflicts)}<div class="dv">
     <div class="legend">
       <div class="leg"><div class="leg-dot" style="background:#D4EDDA"></div>休</div>
       <div class="leg"><div class="leg-dot" style="background:#D4EDDA;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:7px;color:#155724">休</div>必休</div>
@@ -2023,12 +2190,12 @@ function renderPreview(sched,cal,supMap,conflicts,mandatoryOff){
     <div style="margin:4px 0 8px;padding:6px 8px;background:#FAFAFC;border:1px dashed #ccc;border-radius:6px">
       <div style="font-size:8px;color:#888">✏️ 點格子可直接設定出勤／休／必休／必上／支援（橘框＝手動設定過；⚡v7自動的店重新生成時會繞開它排）</div>
       <div style="font-size:8px;color:#888">🖐️ 拖曳格子到另一格可互換兩天的班表狀態（重新生成同年月會自動保留此調整，年月變更則清空）｜🔒 鎖定門市的格子變淡、不能改</div>
-    </div>
-    ${hriBarHtml()}
+    </div></div>
+    ${hriBarHtml()}<div class="dv">
     ${conflicts.length?`<div class="conf-box"><div class="conf-title">⚠ 發現 ${conflicts.length} 項需注意</div>${conflicts.map(c=>`<div class="conf-item"><span>${c.type==='error'?'❌':'⚠️'}</span><span>${c.msg}</span></div>`).join('')}</div>`:`<div class="ok-box">✅ 設定無明顯衝突，班表已生成</div>`}
     ${mobStaff.length?`<div class="prev-sec"><div class="prev-hdr" style="background:#FFFBEB;border:1px solid #F5C842">🔄 機動人員</div>${buildTable(mobStaff,'')}</div>`:''}
     ${storeGroups.map(({store,members})=>`<div class="prev-sec"><div class="prev-hdr" style="background:${SB[store]}"><div style="width:7px;height:7px;border-radius:50%;background:${SC[store]}"></div>${store}${storeBadge(store)}</div>${buildTable(members,store)}</div>`).join('')}
-    <div style="font-size:9px;color:#888;text-align:center;margin-top:7px">顯示整月・修改設定後可重新生成</div>`;
+    <div style="font-size:9px;color:#888;text-align:center;margin-top:7px">顯示整月・修改設定後可重新生成</div></div>`;
 }
 
 function buildWeeks(cal){
@@ -2298,7 +2465,7 @@ function renderPage2(){
       return `<div class="card" style="margin-bottom:8px;padding:8px"><div class="ct" style="padding:0 0 6px"><div><span style="font-size:11px;font-weight:600">${s.name}</span><span style="font-size:9px;color:#888;margin-left:6px">${s.store}</span></div><button class="bi" onclick="delSupStaff(${realIdx})">🗑</button></div><div style="overflow-x:auto"><table class="sptbl"><thead><tr><th style="width:50px">日期</th>${cols}</tr></thead><tbody><tr><td>時段</td>${cells}</tr></tbody></table></div></div>`;
     }).join('');
     return `<div class="prev-sec"><div class="prev-hdr" style="background:${SB[store]}"><div style="width:7px;height:7px;border-radius:50%;background:${SC[store]}"></div>${store}</div>
-      ${homeGrid?`<div class="sub-label">本店夥伴出勤紀錄</div>${homeGrid}`:''}
+      ${homeGrid?`<div class="dv"><div class="sub-label">本店夥伴出勤紀錄</div>${homeGrid}</div>`:''}
       ${supRow}
       <div class="sub-label">貼班人員</div>
       ${tempCards||'<div style="font-size:9px;color:#888;padding:2px 0 6px">尚無貼班人員</div>'}
@@ -2312,11 +2479,11 @@ function renderPage2(){
   const mobTemp=supportStaff.filter(s=>s.store==='機動人員');
   const mobHomeGrid=homeAttendanceRow(mobMembers,'');
   const mobBlock=(mobMembers.length||mobTemp.length)?`<div class="prev-sec"><div class="prev-hdr" style="background:#FFFBEB">🔄 機動人員</div>
-    ${mobHomeGrid?`<div class="sub-label">本店夥伴出勤紀錄</div>${mobHomeGrid}`:''}
+    ${mobHomeGrid?`<div class="dv"><div class="sub-label">本店夥伴出勤紀錄</div>${mobHomeGrid}</div>`:''}
   </div>`:'';
   const dupNames=findDuplicateTempNames();
   const dupWarn=dupNames.length?`<div style="font-size:9px;color:#c00;background:#FFF0F0;border:1px solid #f5b5b5;border-radius:6px;padding:8px;margin-bottom:10px">⚠️ 「${dupNames.join('、')}」同時是「貼班人員」也有「跨店支援改貼班」紀錄，兩邊的貼班時數會被疊加混算，請確認是否為同一人重複登記</div>`:'';
-  document.getElementById('page2-panel').innerHTML=`<div style="font-size:9px;color:#666;margin-bottom:10px;background:#fff;border-radius:6px;padding:8px">點各夥伴格子上的「＋」可登記出勤異動或貼班時段；完成後按下方「生成次假表」</div>${dupWarn}${mobBlock}${storeBlocks}`;
+  document.getElementById('page2-panel').innerHTML=`${mvRender(2)}<div class="dv" style="font-size:9px;color:#666;margin-bottom:10px;background:#fff;border-radius:6px;padding:8px">點各夥伴格子上的「＋」可登記出勤異動或貼班時段；完成後按下方「生成次假表」</div>${dupWarn}${mobBlock}${storeBlocks}`;
 }
 function addSupStaff(store){
   const nameEl=document.getElementById('sp-name-'+store);
@@ -2713,8 +2880,8 @@ function genPage2(){
     const days=Object.values(supportSchedule[s.name]||{});
     return sum+days.reduce((a,e)=>a+e.hours*(s.wage!=null?s.wage:p5BaseHourly),0);
   },0);
-  document.getElementById('page3-preview').innerHTML=`
-    ${mobBlock}${storeBlocks}${supBlock}
+  document.getElementById('page3-preview').innerHTML=`${mvRender(3)||'<div id="mv-3"></div>'}
+    <div class="dv">${mobBlock}${storeBlocks}</div>${supBlock}
     <div style="background:#fff;border-radius:8px;padding:10px;font-size:10px;color:#666">貼班總工資估算：<strong>$${totalCost.toFixed(0)}</strong>（工時×時薪，貼班當天不佔用其原職別排休配額；「→OOO補」表示該請假由貼班人員補上）</div>`;
 }
 function downloadExcel2(){
@@ -3430,7 +3597,7 @@ function updateHeader(p){
   v8Viewport(p);
 }
 // 網頁版手機：做好手機版的頁才用手機寬度，其他頁照舊 980 寬（縮小的電腦版）。本機 v8 沒有 #hr-vp，不做事；登入畫面還開著時也不動
-const V8_MOBILE_PAGES=[4,5];
+const V8_MOBILE_PAGES=[1,2,3,4,5];
 function v8Viewport(p){
   const vp=document.getElementById('hr-vp');if(!vp)return;
   const gate=document.getElementById('hr-gate');if(gate&&gate.style.display!=='none')return;
