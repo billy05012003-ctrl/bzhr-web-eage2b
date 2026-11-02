@@ -448,6 +448,7 @@ button[onclick="v7ClearAutoSave()"]{display:none!important}
 <div id="page3-preview" style="background:#fff;border:1px solid #e0e0e0;border-radius:0 0 8px 8px;padding:10px;min-height:200px"><div class="ph"><div style="font-size:30px">🏷️</div><div style="font-size:12px;font-weight:600">尚未生成次假表</div><div style="font-size:9px;line-height:1.6">請先到「出勤紀錄」頁<br>按「⚡ 生成次假表」</div></div></div>
 <div class="bottom-btns" style="background:#fff;border-radius:8px;margin-top:12px">
 <button class="btn-dl" id="btn-skel" onclick="exportScheduleSkeleton()" disabled style="background:#534AB7">⬇ 匯出假表骨架</button>
+<button class="btn-dl" id="btn-skel-send" onclick="sendScheduleSkeleton()" disabled style="background:#185FA5;display:none">☁ 送到生命值骨架</button>
 <button class="btn-dl" id="btn-dl2" onclick="downloadExcel2()" disabled>⬇ 下載次假表Excel</button>
 </div>
 </div>
@@ -2537,8 +2538,12 @@ function findLinkSupport(staffName,d){
   return null;
 }
 function exportScheduleSkeleton(){
+  pickSkeletonStores('⬇ 匯出假表骨架','只勾部分門市時，骨架只帶這幾間店的夥伴（加上來支援它們的人）。匯入生命值骨架時可選擇只更新這幾間，其他店保留不動。',exportScheduleSkeletonFor);
+}
+// 匯出、送到骨架共用：選門市＋跨店支援牽涉到沒勾的店時提醒
+function pickSkeletonStores(title,note,onPick){
   if(!page2Generated||!generatedData){alert('請先生成次假表');return;}
-  openStorePicker('⬇ 匯出假表骨架',STORES.slice(),'只勾部分門市時，骨架只帶這幾間店的夥伴（加上來支援它們的人）。匯入生命值骨架時可選擇只更新這幾間，其他店保留不動。',sel=>{
+  openStorePicker(title,STORES.slice(),note,sel=>{
     // 跨店支援牽涉到沒勾的店時提醒：那間店的骨架也要一起更新，生命值骨架兩邊才對得上
     const{supMap}=generatedData,cross=new Set();
     Object.keys(supMap||{}).forEach(k=>{
@@ -2551,10 +2556,31 @@ function exportScheduleSkeleton(){
       });
     });
     if(cross.size&&!confirm(`以下跨店支援牽涉到沒勾選的門市：\n${[...cross].join('、')}\n\n如果這次有重新排過，建議把相關門市一起勾選匯出，生命值骨架兩邊的支援安排才對得上。\n\n仍要只匯出勾選的門市嗎？`))return;
-    exportScheduleSkeletonFor(sel);
+    onPick(sel);
   });
 }
 function exportScheduleSkeletonFor(sel){
+  const data=buildSkeletonData(sel);
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`${scopeFileTag()}排班_${data.year}年${data.month}月${pickedFileTag(sel,STORES)}_假表骨架.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+// 2026-11-02 W4 骨架 v2（formatVersion 2）：多帶 hours——計時、跨區支援＝匯入人資假表的時數；排休來貼班＝第 2 頁出勤紀錄的貼班。
+// 生命值骨架用「帶入網頁版時數」同一套規則寫進出勤紀錄（送到骨架.gs），月底不用再另外按「📥 帶入網頁版時數」
+function skeletonHoursFor(y,m,names){
+  const out=[];
+  if(hrImport&&hrImport.y===y&&hrImport.m===m)(hrImport.hours||[]).forEach(h=>{
+    if(names.has(h.name)&&(h.kind==='計時'||h.kind==='跨區支援')&&h.hours!=null)out.push({kind:h.kind,name:h.name,d:h.d,store:h.store,hours:+h.hours});
+  });
+  (attendanceAdjustments||[]).forEach(a=>{
+    if(a.y===y&&a.m===m&&a.personType==='home'&&a.statEffect==='shift'&&names.has(a.staffName)&&a.hours)
+      out.push({kind:'排休來貼班',name:a.staffName,d:a.d,store:a.targetStore,hours:+a.hours,link:a.link||''});
+  });
+  return out;
+}
+function buildSkeletonData(sel){
   const{sched,cal,y,m,supMap}=generatedData;
   const full=sel.length===STORES.length;
   // 全選：跟v7完全一樣（全部staff）；只勾部分：勾到門市的本店夥伴＋來支援這幾間的人
@@ -2577,19 +2603,54 @@ function exportScheduleSkeletonFor(sel){
     // 門市分區設定（同區算「天」日薪制，跨區算「小時」9.5h/天＋跨店費率），給下游程式判斷isExternal用
     storeGroups:storeGroups||[],
     // 每天是否算假日（星期六/星期日設定＋自訂假日），給下游程式（生命值骨架）判斷平日休/假日休分類用
-    holidays:cal.map(({d,isHol})=>({d,isHol}))
+    holidays:cal.map(({d,isHol})=>({d,isHol})),
+    formatVersion:2,
+    hours:skeletonHoursFor(y,m,new Set(outStaff.map(s=>s.name)))
   };
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;a.download=`${scopeFileTag()}排班_${y}年${m}月${pickedFileTag(sel,STORES)}_假表骨架.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  return data;
+}
+// 2026-11-02 W4 第一段（老闆選 B）：網頁版第 3 頁直接送進這區的生命值骨架，不用下載 JSON 再到骨架頁匯入。
+// 先試算（列出會改什麼、哪幾天已有人改過所以保留）→ 確定才寫。第一段只有老闆看得到這顆按鈕（後台也擋）；
+// 06:30～09:00 開店打卡時段後台不收（試算照樣能看）。規則在生命值骨架 送到骨架.gs。
+function skelSendReady(){return !!(window.HR_CALL&&window.HR_ME&&window.HR_ME.boss);}
+function sendScheduleSkeleton(){
+  if(!skelSendReady()){alert('只有老闆能送（網頁版登入後才有）');return;}
+  pickSkeletonStores('☁ 送到生命值骨架','勾到的門市換成這次的排班；同一個月重送時，區行政用 LINE／網頁改過的天會保留不蓋。下一步會先列出會改什麼，確定才送。',sendScheduleSkeletonFor);
+}
+async function sendScheduleSkeletonFor(sel){
+  const data=JSON.stringify(buildSkeletonData(sel));
+  const call=op=>window.HR_CALL(op,{token:window.HR_TOKEN(),data,stores:sel});
+  const why=r=>({boss_only:'第一段只有老闆能送',login:'登入過期，請重新登入',bad_data:'骨架內容讀不懂'})[r&&r.reason]||((r&&r.message)||'沒辦法送（'+(r&&r.reason)+'）');
+  const hrSum=h=>(h['第2頁貼班']||0)+(h['計時']||0)+(h['跨區支援']||0);
+  let r;
+  try{r=await call('skelSendPlan');}catch(e){alert('⚠️ 連不上雲端：'+e.message);return;}
+  if(!r||!r.ok){alert('⚠️ '+why(r));return;}
+  const p=r.plan;
+  if(!p.ok){alert('⚠️ 送不出去，請先處理：\n\n'+p.blocks.join('\n'));return;}
+  const hrs=p.hours||{};
+  const lines=[`${p.year}年${p.month}月　${p.stores.join('、')}`,
+    p.mode==='full'?`這區還沒有這個月的骨架（或換月）：整份建立，共 ${p.rowCount} 列，上個月的出勤紀錄會先歸檔。`
+      :(p.changeCount?`會改 ${p.changeCount} 筆：\n${p.changes.slice(0,20).join('\n')}${p.changeCount>20?'\n…還有 '+(p.changeCount-20)+' 筆':''}`:'排班跟雲端一樣，這次送出沒有任何改變。')];
+  if(p.kept.length)lines.push(`下面 ${p.kept.length} 天排班改了，但已經有人改過，照改過的保留：\n${p.kept.slice(0,15).join('\n')}${p.kept.length>15?'\n…':''}`);
+  if(p.gone.length)lines.push(p.gone.join('\n'));
+  lines.push(`時數一起帶 ${hrSum(hrs)} 筆（貼班 ${hrs['第2頁貼班']||0}、計時 ${hrs['計時']||0}、跨區支援 ${hrs['跨區支援']||0}）`+(p.hourSkipped?`，跳過 ${p.hourSkipped} 筆（已有人改過）`:''));
+  if(p.warningCount)lines.push(`跨店支援兩邊對不上 ${p.warningCount} 筆：\n${p.warnings.slice(0,8).join('\n')}`);
+  if(p.quiet){alert(lines.join('\n\n')+'\n\n⚠️ 現在是 06:30～09:00 開店打卡時段，先不要送（會卡到夥伴打卡），9 點以後再送。');return;}
+  if(!confirm(lines.join('\n\n')+'\n\n確定送出嗎？（送錯可以到生命值骨架按「↶ 復原上一次匯入」）'))return;
+  try{r=await call('skelSendApply');}catch(e){alert('⚠️ 連不上雲端：'+e.message);return;}
+  if(!r||!r.ok){alert('⚠️ '+why(r));return;}
+  const o=r.result;
+  if(!o.ok){alert('⚠️ 沒有送出：\n\n'+o.blocks.join('\n'));return;}
+  const t=new Date(),hm=String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+  const btn=document.getElementById('btn-skel-send');if(btn)btn.textContent=`☁ 已送 ${hm}（再送一次）`;
+  alert(`✅ 已送到生命值骨架：${o.year}年${o.month}月 ${o.stores.join('、')}\n改 ${o.changeCount} 筆、保留 ${o.kept.length} 天、時數 ${hrSum(o.hours||{})} 筆`);
 }
 function genPage2(){
   page2Generated=true;
   if(maxUnlocked<4){maxUnlocked=4;renderTopnav();}
   document.getElementById('btn-dl2').disabled=false;
   document.getElementById('btn-skel').disabled=false;
+  {const sb=document.getElementById('btn-skel-send');sb.disabled=false;sb.style.display=skelSendReady()?'':'none';}
   curPage=3;
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   document.getElementById('page-3').classList.add('active');
