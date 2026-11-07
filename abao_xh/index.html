@@ -300,6 +300,9 @@ input[type=text],input[type=number],select{border:1px solid #ccc;border-radius:5
   .tnitem{flex:0 0 auto;padding:11px 14px;font-size:13px}
   .sys-hdr{flex-wrap:wrap;row-gap:6px}
   .sys-hdr>div:last-child{flex-wrap:wrap;row-gap:4px}
+  /* 11-07 老闆手機回報「沒有填滿整個畫面」：右半邊（網頁版登入列＋雲端存檔狀態）原本 flex-shrink:0，字一長就把整頁撐寬、iPhone 縮小顯示 → 手機上允許縮、最寬到螢幕寬，字自己換行 */
+  .sys-hdr>div:last-child{flex-shrink:1!important;min-width:0;max-width:100%}
+  .sys-hdr .hr-userbar{min-width:0;max-width:100%}
   .sys-title{font-size:14px}.sys-sub{font-size:11px}
   .modal-bg{position:fixed}
   .modal-box{max-width:calc(100vw - 24px)}
