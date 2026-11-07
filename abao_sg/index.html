@@ -552,20 +552,13 @@ button[onclick="v7ClearAutoSave()"]{display:none!important}
 <div class="page" id="page-4" style="padding:16px;background:#f0f0f0;min-height:680px">
 <!-- 2026-11-02 功能 C：天數、時數改用生命值骨架同一套算法（實際＝骨架頁資料、試算＝次假表換算），不再上傳次假表覆蓋 -->
 <div class="main-hdr" style="background:#fff;border-radius:8px 8px 0 0;border:1px solid #e0e0e0;border-bottom:none"><div style="font-size:11px;font-weight:600">📑 薪資假表（試算）</div><div style="font-size:9px;color:#666">用這次排的班預估，天數、時數跟生命值骨架同一套算法；實際請看生命值骨架</div></div>
-<div id="page4-preview" style="background:#fff;border:1px solid #e0e0e0;border-radius:0 0 8px 8px;padding:10px;min-height:200px"><div class="ph"><div style="font-size:30px">📑</div><div style="font-size:12px;font-weight:600">尚未生成薪資假表</div><div style="font-size:9px;line-height:1.6">請先到「次假表」頁<br>按「⚡ 生成次假表」<br>（或於此頁按「⚡ 生成薪資假表」手動觸發）</div></div></div>
-<div class="bottom-btns" style="background:#fff;border-radius:8px;margin-top:12px">
-<button class="btn-gen" onclick="genPage4()">⚡ 生成薪資假表</button>
-<button class="btn-dl" id="btn-dl4" onclick="downloadExcel4()" disabled>⬇ 下載薪資假表Excel</button>
-</div>
+<!-- 2026-11-07 老闆定：第 4、5 頁是試算，「生成」「下載 Excel」按鈕都拿掉（進頁面自動算；要 Excel 到生命值骨架「📊 匯出對帳 Excel」） -->
+<div id="page4-preview" style="background:#fff;border:1px solid #e0e0e0;border-radius:0 0 8px 8px;padding:10px;min-height:200px"><div class="ph"><div style="font-size:30px">📑</div><div style="font-size:12px;font-weight:600">還沒有班表可以試算</div><div style="font-size:9px;line-height:1.6">請先到「次假表」頁<br>按「⚡ 生成次假表」<br>這頁會自動算</div></div></div>
 </div>
 
 <div class="page" id="page-5" style="padding:16px;background:#f0f0f0;min-height:680px">
 <!-- 2026-11-02 功能 C：勞健保、HP 次數等薪資設定一律在生命值骨架頁改（老闆定：v8 這裡只能看） -->
 <div id="page5-panel"></div>
-<div class="bottom-btns" style="background:#fff;border-radius:8px;margin-top:12px">
-<button class="btn-gen" onclick="genPage5()">⚡ 生成薪資試算</button>
-<button class="btn-dl" id="btn-dl5" onclick="downloadExcel5()" disabled>⬇ 下載薪資表Excel</button>
-</div>
 </div>
 <div id="p5-modal-root"></div>
 <div id="pin-modal-root"></div>
@@ -3032,21 +3025,10 @@ function downloadExcel2For(sel,all){
   downloadWorkbook(wb,`${scopeFileTag()}排班_${y}年${m}月${pickedFileTag(sel,all)}_次假表.xlsx`);
 }
 
-// ── 第四頁：薪資假表（上傳次假表 Excel II → 解析底色／文字 → 統計） ──
-let p4Workbook=null,p4Generated=false,p4Results=null;
-function handleP4Upload(e){
-  const file=e.target.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=async function(ev){
-    const wb=new ExcelJS.Workbook();
-    await wb.xlsx.load(ev.target.result);
-    p4Workbook=wb;
-    document.getElementById('p4-upload-status').textContent=`已上傳：${file.name}（按「⚡ 生成薪資假表」套用覆蓋）`;
-  };
-  reader.readAsArrayBuffer(file);
-}
+// ── 第四頁：薪資假表（試算）——次假表生成後自動算（2026-11-07 生成／下載按鈕拿掉） ──
+let p4Generated=false,p4Results=null;
 // 直接從記憶體（generatedData.sched + attendanceAdjustments + supportStaff/supportSchedule）計算第四頁統計，
-// 不經過 Excel II 上傳/解析。回傳格式與 parseStoreSheet() 完全一致，讓 renderPage4Preview()/downloadExcel4() 兩條路徑共用。
+// 不經過 Excel II 上傳/解析。回傳格式與 parseStoreSheet() 完全一致，（現在只有 renderPage4Preview 用；第 4 頁數字改用 SalEngine）。
 // 對應 buildCalendarWorkbookSheet() 寫入儲存格文字/底色的同一套規則，只是改成直接讀記憶體狀態而非讀 Excel 文字/顏色。
 function computeStoreStatsFromMemory(store,home,mobileMode){
   const {sched,cal,supMap}=generatedData;
@@ -3130,7 +3112,6 @@ function linkPage2DataToPage4(){
   p4Results=results;
   p4Generated=true;
   salLoadSoon(); // 2026-11-02 功能 C：次假表變了就重讀生命值骨架資料（試算要重算）
-  const dlBtn=document.getElementById('btn-dl4');if(dlBtn)dlBtn.disabled=false;
   renderPage4Preview();
   if(maxUnlocked<5){maxUnlocked=5;renderTopnav();}
   genPage5();
@@ -3231,31 +3212,6 @@ function parseStoreSheet(ws,homeNames,mobileMode){
   }
   return{stats,visitorEntries,tempEntries};
 }
-function genPage4(){
-  if(!generatedData){alert('請先完成第一頁初假表');return;}
-  if(true){ // 2026-11-02 功能 C：不再讀上傳的次假表覆蓋，一律重讀生命值骨架資料（下面 p4Workbook 那段不會跑到）
-    // 尚未上傳覆蓋檔：沿用第二頁自動帶入的記憶體資料重新計算一次（手動重新觸發）。
-    linkPage2DataToPage4();
-    return;
-  }
-  const dim=generatedData.cal.length;
-  const results=[];
-  [...STORES.map(s=>({store:s,home:staff.filter(x=>x.store===s)})),{store:'機動人員',home:staff.filter(x=>x.type==='機動人員')}].forEach(({store,home})=>{
-    if(!home.length)return;
-    const sheetName=store.replace('店','');
-    const ws=p4Workbook.worksheets.find(w=>w.name===sheetName);
-    if(!ws)return;
-    const homeNames=home.map(s=>s.name);
-    const parsed=parseStoreSheet(ws,homeNames,store==='機動人員');
-    results.push({store,homeNames,parsed,dim});
-  });
-  p4Results=results;
-  p4Generated=true;
-  document.getElementById('btn-dl4').disabled=false;
-  renderPage4Preview();
-  if(maxUnlocked<5){maxUnlocked=5;renderTopnav();}
-  genPage5();
-}
 // 2026-11-02 功能 C：第 4 頁每一列＝SalEngine（生命值骨架同一套 attendanceStatsFor／visitorEntriesFor）算的；下載 Excel 也用這份
 // c＝[平日休, 假日休, 請假, 他店支援, 來店支援, 出勤天數, 計時時數, 跨店時數, 貼班時數]；key＝手機卡片右上大字是 c 的第幾格
 function p4Num(v){return Math.round((Number(v)||0)*10)/10;}
@@ -3287,46 +3243,6 @@ function renderPage4Preview(){
   }).join('');
   pv.innerHTML=salBanner()+`<div class="p5-legend" style="margin:0 2px 8px"><span><span class="p5z">0／—</span>＝沒有</span><span>手機上只列有數字的項目</span></div>`+blocks;
   p5LabelCells(pv);
-}
-function downloadExcel4(){
-  if(!p4Generated){alert('請先生成薪資假表');return;}
-  if(!salReady()){alert('天數、時數要等生命值骨架資料讀好才能下載（網頁版登入，看上方說明）');return;}
-  // 若使用者尚未上傳覆蓋用 Excel II，p4Workbook 會是 null（資料是自動從第二頁帶入的）。
-  // 此時下載 Excel III 前，先用與 downloadExcel2() 相同的邏輯就地生成一份 Excel II 工作簿當底，再疊加統計欄。
-  let wb=p4Workbook;
-  if(!wb){
-    const {sched,cal,y,m,supMap,mandatoryOff}=generatedData;
-    const lunarMap=parseLunarNotes();
-    const bottomNotes=((document.getElementById('bottom-notes')&&document.getElementById('bottom-notes').value)||'').split('\n').filter(Boolean);
-    wb=new ExcelJS.Workbook();
-    [...STORES.map(store=>({name:store,home:staff.filter(s=>s.store===store)})),{name:'機動人員',home:staff.filter(s=>s.type==='機動人員')}].forEach(({name,home})=>{
-      if(!home.length)return;
-      buildCalendarWorkbookSheet(wb,name,home,cal,sched,supMap,lunarMap,bottomNotes,findLinkSupport,true,mandatoryOff);
-    });
-  }
-  // 2026-11-02 功能 C：統計欄改用 SalEngine（跟第 4 頁畫面、生命值骨架同一套）
-  const p4Groups=SalEngine.stores().map(store=>({store,rows:p4RowsFor(store)}));
-  const p4Mob=p4MobRows();if(p4Mob.length)p4Groups.push({store:'機動人員',rows:p4Mob});
-  p4Groups.forEach(({store,rows:p4Rows})=>{
-    const sheetName=store.replace('店','');
-    const ws=wb.worksheets.find(w=>w.name===sheetName);
-    if(!ws)return;
-    const headers=['簡稱','平日休','假日休','請假','他店支援','來店支援','出勤天數','計時時數','跨店時數','貼班時數'];
-    const STAT_BORDER={style:'thin',color:{argb:'FFF0F0F0'}};
-    headers.forEach((h,i)=>{
-      const c=ws.getCell(1,8+i);
-      c.value=h;c.font={name:'微軟正黑體',bold:true};
-      c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEFEFEF'}};
-      c.alignment={horizontal:'center',vertical:'middle'};
-      c.border={top:STAT_BORDER,left:STAT_BORDER,bottom:STAT_BORDER,right:STAT_BORDER};
-    });
-    let row=2;
-    p4Rows.forEach(r=>{
-      [r.vis?`${r.name}（${r.type}）`:r.name,...r.c.map(x=>x==='—'?'':x)].forEach((val,i)=>{const c=ws.getCell(row,8+i);c.value=val;c.font={name:'微軟正黑體'};c.alignment={horizontal:'center',vertical:'middle'};c.border={top:STAT_BORDER,left:STAT_BORDER,bottom:STAT_BORDER,right:STAT_BORDER};});
-      row++;
-    });
-  });
-  downloadWorkbook(wb,`${scopeFileTag()}排班_${generatedData.y}年${generatedData.m}月_薪資假表_試算.xlsx`);
 }
 
 // ── 算薪引擎（功能 C，2026-11-02 老闆定：算法只有一套）──
@@ -3798,7 +3714,7 @@ function salBanner(){
   const box=(bg,bd,html)=>`<div class="sal-banner" style="background:${bg};border:1px solid ${bd};border-radius:8px;padding:8px 10px;margin:0 2px 10px;font-size:11px;line-height:1.7">${html}</div>`;
   const btn=`<button onclick="salLoad()" style="margin-left:8px;font-size:11px;padding:1px 8px;border:1px solid #bbb;border-radius:6px;background:#fff;cursor:pointer">↻ 重新讀取</button>`;
   const sub=t=>`<div style="font-size:10px;color:#666">${t}</div>`;
-  if(s.mode==='trial')return box('#FFF8E1','#F0DCA0',`<b>🧮 預估，不是實際</b>：用這裡這次排的 ${ym} 班表照「送到骨架」同一套規則換算，算法跟骨架頁同一套（讀取 ${salHHMM(s.readAt)}）${btn}`+sub(`<b>實際薪資請看生命值骨架頁「實際計算薪資」</b>。計時時數用人資假表／當天時數，沒寫的用骨架頁預設工時；骨架這個月已經有 LINE／網頁改過的天照樣算進去；HP 次數、勞健保等設定用骨架頁現在存的${s.settingsYM?`（${s.settingsYM}）`:''}，這裡只能看`));
+  if(s.mode==='trial')return box('#FFF8E1','#F0DCA0',`<b>🧮 預估，不是實際</b>：用這裡這次排的 ${ym} 班表照「送到骨架」同一套規則換算，算法跟骨架頁同一套（讀取 ${salHHMM(s.readAt)}）${btn}`+sub(`<b>實際薪資請看生命值骨架頁「實際計算薪資」，要 Excel 請到骨架頁「📊 匯出對帳 Excel」／「月結匯出」</b>。計時時數用人資假表／當天時數，沒寫的用骨架頁預設工時；骨架這個月已經有 LINE／網頁改過的天照樣算進去；HP 次數、勞健保等設定用骨架頁現在存的${s.settingsYM?`（${s.settingsYM}）`:''}，這裡只能看`));
   if(s.mode==='loading')return box('#F5F5F5','#E0E0E0','⏳ 讀取生命值骨架資料中…');
   if(s.mode==='error')return box('#FDECEC','#F2B8B8',`⚠️ 讀不到生命值骨架資料：${s.msg}${btn}`);
   if(s.mode==='noright')return box('#F5F5F5','#E0E0E0','這兩頁給老闆、區行政看（薪資資料在生命值骨架）');
@@ -3879,17 +3795,17 @@ async function handleP5InsuranceUpload(e){
 function getP4Entry(store){return p4Results&&p4Results.find(r=>r.store===store);}
 // 2026-11-02 功能 C：v8 自己的 calcRegular／calcHourly／calcVisitorDays 拿掉了（停在 10 月、少了特殊人員、計時同區支援等規則），
 // 第 4、5 頁一律用 SalEngine（生命值骨架算薪原稿）。上面 p5HP、overtimeAmt… 是舊單機版的設定，第 5 頁已經不用。
+// 2026-11-07：「⚡ 生成薪資試算」按鈕拿掉，次假表生成後由 linkPage2DataToPage4 自動叫；第 4 頁還沒算好就安靜跳過（不跳警告）
 function genPage5(){
-  if(!p4Generated){alert('請先完成第四頁薪資假表');return;}
+  if(!p4Generated)return;
   p5Generated=true;
-  const dl=document.getElementById('btn-dl5');if(dl)dl.disabled=false;
   renderPage5();
 }
 function fmt(n){return Math.round(n).toLocaleString();}
 function renderPage5(){
   const panel=document.getElementById('page5-panel');
   if(!panel)return;
-  if(!p5Generated){panel.innerHTML='<div class="ph"><div style="font-size:30px">💰</div><div style="font-size:12px;font-weight:600">尚未生成薪資試算</div><div style="font-size:9px;line-height:1.6">請先完成第四頁「薪資假表」<br>再按「⚡ 生成薪資試算」</div></div>';return;}
+  if(!p5Generated){panel.innerHTML='<div class="ph"><div style="font-size:30px">💰</div><div style="font-size:12px;font-weight:600">還沒有班表可以試算</div><div style="font-size:9px;line-height:1.6">請先到「次假表」頁<br>按「⚡ 生成次假表」<br>這頁會自動算</div></div>';return;}
   salEnsure();
   if(!salReady()){panel.innerHTML=salBanner();return;}
   // 2026-11-02 功能 C：每一格都是 SalEngine 算的；店小計再跟月結表（collectMonthlyCloseRows）對一次，對不上就紅字
@@ -4056,19 +3972,6 @@ function openInsuranceEdit(name){
   else{const n=parseFloat(v);if(!isNaN(n))p5InsuranceOverride[name]=n;}
   renderPage5();
 }
-function downloadExcel5(){
-  if(!p5Generated){alert('請先生成薪資試算');return;}
-  if(!salReady()){alert('薪資要等生命值骨架資料讀好才能下載（網頁版登入，看上方說明）');return;}
-  // 2026-11-02 功能 C：直接用月結表那 12 欄（＝生命值骨架「月結匯出」同一份格式）；2026-11-07 老闆定 B：只有預估，檔名、第一列都寫明
-  const{header,rows}=SalEngine.rows();
-  const wb=new ExcelJS.Workbook();
-  const ws=wb.addWorksheet('預估');
-  ws.addRow([`${salMode.y}年${salMode.m}月 薪資預估（用這次排的班試算，不是實際；實際請看生命值骨架「月結匯出」）・讀取 ${salHHMM(salMode.readAt)}・算法跟生命值骨架同一套`]);
-  ws.addRow(header);
-  rows.forEach(r=>ws.addRow(r));
-  ws.columns.forEach(c=>c.width=12);
-  downloadWorkbook(wb,`${scopeFileTag()}排班_${salMode.y}年${salMode.m}月_薪資預估_不是實際.xlsx`);
-}
 
 // ── 頁籤導覽 ──
 const SYS_VERSION='排班薪資系統 v8';
@@ -4077,8 +3980,8 @@ const PAGE_HEADER={
   1:{icon:'🗓',sub:'設定規則 → 生成初假表 → 下載初假表Excel'},
   2:{icon:'🏷️',sub:'登記本店夥伴出勤異動・新增貼班人員 → 生成次假表'},
   3:{icon:'📋',sub:'自動帶入出勤紀錄 → 匯出假表骨架・下載次假表Excel'},
-  4:{icon:'📑',sub:'用這次排的班試算天數、時數（預估，實際看生命值骨架）→ 下載薪資假表Excel'},
-  5:{icon:'💰',sub:'用這次排的班預估薪資（不是實際，實際看生命值骨架）→ 下載薪資預估Excel'}
+  4:{icon:'📑',sub:'用這次排的班試算天數、時數（預估）・實際和 Excel 請到生命值骨架'},
+  5:{icon:'💰',sub:'用這次排的班預估薪資（不是實際）・實際和 Excel 請到生命值骨架'}
 };
 const PERMANENT_LOCK=6;
 let maxUnlocked=1,curPage=1;
@@ -4112,6 +4015,8 @@ function goPage(p){
   renderTopnav();
   updateHeader(p);
   if(p===2)renderPage2();
+  // 2026-11-07：生成按鈕拿掉 → 進第 4、5 頁時次假表已生成但還沒算過就自動算
+  if((p===4||p===5)&&!p4Generated&&page2Generated&&generatedData)linkPage2DataToPage4();
   if(p===5)renderPage5();
 }
 renderTopnav();
