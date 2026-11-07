@@ -3707,7 +3707,9 @@ function salReady(){return salMode.mode==='trial';}
 // 還沒讀過、或次假表換了月份：排一次重讀（畫面先顯示讀取中）
 function salEnsure(){
   if(!generatedData||salMode.mode==='loading')return;
-  if(!salMode.mode||(salMode.y&&(salMode.y!==generatedData.y||salMode.m!==generatedData.m)))salLoadSoon();
+  // 2026-11-07：網頁打開時先還原上次排的班、登入確認比較慢 → 那時判成「沒權限／本機」；登入好了再進這兩頁要重讀
+  const stale=(salMode.mode==='noright'||salMode.mode==='local')&&salCanRead();
+  if(!salMode.mode||stale||(salMode.y&&(salMode.y!==generatedData.y||salMode.m!==generatedData.m)))salLoadSoon();
 }
 function salRender(){if(p4Generated)renderPage4Preview();if(p5Generated)renderPage5();}
 // 後端 readAt 是「yyyy/MM/dd HH:mm」（台北時間），直接取時分；ISO 格式才用 Date 換成這台的時間
@@ -3718,10 +3720,11 @@ function salBanner(){
   const btn=`<button onclick="salLoad()" style="margin-left:8px;font-size:11px;padding:1px 8px;border:1px solid #bbb;border-radius:6px;background:#fff;cursor:pointer">↻ 重新讀取</button>`;
   const sub=t=>`<div style="font-size:10px;color:#666">${t}</div>`;
   if(s.mode==='trial')return box('#FFF8E1','#F0DCA0',`<b>🧮 預估，不是實際</b>：用這裡這次排的 ${ym} 班表照「送到骨架」同一套規則換算，算法跟骨架頁同一套（讀取 ${salHHMM(s.readAt)}）${btn}`+sub(`<b>實際薪資請看生命值骨架頁「實際計算薪資」，要 Excel 請到骨架頁「📊 匯出對帳 Excel」／「月結匯出」</b>。計時時數用人資假表／當天時數，沒寫的用骨架頁預設工時；骨架這個月已經有 LINE／網頁改過的天照樣算進去；HP 次數、勞健保等設定用骨架頁現在存的${s.settingsYM?`（${s.settingsYM}）`:''}，這裡只能看`));
-  if(s.mode==='loading')return box('#F5F5F5','#E0E0E0','⏳ 讀取生命值骨架資料中…');
-  if(s.mode==='error')return box('#FDECEC','#F2B8B8',`⚠️ 讀不到生命值骨架資料：${s.msg}${btn}`);
-  if(s.mode==='noright')return box('#F5F5F5','#E0E0E0','這兩頁給老闆、區行政看（薪資資料在生命值骨架）');
-  return box('#F5F5F5','#E0E0E0','💡 這兩頁的數字要用網頁版（hr.bzhouse.tw）登入才算得出來：算薪資料在生命值骨架雲端，算法跟骨架頁同一套');
+  // 2026-11-07 老闆：B 之後這兩頁是「用這次排的班試算」，只跟骨架頁拿 HP 次數、勞健保等薪資設定，文字別寫成在讀骨架的實際資料
+  if(s.mode==='loading')return box('#F5F5F5','#E0E0E0',`⏳ 試算中…（用這次排的 ${ym} 班表，HP 次數、勞健保等設定照生命值骨架頁）`);
+  if(s.mode==='error')return box('#FDECEC','#F2B8B8',`⚠️ 試算失敗：${s.msg}${btn}`);
+  if(s.mode==='noright')return box('#F5F5F5','#E0E0E0','這兩頁的薪資預估給老闆、區行政看（實際薪資在生命值骨架）');
+  return box('#F5F5F5','#E0E0E0','💡 這兩頁的預估要用網頁版（hr.bzhouse.tw）登入才算得出來：HP 次數、勞健保等薪資設定存在生命值骨架雲端，算法跟骨架頁同一套');
 }
 
 // ── 第五頁：薪資系統 ──
@@ -4020,6 +4023,7 @@ function goPage(p){
   if(p===2)renderPage2();
   // 2026-11-07：生成按鈕拿掉 → 進第 4、5 頁時次假表已生成但還沒算過就自動算
   if((p===4||p===5)&&!p4Generated&&page2Generated&&generatedData)linkPage2DataToPage4();
+  if(p===4&&p4Generated)renderPage4Preview();
   if(p===5)renderPage5();
 }
 renderTopnav();
