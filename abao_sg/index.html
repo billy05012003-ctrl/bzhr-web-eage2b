@@ -2272,12 +2272,13 @@ function renderPreview(sched,cal,supMap,conflicts,mandatoryOff){
     let forceRow='';
     if(storeName&&isSegMode()){
       const cells=cal.map(({d,wd})=>{
-        const f=dayForceAt(storeName,d,sched,supMap),l=forceLimitOf(storeName,wd),sh=segShortOf(storeName,d,sched,supMap);
-        const st=sh.length?'background:#FDEBD3;color:#8A4B08;font-weight:700;':(l&&f>l+0.05)?'background:#FADBD8;color:#A32D2D;font-weight:700;':'color:#555;';
-        const tip=`人力 ${fmtForce(f)}／上限 ${l?fmtForce(l):'沒設'}${sh.length?'｜開店條件：'+sh.join('、'):''}`;
-        return`<td title="${tip}" style="${st}font-size:7px;padding:2px 1px;text-align:center">${fmtForce(f)}${sh.length?'⚠':''}</td>`;
+        // 11-07 能力條件不夠也標橘⚠（skillShortOf 由子任務02 做；店沒開能力條件就是空的）
+        const f=dayForceAt(storeName,d,sched,supMap),l=forceLimitOf(storeName,wd),sh=segShortOf(storeName,d,sched,supMap),sk=skillShortOf(storeName,d,sched,supMap),bad=sh.length||sk.length;
+        const st=bad?'background:#FDEBD3;color:#8A4B08;font-weight:700;':(l&&f>l+0.05)?'background:#FADBD8;color:#A32D2D;font-weight:700;':'color:#555;';
+        const tip=`人力 ${fmtForce(f)}／上限 ${l?fmtForce(l):'沒設'}${sh.length?'｜開店條件：'+sh.join('、'):''}${sk.length?'｜能力條件：'+sk.join('、'):''}`;
+        return`<td title="${tip}" style="${st}font-size:7px;padding:2px 1px;text-align:center">${fmtForce(f)}${bad?'⚠':''}</td>`;
       }).join('');
-      forceRow=`<tr><td title="人力＝時數÷${fteBase}；紅＝超過上限、橘＝開店條件不夠" style="font-size:7px;color:#555;padding:2px 5px;font-weight:600;white-space:nowrap;border-right:2px solid #ccc;position:sticky;left:0;background:#fafafa;z-index:1">人力</td>${cells}</tr>`;
+      forceRow=`<tr><td title="人力＝時數÷${fteBase}；紅＝超過上限、橘＝開店條件或能力條件不夠" style="font-size:7px;color:#555;padding:2px 5px;font-weight:600;white-space:nowrap;border-right:2px solid #ccc;position:sticky;left:0;background:#fafafa;z-index:1">人力</td>${cells}</tr>`;
     }
     return`<div style="overflow-x:auto;border:1px solid #e0e0e0;border-radius:6px"><table class="ptbl" style="border-collapse:collapse;width:100%"><thead><tr><th style="text-align:left;min-width:32px;padding:3px 5px;position:sticky;left:0;background:#f5f5f5;z-index:2;border-right:2px solid #ccc">簡稱</th>${cols}</tr></thead><tbody>${rows}${supRow}${forceRow}</tbody></table></div>`;
   };
