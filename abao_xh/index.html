@@ -74,6 +74,18 @@ input[type=text],input[type=number],select{border:1px solid #ccc;border-radius:5
 .oc-del-r{background:none;border:none;cursor:pointer;color:#A32D2D;font-size:11px;font-weight:600}
 .oc-add-m{background:none;border:1px dashed #ccc;border-radius:4px;padding:2px 7px;font-size:9px;color:#888;cursor:pointer;width:100%;margin-top:3px}
 .oc-or{text-align:center;font-size:9px;color:#A32D2D;font-weight:600;margin:3px 0}
+.sc-box{margin-top:6px;border:1px dashed #cfcbee;border-radius:6px;padding:6px 7px;background:#fff}
+.sc-box.on{border-style:solid;border-color:#534AB7;background:#FBFAFF}
+.sc-hdr{display:flex;align-items:center;justify-content:space-between;font-size:10px;font-weight:600;color:#3C3489}
+.sc-sum{font-size:9px;color:#666;margin:3px 0 2px}
+.sc-row{display:flex;align-items:center;gap:3px;flex-wrap:wrap;font-size:9px;padding:4px 0;border-top:1px solid #eeeaf8}
+.sc-row input[type=number]{width:30px;padding:1px 2px;font-size:10px;text-align:center}
+.sc-row select{width:auto;font-size:9px;padding:1px 3px}
+.sc-up{color:#888}
+.sc-segs{display:flex;gap:5px;margin-left:2px}
+.sc-segs label{display:flex;align-items:center;gap:2px;cursor:pointer}
+.sc-segs input{width:auto;accent-color:#534AB7}
+.sc-note{font-size:8px;color:#999;margin-top:4px}
 .oc-add-g{background:none;border:1px solid #534AB7;border-radius:5px;padding:4px 9px;font-size:9px;color:#534AB7;cursor:pointer;width:100%;margin-top:3px}
 .adj-empty{font-size:9px;color:#888;padding:3px 0 5px}
 .adj-card{background:#f9f9f9;border:1px solid #e0e0e0;border-radius:6px;padding:7px 9px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
@@ -250,6 +262,14 @@ input[type=text],input[type=number],select{border:1px solid #ccc;border-radius:5
   #page-1 input[type=text],#page-1 input[type=number],#page-1 select{font-size:16px;padding:6px 8px}
   #page-1 .stab,#page-1 .sctl-b{padding:6px 12px;font-size:13px}
   #page-1 .badd{padding:10px;font-size:13px}
+  .sc-hdr{font-size:14px}.sc-sum,.sc-note{font-size:12px}
+  .sc-row{font-size:13px;gap:6px;padding:8px 30px 8px 0;position:relative}
+  .sc-row .oc-del-r{position:absolute;right:0;top:10px;font-size:20px;padding:0 6px}
+  .sc-row select{font-size:16px;padding:5px 6px}
+  #page-1 .sc-row input[type=number]{width:52px}
+  .sc-segs{width:100%;gap:14px;margin:2px 0 0}
+  .sc-segs input{width:18px;height:18px}
+  .oc-add-m{padding:9px;font-size:13px}
   #page-1 .main-body{padding:10px}
   #page-1 .main-hdr{flex-direction:column;align-items:flex-start;gap:2px}
   #page-2,#page-3{padding:10px!important;min-height:0!important}
@@ -1098,6 +1118,10 @@ let schedMode='seg';   // 'seg'＝新排法（時段＋人力）；'old'＝舊�
 let fteBase=9.5;       // 標準工時：幾小時＝1 人力
 let forceData=null;    // 每天出勤人力上限（每店星期一～日）；null＝還沒搬，從舊的人數上限帶
 let segConds=null;     // 開店條件（每店每段）；null＝還沒搬，從舊的開店條件組帶
+// 2026-11-07 開店條件進階「能力條件」（老闆定）：每店各自開關，對應夥伴管理的能力分級；乙＝乙以上（甲也算），分時段、預設三段都要。
+// { 門市: { on, rows:[ {skill:'櫃台'|'煎台'|'包飲', lv:'丙'|'乙'|'甲'|'', count, seg:{e,p,c}} ] } }；沒有＝這店關閉。
+// 01_B 只做設定畫面＋存檔；檢查（skillShortOf）和自動排休避開由子任務02 接。
+let skillConds=null;
 let dayShifts=[];      // 班表點格子設的當天時數／時段 {y,m,name,d,hrs,seg}
 const SEGS=[['e','開早'],['p','尖峰'],['c','收尾']];
 const HOURLY_UNSET_HRS=4.5;   // 計時人員還沒填時數：先當 4.5 小時算（畫面會提醒去填）
@@ -1211,11 +1235,45 @@ function renderNeedTable(){
 function genSummary(store){const c=openConds[store];if(!c||!c.length)return'尚未設定';return c.map(g=>g.rows.map(r=>`${r.count}位${r.type}${r.skill!=='不限'?'('+r.skill+')':''}`).join('＋')).join(' 或 ');}
 function updateSeg(store,k,f,v){ensureSegData();segConds[store][k][f]=f==='on'?!!v:Math.max(0,Math.round(+v||0));renderOpenConds();}
 function segSummary(store){const c=segConds[store]||{};const on=SEGS.filter(([k])=>c[k]&&c[k].on);if(!on.length)return'沒有勾任何時段（不檢查）';return on.map(([k,l])=>`${l} ${c[k].min} 人${+c[k].reg?`（正職 ${c[k].reg}）`:''}`).join('・');}
+// ── 能力條件（進階）設定畫面 ──
+const SKILL_KINDS=['櫃台','煎台','包飲'];
+function skillCondOf(store){if(!skillConds)skillConds={};if(!skillConds[store])skillConds[store]={on:false,rows:[]};return skillConds[store];}
+function newSkillRow(){return{skill:'櫃台',lv:'丙',count:1,seg:{e:true,p:true,c:true}};}
+function updateSkillOn(store,on){const c=skillCondOf(store);c.on=!!on;if(c.on&&!c.rows.length)c.rows.push(newSkillRow());renderOpenConds();}
+function addSkillRow(store){skillCondOf(store).rows.push(newSkillRow());renderOpenConds();}
+function delSkillRow(store,i){skillCondOf(store).rows.splice(i,1);renderOpenConds();}
+function updateSkillRow(store,i,f,v){
+  const r=skillCondOf(store).rows[i];if(!r)return;
+  if(f==='count')r.count=Math.max(1,Math.min(9,Math.round(+v||1)));
+  else if(f==='skill'){r.skill=v;r.lv=v==='包飲'?'':(r.lv||'丙');}
+  else if(f==='lv')r.lv=v;
+  else if(SEGS.some(([k])=>k===f))r.seg[f]=!!v;
+  renderOpenConds();
+}
+function skillRowText(r){return`${r.count} 位${r.skill}${r.lv?r.lv+'以上':''}`;}
+function skillSummary(store){
+  const c=skillConds&&skillConds[store];if(!c||!c.on)return'關閉（不檢查）';if(!c.rows.length)return'還沒設條件';
+  return c.rows.map(r=>{const on=SEGS.filter(([k])=>r.seg&&r.seg[k]);return`${skillRowText(r)}（${on.length===3?'三段':on.length?on.map(([,l])=>l).join('＋'):'沒勾時段'}）`;}).join('・');
+}
+function skillCondHtml(store){
+  const c=skillCondOf(store);
+  const rows=c.rows.map((r,i)=>`<div class="sc-row">
+    <span>至少</span><input type="number" min="1" max="9" value="${r.count}" onchange="updateSkillRow('${store}',${i},'count',this.value)"><span>位</span>
+    <select onchange="updateSkillRow('${store}',${i},'skill',this.value)">${SKILL_KINDS.map(k=>`<option${k===r.skill?' selected':''}>${k}</option>`).join('')}</select>
+    ${r.skill==='包飲'?'':`<select onchange="updateSkillRow('${store}',${i},'lv',this.value)">${['丙','乙','甲'].map(l=>`<option${l===r.lv?' selected':''}>${l}</option>`).join('')}</select><span class="sc-up">以上</span>`}
+    <span class="sc-segs">${SEGS.map(([k,l])=>`<label><input type="checkbox"${r.seg&&r.seg[k]?' checked':''} onchange="updateSkillRow('${store}',${i},'${k}',this.checked)">${l}</label>`).join('')}</span>
+    <button class="oc-del-r" title="刪除這條" onclick="delSkillRow('${store}',${i})">×</button></div>`).join('');
+  return`<div class="sc-box${c.on?' on':''}">
+    <div class="sc-hdr"><span>🎯 能力條件（進階）</span><label class="tog"><input type="checkbox"${c.on?' checked':''} onchange="updateSkillOn('${store}',this.checked)"><span class="tog-sl"></span></label></div>
+    <div class="sc-sum">${skillSummary(store)}</div>
+    ${c.on?`${rows}<button class="oc-add-m" onclick="addSkillRow('${store}')">＋ 新增一條能力條件</button><div class="sc-note">能力看「夥伴管理」的能力分級；「乙以上」甲也算。排班檢查與排休避開下一階段接上。</div>`:''}
+  </div>`;
+}
 function renderOpenConds(){
   if(isSegMode()){
     ensureSegData();
     const num=(store,k,f,v)=>`<input type="number" min="0" max="9" value="${v}" style="width:30px;padding:1px 2px;font-size:10px;text-align:center" onchange="updateSeg('${store}','${k}','${f}',this.value)">`;
-    document.getElementById('open-conditions').innerHTML='<div class="oc-hint">勾了的時段每天都要做到；不勾＝不檢查</div>'+scopeStoreNames().map(store=>{const c=segConds[store];return`<div class="oc-store"><div class="oc-title"><div style="width:7px;height:7px;border-radius:50%;background:${SC[store]}"></div>${store} 開店條件</div>${SEGS.map(([k,l])=>{const r=c[k];return`<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:10px;padding:4px 0;border-top:1px solid #f0f0f0"><label style="display:flex;align-items:center;gap:3px;min-width:54px;font-weight:600"><input type="checkbox"${r.on?' checked':''} onchange="updateSeg('${store}','${k}','on',this.checked)">${l}</label><span style="color:${r.on?'#333':'#bbb'}">至少 ${num(store,k,'min',r.min)} 人，其中正職至少 ${num(store,k,'reg',r.reg)} 位</span></div>`;}).join('')}</div>`;}).join('');
+    document.getElementById('open-conditions').innerHTML='<div class="oc-hint">勾了的時段每天都要做到；不勾＝不檢查</div>'+scopeStoreNames().map(store=>{const c=segConds[store];return`<div class="oc-store"><div class="oc-title"><div style="width:7px;height:7px;border-radius:50%;background:${SC[store]}"></div>${store} 開店條件</div>${SEGS.map(([k,l])=>{const r=c[k];return`<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:10px;padding:4px 0;border-top:1px solid #f0f0f0"><label style="display:flex;align-items:center;gap:3px;min-width:54px;font-weight:600"><input type="checkbox"${r.on?' checked':''} onchange="updateSeg('${store}','${k}','on',this.checked)">${l}</label><span style="color:${r.on?'#333':'#bbb'}">至少 ${num(store,k,'min',r.min)} 人，其中正職至少 ${num(store,k,'reg',r.reg)} 位</span></div>`;}).join('')}${skillCondHtml(store)}</div>`;}).join('');
     return;
   }
   document.getElementById('open-conditions').innerHTML=scopeStoreNames().map(store=>{const conds=openConds[store];const groups=conds.map((g,gi)=>`<div class="oc-group"><div class="oc-ghdr"><span class="oc-glabel">第${gi+1}組</span><button class="oc-del-g" onclick="delGroup('${store}',${gi})">刪除整組</button></div>${g.rows.map((r,ri)=>`<div class="oc-row"><select onchange="updateOC('${store}',${gi},${ri},'type',this.value)" style="font-size:9px;padding:2px 3px">${TYPE_OPTS.map(t=>`<option${t===r.type?' selected':''}>${t}</option>`).join('')}</select><select onchange="updateOC('${store}',${gi},${ri},'skill',this.value)" style="font-size:9px;padding:2px 3px">${SKILL_OPTS.map(s=>`<option${s===r.skill?' selected':''}>${s}</option>`).join('')}</select><div style="display:flex;align-items:center;gap:1px;font-size:9px">×<input type="number" value="${r.count}" min="1" max="9" style="width:24px;padding:1px 2px;font-size:9px;text-align:center" onchange="updateOC('${store}',${gi},${ri},'count',+this.value)"></div><button class="oc-del-r" onclick="delRow('${store}',${gi},${ri})">×</button></div>`).join('')}<button class="oc-add-m" onclick="addRow('${store}',${gi})">＋ 加夥伴要求</button></div>${gi<conds.length-1?'<div class="oc-or">── 或 ──</div>':''}`).join('');return`<div class="oc-store"><div class="oc-title"><div style="width:7px;height:7px;border-radius:50%;background:${SC[store]}"></div>${store} 開店條件</div><div class="oc-sum">🔑 ${genSummary(store)}</div><div class="oc-hint">滿足以下任何一組就能開店</div>${groups}<button class="oc-add-g" onclick="addGroup('${store}')">＋ 新增條件組</button></div>`;}).join('');
@@ -4035,6 +4093,7 @@ function v7CollectSaveData(){
     storeMode,storeLocks,cellEdits,
     hrImport, // 2026-10-27 匯入人資假表：要確認的黃格、復原用的匯入前樣子
     schedMode,fteBase,forceData,segConds,dayShifts, // 2026-11-01 時段＋人力
+    skillConds, // 2026-11-07 開店條件進階：能力條件
     schedOpts, // 2026-11-01 排班技能開關
     noteRows, // 2026-11-01 特殊日備註五格
     lastGen:generatedData?{y:generatedData.y,m:generatedData.m,scope:generatedData.scope,sched:generatedData.sched,supMap:generatedData.supMap,mandatoryOff:generatedData.mandatoryOff}:null
@@ -4055,7 +4114,7 @@ function v7HideSaveWarn(){
 // 使用者完全不知道其實沒在存，關網頁才會發現整份資料消失。改成失敗時在頁首跳出紅字警示。
 // 開店條件、夥伴管理、必休必上：標題上看得到有沒有存好（2026-11-01 老闆）。改了就自動存，不用按儲存：
 // 網頁版看雲端（window.HR_SAVE_STATE，雲端存檔.js 提供），本機版看瀏覽器存檔；這一區有改、還沒存好＝「儲存中…」，存好＝「✓ 已儲存 時間」
-const SEC_SAVE_DATA={'s-open':()=>JSON.stringify([segConds,forceData,openConds,needsData,schedMode,fteBase]),'s-staff':()=>JSON.stringify(allStaff),'s-pin':()=>JSON.stringify(pins)};
+const SEC_SAVE_DATA={'s-open':()=>JSON.stringify([segConds,forceData,openConds,needsData,schedMode,fteBase,skillConds]),'s-staff':()=>JSON.stringify(allStaff),'s-pin':()=>JSON.stringify(pins)};
 let secSaved=null,secSavedAt='';
 function secNowTxt(){const t=new Date();return String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');}
 function markSecSaved(at){secSaved={};Object.keys(SEC_SAVE_DATA).forEach(id=>{secSaved[id]=SEC_SAVE_DATA[id]();});secSavedAt=at||secNowTxt();renderSecSave();}
@@ -4132,7 +4191,7 @@ function v7RestoreAutoSave(){
   noteRows=d.noteRows||null; // 舊存檔沒有：用預設五格（都沒打勾）
   // 2026-11-01 時段＋人力：舊存檔沒有這幾樣，ensureSegData 從舊的人數上限、開店條件組搬一次
   schedOpts=Object.assign({},SCHED_OPTS_DEFAULT,d.schedOpts||{});
-  schedMode=d.schedMode||'seg';fteBase=+d.fteBase||9.5;forceData=d.forceData||null;segConds=d.segConds||null;dayShifts=d.dayShifts||[];ensureSegData();
+  schedMode=d.schedMode||'seg';fteBase=+d.fteBase||9.5;forceData=d.forceData||null;segConds=d.segConds||null;dayShifts=d.dayShifts||[];ensureSegData();skillConds=d.skillConds||null;
   // 讓genSchedule()把存起來的班表當成「上次結果」，手動／鎖定的店才能原樣還原
   if(maxUnlocked>=2&&d.lastGen&&d.lastGen.sched)generatedData=Object.assign({mandatoryOff:{},supMap:{}},d.lastGen);
 
@@ -4179,6 +4238,7 @@ v7RestoreAutoSave();
       'hrImport',    // 10-27 第 1 頁匯入人資假表：要確認的黃格、復原用的匯入前樣子
       'schedMode', 'fteBase', 'forceData', 'segConds', 'dayShifts',   // 11-01 排班改時段＋人力
       'noteRows',    // 11-01 特殊日備註五格
+      'skillConds',  // 11-07 開店條件進階：能力條件
       'schedOpts'],  // 11-01 排班技能開關
     '薪資': ['p5HP', 'p5Route', 'p5OtherBonus', 'p5InsuranceOverride', 'p5InsuranceMap', 'p5ManualRate', 'p5Generated',
       'p5BaseSalary', 'p5BaseHourly', 'p5CrossRateOverride']
