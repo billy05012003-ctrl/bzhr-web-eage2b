@@ -1655,6 +1655,41 @@ function segShortOf(store,d,sched,supMap){
   });
   return out;
 }
+// 能力條件（2026-11-07 老闆定，開店條件進階）：每店開了才檢查；每條「至少 N 位 櫃台／煎台 某級以上、或包飲」，分開早／尖峰／收尾。
+// 等級比法跟 matchReq 一樣（乙以上＝乙、甲都算；沒填等級當丙）。skillConds 的設定畫面在上面「能力條件（進階）設定畫面」。
+function skillHas(s,r){
+  const sk=(s&&s.sk)||{};
+  if(r.skill==='包飲')return !!sk.d;
+  if(r.skill==='煎台')return !!sk.g&&(RANK[sk.gl]||0)>=(RANK[r.lv]||0);
+  if(r.skill==='櫃台')return !!sk.c&&(RANK[sk.cl]||0)>=(RANK[r.lv]||0);
+  return false;
+}
+function skillGaps(store,d,sched,supMap){
+  const c=skillConds&&skillConds[store];if(!c||!c.on||!(c.rows||[]).length)return[];
+  const{y,m}=curYM(),ppl=presentAt(store,d,sched,supMap),out=[];
+  SEGS.forEach(([k,label])=>{
+    const inSeg=ppl.filter(s=>{const sg=daySegOf(s,d,y,m);return sg&&sg[k];});
+    c.rows.forEach(r=>{
+      if(!r.seg||!r.seg[k])return;
+      const need=+r.count||0,n=inSeg.filter(s=>skillHas(s,r)).length;
+      if(n<need)out.push({label,lack:need-n,r});
+    });
+  });
+  return out;
+}
+// 回傳不夠的地方（空的＝夠），例：「尖峰少 1 位櫃台乙以上」
+function skillShortOf(store,d,sched,supMap){return skillGaps(store,d,sched,supMap).map(g=>`${g.label}少 ${g.lack} 位${g.r.skill}${g.r.lv?g.r.lv+'以上':''}`);}
+function skillLack(store,d,sched,supMap){return skillGaps(store,d,sched,supMap).reduce((a,g)=>a+g.lack,0);}
+// 排休／調去支援用：name 這天改成現在的狀態之後，能力條件有沒有比他照常上班時更不夠。
+// 只看「有沒有變更差」：本來就湊不出那個能力的店（例：沒人是櫃台甲），不會因此全店都不能休
+function skillWorse(store,d,sched,supMap,name){
+  if(!isSegMode()||!store||!sched[name])return false;
+  const c=skillConds&&skillConds[store];if(!c||!c.on)return false;
+  const now=skillLack(store,d,sched,supMap);if(!now)return false;
+  const cur=sched[name][d];sched[name][d]='work';
+  const before=skillLack(store,d,sched,supMap);sched[name][d]=cur;
+  return now>before;
+}
 // 網頁版第一次打開：名單上還沒填時數的人，用骨架頁「預設工時」帶一次（0 或沒設的不帶）；回傳帶了哪些人
 function v8NeedsHours(){return allStaff.some(s=>s.hrs==null||s.hrs==='');}
 function v8FillStaffHours(map){
@@ -1866,11 +1901,11 @@ function genSchedule(){
       if(lastIdx>=0&&i-lastIdx<Math.max(1,step-1))continue;
       if(gapNear(s.name,avail[i].d,sched))continue; // 休假間距：第一輪先跳過離其他休假太近的，第二輪再補
       const {d}=avail[i];if(usedDays(s.name,sched,cal)>=s.days)break;
-      sched[s.name][d]='off';if(!checkOpen(s.store,d,sched,supMap)){sched[s.name][d]='work';continue;}needHd--;lastIdx=i;
+      sched[s.name][d]='off';if(!checkOpen(s.store,d,sched,supMap)||skillWorse(s.store,d,sched,supMap,s.name)){sched[s.name][d]='work';continue;}needHd--;lastIdx=i;
     }
     for(let i=0;i<avail.length&&needHd>0;i++){
       const {d}=avail[i];if(sched[s.name][d]!=='work')continue;if(usedDays(s.name,sched,cal)>=s.days)break;
-      sched[s.name][d]='off';if(!checkOpen(s.store,d,sched,supMap)){sched[s.name][d]='work';continue;}needHd--;
+      sched[s.name][d]='off';if(!checkOpen(s.store,d,sched,supMap)||skillWorse(s.store,d,sched,supMap,s.name)){sched[s.name][d]='work';continue;}needHd--;
     }
   });
   // Step8C: 平日休交錯分配
@@ -1888,7 +1923,7 @@ function genSchedule(){
         let assigned=false;
         for(const s of eligible){
           sched[s.name][d]='off';
-          if(checkOpen(store,d,sched,supMap)){needs[s.name]--;daySlots-=isSegMode()?personForce(s,d):1;assigned=true;break;}
+          if(checkOpen(store,d,sched,supMap)&&!skillWorse(store,d,sched,supMap,s.name)){needs[s.name]--;daySlots-=isSegMode()?personForce(s,d):1;assigned=true;break;}
           sched[s.name][d]='work';
         }
         if(!assigned)break;
@@ -1899,7 +1934,7 @@ function genSchedule(){
       const avail=cal.filter(({d,isHol})=>!isHol&&sched[s.name][d]==='work'&&!locked[s.name+'_'+d]);
       for(const {d} of avail){
         if(rem<=0)break;if(usedDays(s.name,sched,cal)>=s.days)break;
-        sched[s.name][d]='off';if(!checkOpen(store,d,sched,supMap)){sched[s.name][d]='work';continue;}rem--;needs[s.name]--;
+        sched[s.name][d]='off';if(!checkOpen(store,d,sched,supMap)||skillWorse(store,d,sched,supMap,s.name)){sched[s.name][d]='work';continue;}rem--;needs[s.name]--;
       }
     });
   });
@@ -1927,21 +1962,39 @@ function genSchedule(){
         if(checkOpen(store,d,sched,supMap))break;
       }
     });
+    // 2026-11-07 能力條件：排完還不夠的天，把一般排休（必休不動）一個一個改回上班，能力條件有變好才留；
+    // 改回也湊不出來的（例：全店沒人有那個能力）就不亂改，交給衝突清單提醒
+    if(isSegMode())cal.forEach(({d})=>{
+      let lack=skillLack(store,d,sched,supMap);if(!lack)return;
+      const offToday=staff.filter(s=>s.store===store&&sched[s.name][d]==='off'&&!locked[s.name+'_'+d]);
+      offToday.sort((a,b)=>usedDays(b.name,sched,cal)-usedDays(a.name,sched,cal));
+      for(const s of offToday){
+        sched[s.name][d]='work';
+        const now=skillLack(store,d,sched,supMap);
+        if(now<lack){lack=now;if(!lack)break;}else sched[s.name][d]='off';
+      }
+    });
   });
   // Step8D: 人力不足時跨店支援（排休結算後，依實際出勤人數跟開店條件最低人力比較）
   crossRules.filter(cr=>cr.trigger==='人力不足時').forEach(cr=>{
     if(frozenSet.has(cr.store))return; // v8：v7不排的店，不再塞新的支援進去
     cal.forEach(({d,wd,wn})=>{
       if(cr.cond&&!hasWeekday(cr.cond,wn))return;
-      if(isSegMode()){if(checkOpen(cr.store,d,sched,supMap))return;}
+      // 2026-11-07 老闆定：人數／時段夠、只有能力條件不夠時，也叫支援——但只叫有缺的那個能力、叫來真的會變好的人
+      let skillOnly=false;
+      if(isSegMode()){if(checkOpen(cr.store,d,sched,supMap)){if(!skillLack(cr.store,d,sched,supMap))return;skillOnly=true;}}
       else{const minNeed=needsData[cr.store]?needsData[cr.store][wd]:0;if(!minNeed||getOnDuty(cr.store,d,sched)>=minNeed)return;}
       if(!sched[cr.staff]||locked[cr.staff+'_'+d]||sched[cr.staff][d]!=='work')return;
+      const lackBefore=skillOnly?skillLack(cr.store,d,sched,supMap):0;
       sched[cr.staff][d]='sup';
       const k=cr.store+'_'+d;if(!supMap[k])supMap[k]=[];if(!supMap[k].includes(cr.staff))supMap[k].push(cr.staff);
       if(isSegMode()){
+        const undo=()=>{sched[cr.staff][d]='work';supMap[k]=supMap[k].filter(n=>n!==cr.staff);};
         // 調走之前先確認本店三段還夠，不夠就不調（不要補了別店、空了自己店）
         const home=(staff.find(x=>x.name===cr.staff)||{}).store;
-        if(home&&STORES.includes(home)&&!checkOpen(home,d,sched,supMap)){sched[cr.staff][d]='work';supMap[k]=supMap[k].filter(n=>n!==cr.staff);return;}
+        if(home&&STORES.includes(home)&&(!checkOpen(home,d,sched,supMap)||skillWorse(home,d,sched,supMap,cr.staff))){undo();return;}
+        // 只為了能力條件叫的：他沒有缺的那個能力（叫來能力條件沒變好）就不叫
+        if(skillOnly&&skillLack(cr.store,d,sched,supMap)>=lackBefore){undo();return;}
       }
       if(cr.linkedRest&&sched[cr.linkedRest]&&!locked[cr.linkedRest+'_'+d]&&sched[cr.linkedRest][d]==='work'){
         const lr=staff.find(s=>s.name===cr.linkedRest);
@@ -2015,6 +2068,8 @@ function computeConflicts(sched,cal,supMap){
     STORES.forEach(store=>{
       const short=cal.map(({d,wn})=>({d,wn,s:segShortOf(store,d,sched,supMap)})).filter(x=>x.s.length);
       if(short.length)conflicts.push({type:'warn',msg:`${store}：開店條件不夠 ${short.length} 天——${short.slice(0,4).map(x=>`${x.d}日(星期${x.wn})${x.s.join('、')}`).join('；')}${short.length>4?'…':''}`});
+      const skShort=cal.map(({d,wn})=>({d,wn,s:skillShortOf(store,d,sched,supMap)})).filter(x=>x.s.length);
+      if(skShort.length)conflicts.push({type:'warn',msg:`${store}：能力條件不夠 ${skShort.length} 天——${skShort.slice(0,4).map(x=>`${x.d}日(星期${x.wn})${x.s.join('、')}`).join('；')}${skShort.length>4?'…':''}`});
       const over=cal.map(({d,wd})=>({d,f:dayForceAt(store,d,sched,supMap),l:forceLimitOf(store,wd)})).filter(x=>x.l&&x.f>x.l+0.05);
       if(over.length)conflicts.push({type:'warn',msg:`${store}：人力超過上限 ${over.length} 天——${over.slice(0,5).map(x=>`${x.d}日 ${fmtForce(x.f)}／${fmtForce(x.l)}`).join('、')}${over.length>5?'…':''}（休假天數用完排不掉）`});
     });
