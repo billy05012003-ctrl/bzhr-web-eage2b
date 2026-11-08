@@ -467,6 +467,7 @@ button[onclick="v7ClearAutoSave()"]{display:none!important}
 
 <div class="sec" id="s-pin"><div class="sh" onclick="tog('s-pin')"><div class="st">📌 必休／必上</div><span class="sec-save" id="ss-s-pin"></span><span id="cv-s-pin">▲</span></div><div class="sb">
 <div id="pin-list"></div>
+<button class="badd bsec" id="lp-import" onclick="importLeavePre()" style="display:none;margin-bottom:4px" title="打卡頁夥伴排的休假預排：第一順位帶成這個月的必休（先預覽，確定才加）">📥 帶入休假預排（打卡頁）</button>
 <button class="badd bsec" id="pn-open" onclick="togglePinAdd(true)">＋ 新增必休／必上</button>
 <div class="abox" id="pn-box" style="display:none"><h4 style="display:flex;justify-content:space-between">＋ 新增必休／必上<span onclick="togglePinAdd(false)" style="cursor:pointer;color:#999;font-weight:400">✕ 收起</span></h4><div id="pn-form"></div>
 <button class="badd" onclick="addPin()">＋ 新增</button></div>
@@ -661,7 +662,7 @@ function setCellState(sched,supMap,mandatoryOff,name,d,st,target){
 function pinStateFor(name,d,wd){
   let r=null;
   pins.forEach(p=>{
-    if(p.name!==name)return;
+    if(p.name!==name||!pinInMonth(p))return;
     const dm=p.dates&&p.dates.split(',').map(x=>+x.trim()).includes(d);
     const wm=p.weeks&&WN.some((w,i)=>hasWeekday(p.weeks,w)&&wd===i);
     if(dm||wm)r=p.type==='off'?'mustoff':'must';
@@ -1338,15 +1339,17 @@ function storeOrder(){const sc=scopeStoreNames();return[...sc,'機動人員',...
 function staffStoreOf(name){return(allStaff.find(p=>p.name===name)||{}).store||'';}
 function groupHdr(st,n){return`<div style="display:flex;align-items:center;gap:4px;font-size:9px;font-weight:600;color:#555;margin:7px 0 3px"><div style="width:7px;height:7px;border-radius:50%;background:${SC[st]||'#F5C842'}"></div>${st||'不在名單'}<span style="font-weight:400;color:#999">${n}</span></div>`;}
 // ① 必休必上：卡片一行、依門市分組
-function pinText(p){const a=[];if(p.weeks)a.push('每'+p.weeks);if(p.dates)a.push(p.dates.split(',').map(x=>x.trim()).filter(Boolean).join('、')+' 日');return a.join('・');}
+function pinText(p){const a=[];if(p.weeks)a.push('每'+p.weeks);if(p.dates)a.push(p.ym?p.dates.split(',').map(x=>x.trim()).filter(Boolean).map(x=>(+p.ym.slice(5))+'/'+x).join('、')+'（休假預排）':p.dates.split(',').map(x=>x.trim()).filter(Boolean).join('、')+' 日');return a.join('・');}
+// 2026-11-08 打卡線 2-5：休假預排帶進來的必休帶 ym（只套那個月）；手動新增的沒有 ym＝每個月都套（照舊）
+function pinInMonth(p){if(!p.ym)return true;const y=+document.getElementById('yr').value,m=+document.getElementById('mo').value;return p.ym===y+'-'+String(m).padStart(2,'0');}
 function pinFields(p,pin){pin=pin||{};return`<div class="r2"><div class="fg" style="margin-top:0"><label>夥伴</label><select id="${p}-s">${allStaff.map(x=>`<option${x.name===pin.name?' selected':''}>${x.name}</option>`).join('')}</select></div><div class="fg" style="margin-top:0"><label>類型</label><select id="${p}-t"><option value="off"${pin.type!=='on'?' selected':''}>必休</option><option value="on"${pin.type==='on'?' selected':''}>必上</option></select></div></div><div class="fg"><label>每星期幾</label>${weekChecks(p,pin.weeks)}</div><div class="fg"><label>指定日期</label><div style="display:flex;gap:4px"><input id="${p}-d" type="text" value="${pin.dates||''}" placeholder="點 📅 選" readonly onclick="openDatePicker('${p}-d')" style="flex:1;cursor:pointer"><button class="badd bsec pk-btn" onclick="openDatePicker('${p}-d')">📅</button></div></div>`;}
 function readPinFields(p){return{name:document.getElementById(p+'-s').value,type:document.getElementById(p+'-t').value,dates:document.getElementById(p+'-d').value.trim(),weeks:readWeeks(p)};}
 function togglePinAdd(open){const box=document.getElementById('pn-box'),btn=document.getElementById('pn-open');if(!box)return;if(open)document.getElementById('pn-form').innerHTML=pinFields('pn',null);box.style.display=open?'':'none';btn.style.display=open?'none':'';}
-function renderPins(){const el=document.getElementById('pin-list');if(!pins.length){el.innerHTML=`<div style="font-size:9px;color:#888;padding:2px 0 5px">尚無設定</div>`;return;}const order=storeOrder();pins.forEach(p=>{const st=staffStoreOf(p.name);if(!order.includes(st))order.push(st);});el.innerHTML=order.map(st=>{const list=pins.map((p,i)=>[p,i]).filter(([p])=>staffStoreOf(p.name)===st);if(!list.length)return'';return groupHdr(st,list.length+' 筆')+list.map(([p,i])=>`<div class="card"><div class="ct" style="align-items:center"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span class="bdg ${p.type==='off'?'poff':'pon'}">${p.type==='off'?'必休':'必上'}</span><span style="font-size:10px;font-weight:600">${p.name}</span><span style="font-size:9px;color:#666">${pinText(p)}</span></div><div class="sa"><button class="bi" onclick="editP(${i})">✏️</button><button class="bi" onclick="delP(${i})">🗑</button></div></div>${ePIdx===i?renderEP(i):''}</div>`).join('');}).join('');}
+function renderPins(){{const lb=document.getElementById('lp-import');if(lb)lb.style.display=window.HR_CALL?'':'none';}const el=document.getElementById('pin-list');if(!pins.length){el.innerHTML=`<div style="font-size:9px;color:#888;padding:2px 0 5px">尚無設定</div>`;return;}const order=storeOrder();pins.forEach(p=>{const st=staffStoreOf(p.name);if(!order.includes(st))order.push(st);});el.innerHTML=order.map(st=>{const list=pins.map((p,i)=>[p,i]).filter(([p])=>staffStoreOf(p.name)===st);if(!list.length)return'';return groupHdr(st,list.length+' 筆')+list.map(([p,i])=>`<div class="card"><div class="ct" style="align-items:center"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span class="bdg ${p.type==='off'?'poff':'pon'}">${p.type==='off'?'必休':'必上'}</span><span style="font-size:10px;font-weight:600">${p.name}</span><span style="font-size:9px;color:#666">${pinText(p)}</span></div><div class="sa"><button class="bi" onclick="editP(${i})">✏️</button><button class="bi" onclick="delP(${i})">🗑</button></div></div>${ePIdx===i?renderEP(i):''}</div>`).join('');}).join('');}
 function renderEP(i){return`<div class="ei">${pinFields('ep',pins[i])}<div style="display:flex;gap:4px;margin-top:7px"><button class="badd" style="flex:2" onclick="saveP(${i})">儲存</button><button class="badd bsec" style="flex:1" onclick="cancelEP()">取消</button></div></div>`;}
 function editP(i){ePIdx=(ePIdx===i?-1:i);renderPins();}
 function cancelEP(){ePIdx=-1;renderPins();}
-function saveP(i){const o=readPinFields('ep');if(!o.dates&&!o.weeks){alert('要勾星期幾或選日期');return;}pins[i]=o;ePIdx=-1;renderPins();}
+function saveP(i){const o=readPinFields('ep');if(!o.dates&&!o.weeks){alert('要勾星期幾或選日期');return;}if(pins[i].ym)o.ym=pins[i].ym;/* 休假預排帶進來的改過後還是只套那個月，但算手動的了（不再跟預排連動） */pins[i]=o;ePIdx=-1;renderPins();}
 function delP(i){const p=pins[i];if(!p||!confirm(`確定刪除「${p.name} ${p.type==='off'?'必休':'必上'} ${pinText(p)}」？`))return;if(ePIdx===i)ePIdx=-1;else if(ePIdx>i)ePIdx--;pins.splice(i,1);renderPins();}
 function addPin(){const o=readPinFields('pn');if(!o.dates&&!o.weeks){alert('要勾星期幾或選日期');return;}pins.push(o);togglePinAdd(false);renderPins();}
 let pkState=null;
@@ -1788,6 +1791,7 @@ function genSchedule(){
   }
   // Step3: 必休／必上（沿用上次結果的格子不再套，避免蓋掉手動改過的內容）
   pins.forEach(p=>{
+    if(!pinInMonth(p))return;   // 休假預排帶進來的只套那個月
     cal.forEach(({d,wd})=>{
       const dm=p.dates&&p.dates.split(',').map(x=>+x.trim()).includes(d);
       const wm=p.weeks&&WN.some((w,i)=>hasWeekday(p.weeks,w)&&wd===i);
@@ -2916,6 +2920,51 @@ async function sendScheduleSkeletonFor(sel){
   const t=new Date(),hm=String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
   const btn=document.getElementById('btn-skel-send');if(btn)btn.textContent=`☁ 已送 ${hm}（再送一次）`;
   alert(`✅ 已送到生命值骨架：${o.year}年${o.month}月 ${o.stores.join('、')}\n改 ${o.changeCount} 筆、保留 ${o.kept.length} 天、時數 ${hrSum(o.hours||{})} 筆`);
+}
+// 2026-11-08 打卡線 2-5 休假預排第二段（老闆定：都由 2-5 做）：把打卡頁夥伴排的休假預排帶成這個月的「必休」。
+// 後台 op leavePre（生命值骨架 休假預排.gs，只讀；20 號截止後週末輪流只跑一次、結果存表，重複叫不會變）。
+// 第一順位 → 必休（pin 帶 ym＝只套那個月、帶 lpId 去重：重複按不會加出兩筆）；第二順位、週末許願只列出來參考；
+// 預排後來取消的（之前帶進來、現在不是第一順位）列出來、確定時一起拿掉；店休只提醒，v8 不自動排掉。先預覽、按確定才改。
+function lpImportReady(){const me=window.HR_ME;return !!(window.HR_CALL&&me&&(me.boss||(me.pages||[]).indexOf(3)>=0));}
+async function importLeavePre(){
+  if(!lpImportReady()){alert('網頁版登入、有第 1～3 頁權限（老闆、區人資）才能帶入');return;}
+  const y=+document.getElementById('yr').value,m=+document.getElementById('mo').value,ym=y+'-'+String(m).padStart(2,'0');
+  let r;
+  try{r=await window.HR_CALL('leavePre',{token:window.HR_TOKEN(),ym});}catch(e){alert('⚠️ 連不上雲端：'+e.message);return;}
+  if(!r||!r.ok){alert('⚠️ '+(({login:'登入過期，請重新登入',no_right:'沒有權限（老闆、區人資才能帶入）',bad_ym:'月份看不懂'})[r&&r.reason]||(r&&r.message)||'讀不到休假預排'));return;}
+  const md=x=>m+'/'+(+x.date.slice(8));
+  const names=new Set(allStaff.map(s=>s.name));
+  const firsts=r.items.filter(x=>x.status==='第一順位'),seconds=r.items.filter(x=>x.status==='第二順位'),wishes=r.items.filter(x=>x.status==='許願');
+  const have=new Set(pins.filter(p=>p.lpId).map(p=>p.lpId));
+  const add=[],skip=[];let already=0;
+  firsts.forEach(x=>{
+    const d=+x.date.slice(8);
+    if(have.has(x.id)){already++;return;}
+    if(!names.has(x.name)){skip.push(x.name+' '+md(x)+'（v8 名單沒有這個人）');return;}
+    if(pins.some(p=>p.name===x.name&&p.type==='off'&&pinInMonth(p)&&p.dates&&p.dates.split(',').map(s=>+s.trim()).includes(d))){skip.push(x.name+' '+md(x)+'（本來就有必休）');return;}
+    add.push(x);
+  });
+  const activeIds=new Set(firsts.map(x=>x.id));
+  const gone=pins.filter(p=>p.src==='預排'&&p.ym===ym&&p.lpId&&!activeIds.has(p.lpId));
+  const roleTxt=x=>x.role==='計時'?'・計時':x.role==='特殊'?'・特殊人員':'';
+  const lines=[y+'年'+m+'月　休假預排（打卡頁）'];
+  if(!r.locked)lines.push('⚠️ '+m+' 月的預排還沒截止（'+r.deadline.slice(5).replace('-','/')+' 截止），夥伴還能改；週末還沒輪流，現在只會帶平日的第一順位。');
+  lines.push(add.length?'會加 '+add.length+' 筆必休：\n'+add.map(x=>x.name+' '+md(x)+'（'+x.store+roleTxt(x)+'）').join('\n'):'沒有新的必休要加。');
+  if(already)lines.push('已經帶過 '+already+' 筆（不會重複加）');
+  if(gone.length)lines.push('下面 '+gone.length+' 筆預排已經取消，會一起拿掉：\n'+gone.map(p=>p.name+' '+pinText(p)).join('\n'));
+  if(skip.length)lines.push('跳過 '+skip.length+' 筆：\n'+skip.join('\n'));
+  if(seconds.length)lines.push('第二順位（只參考，不會加）：\n'+seconds.map(x=>x.name+' '+md(x)).join('\n'));
+  if(wishes.length)lines.push('週末還在許願（截止後才輪流）：'+wishes.length+' 筆');
+  const cl=Object.keys(r.closures||{}).map(s=>{const c=r.closures[s],t=[];if(c.week&&c.week.length)t.push('每星期'+c.week.map(w=>'日一二三四五六'[w]).join('、'));if(c.dates&&c.dates.length)t.push(c.dates.map(d=>m+'/'+(+d.slice(8))).join('、'));return t.length?s+'：'+t.join('；'):'';}).filter(Boolean);
+  if(cl.length)lines.push('店休（打卡頁「門市店休」設的；v8 不會自動排掉，請確認門市規則、開店條件）：\n'+cl.join('\n'));
+  if(!add.length&&!gone.length){alert(lines.join('\n\n'));return;}
+  if(!confirm(lines.join('\n\n')+'\n\n確定帶入嗎？（加的必休只套 '+m+' 月，之後要拿掉照一般必休刪除）'))return;
+  const goneSet=new Set(gone);
+  pins=pins.filter(p=>!goneSet.has(p));
+  add.forEach(x=>pins.push({name:x.name,type:'off',dates:String(+x.date.slice(8)),weeks:'',ym,src:'預排',lpId:x.id}));
+  ePIdx=-1;renderPins();
+  try{v7AutoSave();}catch(e){}
+  alert('✅ 已帶入：加 '+add.length+' 筆必休'+(gone.length?'、拿掉 '+gone.length+' 筆':'')+'。重新產生假表才會套用。');
 }
 function genPage2(){
   page2Generated=true;
