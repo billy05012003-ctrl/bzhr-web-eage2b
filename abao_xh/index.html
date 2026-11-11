@@ -3611,7 +3611,7 @@ function visitorEntriesFor(store){
   return entries;
 }
 function collectMonthlyCloseRows(){
-  var header = ['門市','簡稱','類別','出勤天數','平日休','假日休','計時時數','貼班時數','跨店支援時數','其他獎金','勞健保自付額','應發金額'];
+  var header = ['門市','簡稱','類別','出勤天數','平日休','假日休','計時時數','貼班時數','跨店支援時數','其他獎金','勞健保自付額','實發金額'];
   var rows = [];
   var grand = 0;
   skeleton.stores.forEach(function(store){
@@ -3750,6 +3750,21 @@ async function salLoad(){
   }catch(e){next={mode:'error',y,m,msg:String(e&&e.message||e)};}
   if(seq!==salSeq)return; // 讀的中間又重讀了：用後面那次
   salMode=next;salRender();
+  if(next.mode==='trial')salPostEstimate(y,m);
+}
+// 2026-11-11 老闆：試算完把各店「本店小計」（實發，已扣個人勞健保自付額）寫進後台「各店薪資預估」分頁，給行政損益第 19 列「V8」選項讀。
+// 只送不擋：失敗只在 console 記一筆、畫面照常；同一份數字不重送（省 Apps Script 次數）
+let salEstSent='';
+async function salPostEstimate(y,m){
+  try{
+    const rows=SalEngine.rows().rows;
+    const stores=rows.filter(r=>r[1]==='— 本店小計 —').map(r=>({store:String(r[0]),amount:Number(r[11])||0}));
+    if(!stores.length)return;
+    const key=JSON.stringify([window.HR_REGION||'',y,m,stores]);
+    if(key===salEstSent)return;
+    const r=await window.HR_CALL('salaryEstimate',{token:window.HR_TOKEN(),year:y,month:m,data:JSON.stringify({stores})});
+    if(r&&r.ok)salEstSent=key;else console.warn('各店薪資預估沒寫進去：',salReason(r));
+  }catch(e){console.warn('各店薪資預估沒寫進去：',e&&e.message);}
 }
 function salReason(r){const k=r&&r.reason;return k==='bad_op'?'後台還沒有這個功能（等部署）':k==='no_right'?'沒有看薪資的權限':k==='login'?'登入過期，請重新整理':k==='bad_data'?'次假表資料讀不懂':(k||'讀不到');}
 function salReady(){return salMode.mode==='trial';}
@@ -3768,7 +3783,7 @@ function salBanner(){
   const box=(bg,bd,html)=>`<div class="sal-banner" style="background:${bg};border:1px solid ${bd};border-radius:8px;padding:8px 10px;margin:0 2px 10px;font-size:11px;line-height:1.7">${html}</div>`;
   const btn=`<button onclick="salLoad()" style="margin-left:8px;font-size:11px;padding:1px 8px;border:1px solid #bbb;border-radius:6px;background:#fff;cursor:pointer">↻ 重新讀取</button>`;
   const sub=t=>`<div style="font-size:10px;color:#666">${t}</div>`;
-  if(s.mode==='trial')return box('#FFF8E1','#F0DCA0',`<b>🧮 預估，不是實際</b>：用這裡這次排的 ${ym} 班表照「送到骨架」同一套規則換算，算法跟骨架頁同一套（讀取 ${salHHMM(s.readAt)}）${btn}`+sub(`<b>實際薪資請看生命值骨架頁「實際計算薪資」，要 Excel 請到骨架頁「📊 匯出對帳 Excel」／「月結匯出」</b>。計時時數用人資假表／當天時數，沒寫的用骨架頁預設工時；骨架這個月已經有 LINE／網頁改過的天照樣算進去；HP 次數、勞健保等設定用骨架頁現在存的${s.settingsYM?`（${s.settingsYM}）`:''}，這裡只能看`));
+  if(s.mode==='trial')return box('#FFF8E1','#F0DCA0',`<b>🧮 預估，不是實際</b>：用這裡這次排的 ${ym} 班表照「送到骨架」同一套規則換算，算法跟骨架頁同一套（讀取 ${salHHMM(s.readAt)}）${btn}`+sub(`<b>實際薪資請看生命值骨架頁「實發薪資計算」，要 Excel 請到骨架頁「📊 匯出對帳 Excel」／「月結匯出」</b>。計時時數用人資假表／當天時數，沒寫的用骨架頁預設工時；骨架這個月已經有 LINE／網頁改過的天照樣算進去；HP 次數、勞健保等設定用骨架頁現在存的${s.settingsYM?`（${s.settingsYM}）`:''}，這裡只能看`));
   // 2026-11-07 老闆：B 之後這兩頁是「用這次排的班試算」，只跟骨架頁拿 HP 次數、勞健保等薪資設定，文字別寫成在讀骨架的實際資料
   if(s.mode==='loading')return box('#F5F5F5','#E0E0E0',`⏳ 試算中…（用這次排的 ${ym} 班表，HP 次數、勞健保等設定照生命值骨架頁）`);
   if(s.mode==='error')return box('#FDECEC','#F2B8B8',`⚠️ 試算失敗：${s.msg}${btn}`);
@@ -3776,7 +3791,7 @@ function salBanner(){
   return box('#F5F5F5','#E0E0E0','💡 這兩頁的預估要用網頁版（hr.bzhouse.tw）登入才算得出來：HP 次數、勞健保等薪資設定存在生命值骨架雲端，算法跟骨架頁同一套');
 }
 
-// ── 第五頁：薪資系統 ──
+// ── 第五頁：實發薪資（預估）（11-11 前叫「薪資系統」） ──
 const ROUTE_FIXED={counter:{丙:1000,乙:1500,甲:2500},grill:{丙:1000,乙:1500,甲:2500},drink:1500,coffee:500};
 const ROUTE_HOURLY={counter:{丙:1,乙:2,甲:3},grill:{丙:1,乙:2,甲:3},drink:2,coffee:1};
 const ROUTE_CATS=[['counter','櫃檯','🧾'],['drink','包飲','🥤'],['grill','煎台','🍳'],['coffee','品咖啡','☕']];
@@ -3885,7 +3900,7 @@ function renderPage5(){
     </div>
     <div style="width:1px;background:#e0e0e0;align-self:stretch"></div>
     <div style="flex:1;min-width:220px">
-      <div class="p5-sum-label">${actual?'全公司本月薪資（實際）':'全公司本月薪資預估（試算，不是實際）'}</div>
+      <div class="p5-sum-label">${actual?'全公司本月實發薪資（實際）':'全公司本月實發薪資預估（試算，不是實際）'}</div>
       <div class="p5-sum-total">${fmt(grand)}</div>
       <div class="p5-sum-stores" style="margin-top:6px">${stores.map(s=>`<div class="p5-sum-store${s===curP5Store?' on':''}" title="只看${s}（再點一次看全部）" onclick="curP5Store=curP5Store==='${s}'?'全部':'${s}';renderPage5()"><div>${s.replace('店','')}</div><div>${fmt(storeSubtotals[s])}</div></div>`).join('')}</div>
     </div>
@@ -4030,7 +4045,7 @@ function openInsuranceEdit(name){
 
 // ── 頁籤導覽 ──
 const SYS_VERSION='排班薪資系統 v8';
-const PAGE_NAMES=['初假表','出勤紀錄','次假表','薪資假表（試算）','薪資系統'];
+const PAGE_NAMES=['初假表','出勤紀錄','次假表','薪資假表（試算）','實發薪資（預估）'];   // 11-11 老闆：第 5 頁「薪資系統」改名
 const PAGE_HEADER={
   1:{icon:'🗓',sub:'設定規則 → 生成初假表 → 下載初假表Excel'},
   2:{icon:'🏷️',sub:'登記本店夥伴出勤異動・新增貼班人員 → 生成次假表'},
