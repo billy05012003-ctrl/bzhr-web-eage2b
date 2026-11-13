@@ -4184,7 +4184,10 @@ function v7ClearAutoSave(){
   location.reload();
 }
 
-function v7RestoreAutoSave(){
+// fresh＝剛打開網頁：一律從第 1 頁開始，不跳回上次停的頁（2026-11-13 老闆：「直接鎖定在第五頁，這是不好的」）。
+// 網頁版沒有第 1 頁權限的人，登入層的 HR_FIX_PAGE 會再換到他能看的第一頁。
+// 雲端存檔中途重新套資料（別人存了新版、被接手）也會呼叫這裡，那時不帶 fresh，照舊停在目前這頁。
+function v7RestoreAutoSave(fresh){
   let raw;
   // 按過「重新開始」就不再去讀v7的舊存檔（不然清完又被v7的資料帶回來）
   try{raw=localStorage.getItem(V7_SAVE_KEY)||(localStorage.getItem(V7_SAVE_KEY+'_cleared')?null:localStorage.getItem(V7_LEGACY_SAVE_KEY));}catch(e){return;}
@@ -4233,7 +4236,7 @@ function v7RestoreAutoSave(){
     alert('已還原上次的設定資料，但重新計算排班/薪資結果時發生錯誤，請手動重新按各頁的「生成」按鈕。');
   }
 
-  const targetPage=d.curPage||1;
+  const targetPage=fresh?1:(d.curPage||1);
   curPage=targetPage;
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   const pageEl=document.getElementById('page-'+targetPage);
@@ -4243,7 +4246,7 @@ function v7RestoreAutoSave(){
   if(targetPage===5)renderPage5();
 }
 window.HR_DEFAULTS=v7CollectSaveData();
-v7RestoreAutoSave();
+v7RestoreAutoSave(true);
 </script>
 <script>
 // ── BZ HR 網頁版存雲端（2026-10-27，W3 選項 A；後台在生命值骨架的 網頁存檔.gs）──
