@@ -439,7 +439,7 @@ button[onclick="v7ClearAutoSave()"]{display:none!important}
 <div style="display:none"><div id="hint" class="hint" style="display:none"><div style="display:flex;justify-content:space-between;gap:5px;align-items:flex-start"><div><strong id="hint-t"></strong><br><span id="hint-b"></span></div><button onclick="autoFill()" style="background:#534AB7;color:#fff;border:none;padding:2px 6px;border-radius:3px;font-size:8px;cursor:pointer;white-space:nowrap">重新帶入</button></div></div></div>
 <div style="display:flex;gap:4px"><input type="text" id="hols" placeholder="沒有國定假日" oninput="renderHolList()" style="flex:1"><button class="badd bsec pk-btn" onclick="openDatePicker('hols')">📅</button></div>
 <div id="hol-list"></div>
-<div style="margin-top:8px;font-size:9px;color:#666;margin-bottom:2px">特殊日備註（打勾才會顯示在假表上；文字可以改；點日期格選日子）</div>
+<div style="margin-top:8px;font-size:9px;color:#666;margin-bottom:2px">好康日（打勾才會顯示在假表上；文字可以改；點日期格選日子；右邊選放在日期格第幾行，每週固定的放星期標題）</div>
 <div id="note-rows"></div>
 <!-- 2026-11-01 老闆：「其他」「Excel 底部備註」畫面拿掉；留著藏起來給舊存檔、匯出用 -->
 <input type="hidden" id="lunar-notes"><textarea id="bottom-notes" style="display:none"></textarea>
@@ -755,7 +755,7 @@ function hrParseWorkbook(wb,opt){
     }
     const r=sp.rest;o.name=sp.name;
     if(!r)return Object.assign(o,{kind:'plain'});
-    if(/^(例|休)$/.test(r))return Object.assign(o,{kind:'word'});
+    if(/^(例|休|[XxＸｘ×])$/.test(r))return Object.assign(o,{kind:'word'});   // 11-13：v8 匯出計時整週休寫「名字X」
     mm=r.match(/^[(（](.+)[)）]$/);if(mm)return Object.assign(o,{kind:'sup',target:hriStoreOf(mm[1]),targetText:mm[1]});
     mm=r.match(/^支援(.+)$/);if(mm)return Object.assign(o,{kind:'sup',target:hriStoreOf(mm[1]),targetText:mm[1]});
     mm=r.match(/^(\d+(?:\.\d+)?)\s*h?$/i);if(mm)return Object.assign(o,{kind:'hours',hours:+mm[1]});
@@ -1122,8 +1122,21 @@ let skillConds=null;
 let dayShifts=[];      // 班表點格子設的當天時數／時段 {y,m,name,d,hrs,seg}
 const SEGS=[['e','開早'],['p','尖峰'],['c','收尾']];
 const HOURLY_UNSET_HRS=4.5;   // 計時人員還沒填時數：先當 4.5 小時算（畫面會提醒去填）
-// 特殊日備註五格（2026-11-01 老闆定）：{on 打勾才顯示, text 文字, dates 日期「1,15」}
+// 好康日（2026-11-01 老闆定五格，原名「特殊日備註」；11-13 老闆：改叫「好康日」免得跟打卡的特殊日搞混、多兩格）：
+// {on 打勾才顯示, text 文字, dates 日期「1,15」, line 放哪：1＝第一行（節氣活動、雞塊日）／2＝第二行（農曆初一限定）／3＝第三行（國際咖B日、七夕等節日）／'wk'＝每週固定，放星期標題}
 const NOTE_PRESETS=['農曆初一限定','週二ㄋㄟㄋㄟ日','週四定食日','雞塊日',''];   // 「週二ㄋㄟㄋㄟ日」「週四定食日」是固定活動名稱（老闆 11-01），不改成星期
+const NOTE_ROW_MAX=7;
+const NOTE_LINES=[['1','第1行'],['2','第2行'],['3','第3行'],['wk','星期標題']];
+const SOLAR_TERMS='立春雨水驚蟄春分清明穀雨立夏小滿芒種夏至小暑大暑立秋處暑白露秋分寒露霜降立冬小雪大雪冬至小寒大寒';
+// 舊存檔沒有 line：照名字猜（週X開頭＝星期標題、農曆＝第2行、雞塊／節氣／二十四節氣＝第1行、其他＝第3行），之後老闆自己可以改
+function noteLineGuess(text){
+  const t=String(text||'');
+  if(/^[週周][一二三四五六日]/.test(t))return'wk';
+  if(/農曆/.test(t))return'2';
+  if(/雞塊|節氣/.test(t))return'1';
+  for(let i=0;i<SOLAR_TERMS.length;i+=2)if(t.indexOf(SOLAR_TERMS.substr(i,2))>=0)return'1';
+  return t?'3':'1';   // 空白那格（預設自填節氣）先放第1行
+}
 let noteRows=null;
 // 排班技能開關（2026-11-01 老闆：開關要真的有作用）：假日避休（計時）、休假間距（盡量分開）、平日出勤人力保障
 // 支援／連動規則的種類（開頁一開始就會畫，要放在前面）
@@ -2313,28 +2326,72 @@ function buildWeeks(cal){
   if(cur.some(x=>x))weeks.push(cur);
   return weeks;
 }
-function ensureNoteRows(){if(!noteRows)noteRows=NOTE_PRESETS.map(t=>({on:false,text:t,dates:''}));while(noteRows.length<5)noteRows.push({on:false,text:'',dates:''});}
+function ensureNoteRows(){
+  if(!noteRows)noteRows=NOTE_PRESETS.map(t=>({on:false,text:t,dates:''}));
+  while(noteRows.length<NOTE_ROW_MAX)noteRows.push({on:false,text:'',dates:'',line:noteRows.length>=5?'3':''});   // 11-13 多的兩格預設第3行（節日）
+  noteRows.forEach(r=>{if(!r.line)r.line=noteLineGuess(r.text);});
+}
 function renderNoteRows(){
   ensureNoteRows();const el=document.getElementById('note-rows');if(!el)return;
   const q=v=>String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-  el.innerHTML=noteRows.map((r,i)=>`<div style="display:flex;align-items:center;gap:4px;margin-top:4px"><input type="checkbox"${r.on?' checked':''} title="打勾才會顯示在假表上" onchange="noteRows[${i}].on=this.checked" style="width:auto;flex-shrink:0"><input type="text" value="${q(r.text)}" placeholder="${i===4?'OO節氣或其他（自填）':'備註文字'}" oninput="noteRows[${i}].text=this.value" style="flex:1;min-width:0"><input type="text" id="note-d-${i}" value="${q(r.dates)}" placeholder="點選日期" readonly onclick="openDatePicker('note-d-${i}')" style="width:78px;flex-shrink:0;cursor:pointer"><button class="badd bsec pk-btn" onclick="openDatePicker('note-d-${i}')" style="flex-shrink:0">📅</button></div>`).join('');
+  // 11-13 多了「放第幾行」選單，一列塞不下 → 每格兩列：上面打勾＋名稱，下面日期＋📅＋第幾行
+  el.innerHTML=noteRows.map((r,i)=>`<div style="margin-top:6px"><div style="display:flex;align-items:center;gap:4px"><input type="checkbox"${r.on?' checked':''} title="打勾才會顯示在假表上" onchange="noteRows[${i}].on=this.checked" style="width:auto;flex-shrink:0"><input type="text" value="${q(r.text)}" placeholder="${i===4?'OO節氣或其他（自填）':i>4?'國際咖B日、七夕等（自填）':'好康日名稱'}" oninput="noteRows[${i}].text=this.value" style="flex:1;min-width:0"></div><div style="display:flex;align-items:center;gap:4px;margin-top:3px;padding-left:18px"><input type="text" id="note-d-${i}" value="${q(r.dates)}" placeholder="點選日期" readonly onclick="openDatePicker('note-d-${i}')" style="flex:1;min-width:0;cursor:pointer"><button class="badd bsec pk-btn" onclick="openDatePicker('note-d-${i}')" style="flex-shrink:0">📅</button><select title="放在日期格第幾行；每週固定的放星期標題" onchange="noteRows[${i}].line=this.value" style="width:auto;flex-shrink:0;font-size:9px">${NOTE_LINES.map(([v,t])=>`<option value="${v}"${String(r.line)===v?' selected':''}>${t}</option>`).join('')}</select></div></div>`).join('');
 }
+// 好康日給 Excel 用（11-13 老闆：日期格固定三小行，週二、週四這種每週固定的放星期標題）
+// 回傳 {byDay:{日:['第1行','第2行','第3行']}, wk:[{text,dates}], any:有沒有任何一天有字}
 function parseLunarNotes(){
+  const byDay={},wk=[];let any=false;
+  const add=(dd,line,txt)=>{const a=byDay[dd]||(byDay[dd]=['','','']);const i=(+line||3)-1;a[i]=a[i]?a[i]+'、'+txt:txt;any=true;};
   const raw=(document.getElementById('lunar-notes')&&document.getElementById('lunar-notes').value)||'';
-  const map={};
-  raw.split(',').forEach(pair=>{
+  raw.split(',').forEach(pair=>{   // 舊存檔藏起來的「其他」欄（日:文字）→ 第3行
     const idx=pair.indexOf(':');if(idx<0)return;
     const dd=pair.slice(0,idx).trim(),txt=pair.slice(idx+1).trim();
-    if(dd&&txt)map[+dd]=txt;
+    if(dd&&txt)add(+dd,'3',txt);
   });
   ensureNoteRows();
   noteRows.forEach(r=>{
     const txt=String(r.text||'').trim();if(!r.on||!txt)return;
-    String(r.dates||'').split(',').map(x=>+x.trim()).filter(x=>x>0).forEach(dd=>{map[dd]=map[dd]?map[dd]+'、'+txt:txt;});
+    const dates=String(r.dates||'').split(',').map(x=>+x.trim()).filter(x=>x>0);
+    if(r.line==='wk'){wk.push({text:txt,dates});return;}
+    dates.forEach(dd=>add(dd,r.line,txt));
   });
-  return map;
+  return{byDay,wk,any};
 }
-function offFillFor(name){return STAFF_COLOR_ARGB[name]||'FFD4EDDA';}
+// 每週固定的好康日 → 星期標題：「週二ㄋㄟㄋㄟ日」→ 二 欄寫「二ㄋㄟㄋㄟ日」；名字沒寫週幾就看選的日子是星期幾
+function hkWeekHeads(notes,cal){
+  const WD='一二三四五六日',heads=['','','','','','',''];
+  (notes&&notes.wk||[]).forEach(w=>{
+    let c=-1,suffix=w.text;
+    const mm=w.text.match(/^[週周]([一二三四五六日])(.*)$/);
+    if(mm){c=WD.indexOf(mm[1]);suffix=mm[2];}
+    else{const day=cal.find(x=>w.dates.includes(x.d));if(day)c=day.wd;}
+    if(c<0||!suffix)return;
+    heads[c]=heads[c]?heads[c]+'、'+suffix:suffix;
+  });
+  return heads;
+}
+// 好康日三小行的配色（11-13 先做三版給老闆挑）：line＝第1、2、3行字色，fill＝有好康日那個月日期格底色
+const HK_SCHEMES={
+  A:{label:'A 清爽三色',line:['FF3B6D11','FFA32D2D','FF185FA5'],fill:null},
+  B:{label:'B 暖色',line:['FFBA7517','FF993C1D','FF534AB7'],fill:'FFFDF8EE'},
+  C:{label:'C 低調灰＋農曆紅',line:['FF5F5E5A','FFC0392B','FF4A6A8A'],fill:'FFF4F4F2'}
+};
+let HK_SCHEME='A';
+// 休假格顏色（2026-11-13 老闆：盡量每一個正職顏色都不同）：網頁版不能寫死名字（STAFF_COLOR_ARGB 部署時清空、大家都變綠），
+// 改成照名單順序配色——這一區不是計時的人依序拿色盤的顏色，計時照舊淡綠。色盤避開黃（支援）、米色（必上／貼班）、深紫（休有人補）
+const OFF_PALETTES={
+  A:{label:'A 鮮明',font:'FFFFFFFF',c:['FFD4537E','FF378ADD','FF7F77DD','FFEF9F27','FFE24B4A','FF639922','FF185FA5','FF1D9E75','FFBA7517','FF993556','FF5F5E5A','FF0F6E56']},
+  B:{label:'B 粉彩',font:'FF2C2C2A',c:['FFF4C0D1','FFB5D4F4','FFCECBF6','FFFAC775','FFF7C1C1','FFC0DD97','FF9FE1CB','FFF5C4B3','FFD3D1C7','FFE8B4D8','FFA9C9E8','FFBFE3D0']},
+  C:{label:'C 沉穩',font:'FFFFFFFF',c:['FF72243E','FF0C447C','FF3C3489','FF854F0B','FF791F1F','FF27500A','FF085041','FF444441','FF6B3A73','FF2F5D8A','FF8A4B2A','FF3E6B5A']}
+};
+let OFF_PALETTE='C';   // 11-13 老闆選 C 沉穩
+const OFF_PART_FILL='FFD4EDDA';
+function offColorOf(name){
+  const p=OFF_PALETTES[OFF_PALETTE]||OFF_PALETTES.A;
+  const ft=staff.filter(s=>s.type!=='計時').map(s=>s.name),i=ft.indexOf(name);
+  return i<0?{fill:OFF_PART_FILL,font:'FFFFFFFF'}:{fill:p.c[i%p.c.length],font:p.font};
+}
+function offFillFor(name){return offColorOf(name).fill;}
 function findSupTargetStore(supMap,name,d){for(const st of STORES){if((supMap[st+'_'+d]||[]).includes(name))return st;}return'';}
 function weekdayHeaderFill(wd){if(wd===3||wd===5)return'FF90EE90';if(wd===6)return'FFFFB6C1';return'FFF0F0F0';}
 function weekdayAccentColor(wd){if(wd===3)return'FFBA7517';if(wd===5)return'FF3B6D11';if(wd===6)return'FFA32D2D';return'FF2C2C2A';}
@@ -2393,11 +2450,12 @@ function buildCalendarWorkbookSheet(wb,sheetName,home,cal,sched,supMap,lunarMap,
     cell.font={name:'微軟正黑體',bold:!!bold,color:fontColor?{argb:fontColor}:undefined};
     cell.border={top:THIN_BORDER,left:THIN_BORDER,bottom:THIN_BORDER,right:THIN_BORDER};
   }
-  const WDN=['一','二','三','四定食日','五','六','日'];
+  // 11-13：星期標題接每週固定的好康日（原本寫死「四定食日」），日期格固定三小行
+  const WDN=['一','二','三','四','五','六','日'],heads=hkWeekHeads(lunarMap,cal),hk=HK_SCHEMES[HK_SCHEME]||HK_SCHEMES.A;
   let r=0;
   WDN.forEach((t,c)=>{
     const cell=ws.getCell(r+1,c+1);
-    cell.value=t;
+    cell.value=t+heads[c];
     cell.alignment={horizontal:'center',vertical:'middle'};
     cell.font={name:'微軟正黑體',bold:true,color:{argb:weekdayAccentColor(c)}};
     cell.border={bottom:{style:'medium',color:{argb:weekdayBorderColor(c)}}};
@@ -2407,15 +2465,31 @@ function buildCalendarWorkbookSheet(wb,sheetName,home,cal,sched,supMap,lunarMap,
     week.forEach((day,c)=>{
       if(!day){setCell(r,c,'',undefined);return;}
       const cell=ws.getCell(r+1,c+1);
-      const note=lunarMap[day.d];
       const accent=weekdayAccentColor(day.wd);
-      cell.value=note?{richText:[{font:{name:'微軟正黑體',bold:true,size:11,color:{argb:accent}},text:String(day.d)+' '},{font:{name:'微軟正黑體',size:8,color:{argb:'FF888780'}},text:note}]}:String(day.d);
+      if(lunarMap.any){
+        // 這個月有好康日：每一格都固定「日期＋三小行」（沒有就空著），哪一行是哪一類每格都對齊
+        const lines=lunarMap.byDay[day.d]||['','',''];
+        cell.value={richText:[{font:{name:'微軟正黑體',bold:true,size:11,color:{argb:accent}},text:String(day.d)}].concat(lines.map((t,i)=>({font:{name:'微軟正黑體',size:8,color:{argb:hk.line[i]}},text:'\n'+(t||' ')})))};
+        if(hk.fill)cell.fill=exlFill(hk.fill);
+      }else{
+        cell.value=String(day.d);
+        cell.font={name:'微軟正黑體',bold:true,color:{argb:accent}};
+      }
       cell.alignment={horizontal:'center',vertical:'middle',wrapText:true};
-      if(!note)cell.font={name:'微軟正黑體',bold:true,color:{argb:accent}};
       cell.border={top:THIN_BORDER,left:THIN_BORDER,right:THIN_BORDER,bottom:{style:'thin',color:{argb:weekdayBorderColor(day.wd)}}};
     });
+    if(lunarMap.any)ws.getRow(r+1).height=54;
     r++;
     home.forEach(s=>{
+      // 2026-11-13 老闆：計時這一週整排都是 X 會看不出是誰 → 第一格寫「名字X」（其他格照樣 X）
+      const bareX=day=>{
+        if(!day)return true;
+        if((sched[s.name]?sched[s.name][day.d]:'work')!=='off')return false;
+        const a=includeOverlay?findAttendanceAdj(s.name,day.d):null;
+        if(a&&(a.statEffect==='shift'||a.statEffect==='work_plus'))return false;
+        return!((linkFn&&linkFn(s.name,day.d))||(includeOverlay?findHomeLinkSource(s.name,day.d):null));
+      };
+      let nameX=s.type==='計時'&&week.some(Boolean)&&week.every(bareX);
       week.forEach((day,c)=>{
         if(!day){setCell(r,c,'',undefined);return;}
         const st=sched[s.name]?sched[s.name][day.d]:'work';
@@ -2433,7 +2507,10 @@ function buildCalendarWorkbookSheet(wb,sheetName,home,cal,sched,supMap,lunarMap,
           // 連動請假來源：先看貼班人員（temp staff，跨店支援的「跨店時數」不在此 linkFn 範圍內），
           // 再看本店夥伴互相連動（含連動對象＝自己）的貼班紀錄，兩者皆用同一套「休→XX補」顯示慣例。
           const linked=(linkFn&&linkFn(s.name,day.d))||(includeOverlay?findHomeLinkSource(s.name,day.d):null);
-          const isMust=mandatoryOff&&mandatoryOff[s.name+'_'+day.d];setCell(r,c,linked?`${s.name}休\n→${linked}補`:`${s.name}休`,linked?LEAVE_COVERED_FILL:offFillFor(s.name),'FFFFFFFF',!!linked||!!isMust);
+          const isMust=mandatoryOff&&mandatoryOff[s.name+'_'+day.d];
+          // 2026-11-13 老闆：計時休假只寫「X」（灰字、不上色，正職的顏色才看得清楚）；有人補的照舊寫「休→XX補」
+          if(!linked&&s.type==='計時'){const t=nameX?s.name+'X':'X';nameX=false;setCell(r,c,t,undefined,'FF888780',!!isMust);return;}
+          setCell(r,c,linked?`${s.name}休\n→${linked}補`:`${s.name}休`,linked?LEAVE_COVERED_FILL:offFillFor(s.name),linked?'FFFFFFFF':offColorOf(s.name).font,!!linked||!!isMust);
         }
         else if(st==='sup'){const target=findSupTargetStore(supMap,s.name,day.d);setCell(r,c,`${s.name}支援${target}`,'FFFAEEDA','FF633806',false);}
         else if(st==='must')setCell(r,c,s.type==='計時'?`${s.name}${hrsTxt(exportHrsOf(s.name,day.d))}h`:s.name,'FFF5ECD7',undefined,false); // 計時必上那天也要寫時數（11-01 補）
@@ -3210,6 +3287,8 @@ function parseStoreSheet(ws,homeNames,mobileMode){
           stats[name].hourEntries.push({d,hours:+m[1],cross:mobileMode?true:text.includes('支援')});
           continue;
         }
+        // 2026-11-13 老闆：計時休假改寫「X」（跟區人資 Excel 的習慣一樣），照樣算休
+        if(/^[XxＸｘ×]$/.test(text.trim().replace(name,''))){if(isHol)stats[name].hdOff++;else stats[name].wdOff++;continue;}
         const fillArgb=cell.fill&&cell.fill.fgColor&&cell.fill.fgColor.argb;
         const personal=offFillFor(name);
         if(fillArgb===LEAVE_COVERED_FILL){stats[name].coveredLeave++;}
