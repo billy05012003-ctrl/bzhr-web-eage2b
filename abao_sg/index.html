@@ -2392,7 +2392,8 @@ function offColorOf(name){
   return i<0?{fill:OFF_PART_FILL,font:'FFFFFFFF'}:{fill:p.c[i%p.c.length],font:p.font};
 }
 function offFillFor(name){return offColorOf(name).fill;}
-function findSupTargetStore(supMap,name,d){for(const st of STORES){if((supMap[st+'_'+d]||[]).includes(name))return st;}return'';}
+// 2026-11-17：本區找不到就看全部支援紀錄——跨區支援（例：伸港阿傑星期五、六去溪湖彰水）原本只寫「阿傑支援」沒寫店名，匯入讀不懂
+function findSupTargetStore(supMap,name,d){for(const st of STORES){if((supMap[st+'_'+d]||[]).includes(name))return st;}return supTargetOf(supMap,name,d);}
 function weekdayHeaderFill(wd){if(wd===3||wd===5)return'FF90EE90';if(wd===6)return'FFFFB6C1';return'FFF0F0F0';}
 function weekdayAccentColor(wd){if(wd===3)return'FFBA7517';if(wd===5)return'FF3B6D11';if(wd===6)return'FFA32D2D';return'FF2C2C2A';}
 function weekdayBorderColor(wd){if(wd===3)return'FFBA7517';if(wd===5)return'FF97C459';if(wd===6)return'FFF09595';return'FFE5E2DA';}
