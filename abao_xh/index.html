@@ -1654,8 +1654,30 @@ function presentAt(store,d,sched,supMap){
 }
 function dayForceAt(store,d,sched,supMap){return Math.round(presentAt(store,d,sched,supMap).reduce((a,s)=>a+personForce(s,d),0)*10)/10;}
 function forceLimitOf(store,wd){ensureSegData();return +((forceData[store]||[])[wd])||0;}
+// 2026-11-18 老闆定：店休那天不排班。兩個來源都算：
+//   ①打卡頁「門市店休」（老闆用 LINE／打卡頁設的固定店休星期、指定店休日期；帶入休假預排、按生成時從後台 leavePre 讀，存在 storeClosures）
+//   ②新排法人力上限填 0（同一間店別天有填上限才算；整間店 7 天都 0＝還沒設，照舊不限）
+// 店休那天：那間店的人算休（必休必上、點格子、跨店支援照舊），開店條件／能力條件不檢查，別店不會被叫來支援。
+let storeClosures={}; // { 'yyyy-MM': { 培英: { week:[0～6，0＝星期日], dates:['yyyy-MM-dd'] } } }
+function closedReason(store,d,wd){
+  if(!store)return'';
+  const{y,m}=curYM(),ym=y+'-'+String(m).padStart(2,'0');
+  if(wd==null)wd=[6,0,1,2,3,4,5][new Date(y,m-1,d).getDay()];
+  const c=(storeClosures[ym]||{})[String(store).replace(/店$/,'')];
+  if(c){
+    if((c.week||[]).map(Number).includes((wd+1)%7))return'門市店休（每星期'+WN[wd]+'）';
+    if((c.dates||[]).includes(ym+'-'+String(d).padStart(2,'0')))return'門市店休（指定日期）';
+  }
+  if(isSegMode()){
+    ensureSegData();
+    const fl=forceData[store]||[];
+    if(fl.some(x=>+x>0)&&!(+fl[wd]>0))return'人力上限 0（星期'+WN[wd]+'）';
+  }
+  return'';
+}
 // 開店條件（新）：有勾的每一段，人數、正職數夠不夠；回傳不夠的地方（空的＝夠）
 function segShortOf(store,d,sched,supMap){
+  if(closedReason(store,d))return[]; // 11-18 店休那天不檢查開店條件
   ensureSegData();
   const{y,m}=curYM(),c=segConds[store]||{},ppl=presentAt(store,d,sched,supMap),out=[];
   SEGS.forEach(([k,label])=>{
@@ -1678,6 +1700,7 @@ function skillHas(s,r){
 }
 function skillGaps(store,d,sched,supMap){
   const c=skillConds&&skillConds[store];if(!c||!c.on||!(c.rows||[]).length)return[];
+  if(closedReason(store,d))return[]; // 11-18 店休那天不檢查能力條件
   const{y,m}=curYM(),ppl=presentAt(store,d,sched,supMap),out=[];
   SEGS.forEach(([k,label])=>{
     const inSeg=ppl.filter(s=>{const sg=daySegOf(s,d,y,m);return sg&&sg[k];});
@@ -1712,6 +1735,7 @@ function v8FillStaffHours(map){
 }
 
 function checkOpen(store,d,sched,supMap){
+  if(closedReason(store,d))return true; // 11-18 店休那天不用開店
   if(isSegMode())return segShortOf(store,d,sched,supMap).length===0;
   const conds=openConds[store]||[];
   if(!conds.length)return true;
@@ -1740,7 +1764,17 @@ function genScheduleBtn(){
     const auto=SCOPE_STORES[curScope].filter(st=>modeOf(st)==='auto'&&!isLocked(st));
     if(!confirm(`這個月已經匯入人資假表（${hrImport.stores.join('、')}），不用再生成。\n再生成只會重排「⚡自動」的店${auto.length?`（${auto.join('、')}）`:'（現在沒有自動的店，等於不會變）'}，匯入的店不會動。\n確定要生成嗎？`))return;
   }
+  genScheduleWithClosures(y,m);
+}
+// 11-18：網頁版（老闆、區人資）按生成先讀最新的門市店休；本機版、讀不到就用上次記下的（storeClosures），並在提醒清單說一聲
+async function genScheduleWithClosures(y,m){
+  const ym=y+'-'+String(m).padStart(2,'0');let note='';
+  if(lpImportReady()){
+    try{const r=await window.HR_CALL('leavePre',{token:window.HR_TOKEN(),ym});if(r&&r.ok)storeClosures[ym]=r.closures||{};else note='讀不到最新的門市店休（'+((r&&(r.reason||r.message))||'不明原因')+'），先用上次記下的';}
+    catch(e){note='連不上雲端，門市店休先用上次記下的';}
+  }
   genSchedule();
+  if(note&&generatedData){const box=document.querySelector('#main-body .conf-box,#main-body .ok-box');if(box)box.insertAdjacentHTML('beforebegin','<div class="conf-box"><div class="conf-item"><span>⚠️</span><span>'+note+'</span></div></div>');}
 }
 function genSchedule(){
   if(!holYearReady_(+document.getElementById('yr').value)){alert('系統還沒有 '+document.getElementById('yr').value+' 年的國定假日資料，請聯繫小保補上後再排班');return;}
@@ -1831,6 +1865,7 @@ function genSchedule(){
     if(frozenSet.has(cr.store))return; // v8：v7不排的店，不再塞新的支援進去
     cal.forEach(({d,wd,wn})=>{
       if(cr.cond&&!hasWeekday(cr.cond,wn))return;
+      if(closedReason(cr.store,d,wd))return; // 11-18 要去支援的店那天店休：不去
       if(cr.trigger==='特定人休假時'){if(!cr.condPerson||!sched[cr.condPerson]||sched[cr.condPerson][d]!=='off'||!mandatoryOff[cr.condPerson+'_'+d])return;}
       if(!sched[cr.staff]||locked[cr.staff+'_'+d]||sched[cr.staff][d]!=='work')return;
       sched[cr.staff][d]='sup';
@@ -1840,6 +1875,20 @@ function genSchedule(){
         if(lr&&usedDays(cr.linkedRest,sched,cal)<lr.days){sched[cr.linkedRest][d]='off';locked[cr.linkedRest+'_'+d]=true;}
       }
     });
+  });
+  // Step4.5（11-18 老闆定）：店休那天那間店的人算休（鎖住，後面不會被改回上班）。
+  // 必休必上、點格子設定的、上面已經排去支援的照舊；v7 不排的店（手動／鎖定）不動。
+  const closedHit={};
+  staff.forEach(s=>{
+    if(s.type==='機動人員'||!STORES.includes(s.store)||frozenSet.has(s.store))return;
+    cal.forEach(({d,wd})=>{
+      if(!closedReason(s.store,d,wd)||locked[s.name+'_'+d]||sched[s.name][d]!=='work')return;
+      sched[s.name][d]='off';locked[s.name+'_'+d]=true;closedHit[s.store]=(closedHit[s.store]||0)+1;
+    });
+  });
+  Object.keys(closedHit).forEach(st=>{
+    const ds=cal.filter(({d,wd})=>closedReason(st,d,wd));
+    notices.push({type:'info',msg:`${st}：店休 ${ds.length} 天（${ds.map(x=>x.d).join('、')}日；${[...new Set(ds.map(x=>closedReason(st,x.d,x.wd).replace(/（每?星期.）$/,'')))].join('、')}），那天店裡的人排休`});
   });
   // Step5: 機動人員
   staff.filter(s=>s.type==='機動人員').forEach(s=>{cal.forEach(({d})=>{if(sched[s.name][d]==='work')sched[s.name][d]='mob';});});
@@ -1862,6 +1911,7 @@ function genSchedule(){
   cal.forEach(({d,wd})=>{
     STORES.forEach(store=>{
       if(frozenSet.has(store))return; // v8：v7不排的店不算排休名額
+      if(closedReason(store,d,wd))return; // 11-18 店休那天上面已經排休了
       if(isSegMode()){
         // 新排法：人力超過上限多少，就排休到不超過（每休一人扣他的人力，8C 處理）
         const fl=forceLimitOf(store,wd);if(!fl)return;
@@ -1993,6 +2043,7 @@ function genSchedule(){
     if(frozenSet.has(cr.store))return; // v8：v7不排的店，不再塞新的支援進去
     cal.forEach(({d,wd,wn})=>{
       if(cr.cond&&!hasWeekday(cr.cond,wn))return;
+      if(closedReason(cr.store,d,wd))return; // 11-18 店休那天不用叫支援
       // 2026-11-07 老闆定：人數／時段夠、只有能力條件不夠時，也叫支援——但只叫有缺的那個能力、叫來真的會變好的人
       let skillOnly=false;
       if(isSegMode()){if(checkOpen(cr.store,d,sched,supMap)){if(!skillLack(cr.store,d,sched,supMap))return;skillOnly=true;}}
@@ -2052,7 +2103,12 @@ function computeConflicts(sched,cal,supMap){
   staff.forEach(s=>{
     if(s.days>0&&(s.wd+s.hd)>s.days)conflicts.push({type:'error',msg:`${s.name}：平日休下限(${s.wd})+假日休下限(${s.hd})超過月休上限(${s.days}天)`});
     const used=usedDays(s.name,sched,cal);
-    if(used>s.days&&s.days>0)conflicts.push({type:'error',msg:`${s.name}：實際休假${used}天超過月休上限${s.days}天`});
+    if(used>s.days&&s.days>0){
+      // 11-18 店休那天也算休：超過的部分是店休造成的，改成提醒（不是排錯）
+      const byClose=cal.filter(({d,wd})=>sched[s.name][d]==='off'&&closedReason(s.store,d,wd)).length;
+      if(byClose&&used-byClose<=s.days)conflicts.push({type:'warn',msg:`${s.name}：店休 ${byClose} 天也算休，實際休假${used}天超過月休上限${s.days}天`});
+      else conflicts.push({type:'error',msg:`${s.name}：實際休假${used}天超過月休上限${s.days}天`});
+    }
     if(!STORES.includes(s.store))return;
     const actHd=cal.filter(({d,isHol})=>isHol&&sched[s.name][d]==='off').length;
     const actWd=cal.filter(({d,isHol})=>!isHol&&sched[s.name][d]==='off').length;
@@ -2236,7 +2292,7 @@ function mvRender(page,conflicts){
     ${warns.length?`<div class="mv-warn">${warns.map(x=>`⚠️ ${x}`).join('<br>')}</div>`:''}
     <div class="mv-box"><div class="mv-cal">${cells}</div></div>
     <div class="mv-leg">${legend}</div>
-    ${storeConf.length?`<details class="mv-more"><summary>全店提醒 ${storeConf.length} 項</summary>${storeConf.map(c=>`<div>${c.type==='error'?'❌':'⚠️'} ${c.msg}</div>`).join('')}</details>`:''}
+    ${storeConf.length?`<details class="mv-more"><summary>全店提醒 ${storeConf.length} 項</summary>${storeConf.map(c=>`<div>${c.type==='error'?'❌':c.type==='info'?'ℹ️':'⚠️'} ${c.msg}</div>`).join('')}</details>`:''}
   </div>`;
 }
 // 手機轉橫、視窗變寬變窄時，換成對應的畫法
@@ -2286,12 +2342,14 @@ function renderPreview(sched,cal,supMap,conflicts,mandatoryOff){
     if(storeName&&isSegMode()){
       const cells=cal.map(({d,wd})=>{
         // 11-07 能力條件不夠也標橘⚠（skillShortOf 由子任務02 做；店沒開能力條件就是空的）
+        const cr=closedReason(storeName,d,wd);
+        if(cr){const f0=dayForceAt(storeName,d,sched,supMap);return`<td title="${cr}${f0?'｜還有人上班：人力 '+fmtForce(f0):''}" style="background:#EEEEEE;color:#888;font-size:7px;padding:2px 1px;text-align:center">店休${f0?' '+fmtForce(f0):''}</td>`;} // 11-18
         const f=dayForceAt(storeName,d,sched,supMap),l=forceLimitOf(storeName,wd),sh=segShortOf(storeName,d,sched,supMap),sk=skillShortOf(storeName,d,sched,supMap),bad=sh.length||sk.length;
         const st=bad?'background:#FDEBD3;color:#8A4B08;font-weight:700;':(l&&f>l+0.05)?'background:#FADBD8;color:#A32D2D;font-weight:700;':'color:#555;';
         const tip=`人力 ${fmtForce(f)}／上限 ${l?fmtForce(l):'沒設'}${sh.length?'｜開店條件：'+sh.join('、'):''}${sk.length?'｜能力條件：'+sk.join('、'):''}`;
         return`<td title="${tip}" style="${st}font-size:7px;padding:2px 1px;text-align:center">${fmtForce(f)}${bad?'⚠':''}</td>`;
       }).join('');
-      forceRow=`<tr><td title="人力＝時數÷${fteBase}；紅＝超過上限、橘＝開店條件或能力條件不夠" style="font-size:7px;color:#555;padding:2px 5px;font-weight:600;white-space:nowrap;border-right:2px solid #ccc;position:sticky;left:0;background:#fafafa;z-index:1">人力</td>${cells}</tr>`;
+      forceRow=`<tr><td title="人力＝時數÷${fteBase}；紅＝超過上限、橘＝開店條件或能力條件不夠、灰＝店休" style="font-size:7px;color:#555;padding:2px 5px;font-weight:600;white-space:nowrap;border-right:2px solid #ccc;position:sticky;left:0;background:#fafafa;z-index:1">人力</td>${cells}</tr>`;
     }
     return`<div style="overflow-x:auto;border:1px solid #e0e0e0;border-radius:6px"><table class="ptbl" style="border-collapse:collapse;width:100%"><thead><tr><th style="text-align:left;min-width:32px;padding:3px 5px;position:sticky;left:0;background:#f5f5f5;z-index:2;border-right:2px solid #ccc">簡稱</th>${cols}</tr></thead><tbody>${rows}${supRow}${forceRow}</tbody></table></div>`;
   };
@@ -2314,7 +2372,7 @@ function renderPreview(sched,cal,supMap,conflicts,mandatoryOff){
       <div style="font-size:8px;color:#888">🖐️ 拖曳格子到另一格可互換兩天的班表狀態（重新生成同年月會自動保留此調整，年月變更則清空）｜🔒 鎖定門市的格子變淡、不能改</div>
     </div></div>
     ${hriBarHtml()}<div class="dv">
-    ${conflicts.length?`<div class="conf-box"><div class="conf-title">⚠ 發現 ${conflicts.length} 項需注意</div>${conflicts.map(c=>`<div class="conf-item"><span>${c.type==='error'?'❌':'⚠️'}</span><span>${c.msg}</span></div>`).join('')}</div>`:`<div class="ok-box">✅ 設定無明顯衝突，班表已生成</div>`}
+    ${conflicts.length?`<div class="conf-box"><div class="conf-title">⚠ 發現 ${conflicts.length} 項需注意</div>${conflicts.map(c=>`<div class="conf-item"><span>${c.type==='error'?'❌':c.type==='info'?'ℹ️':'⚠️'}</span><span>${c.msg}</span></div>`).join('')}</div>`:`<div class="ok-box">✅ 設定無明顯衝突，班表已生成</div>`}
     ${mobStaff.length?`<div class="prev-sec"><div class="prev-hdr" style="background:#FFFBEB;border:1px solid #F5C842">🔄 機動人員</div>${buildTable(mobStaff,'')}</div>`:''}
     ${storeGroups.map(({store,members})=>`<div class="prev-sec"><div class="prev-hdr" style="background:${SB[store]}"><div style="width:7px;height:7px;border-radius:50%;background:${SC[store]}"></div>${store}${storeBadge(store)}</div>${buildTable(members,store)}</div>`).join('')}
     <div style="font-size:9px;color:#888;text-align:center;margin-top:7px">顯示整月・修改設定後可重新生成</div></div>`;
@@ -3006,7 +3064,8 @@ async function sendScheduleSkeletonFor(sel){
 // 2026-11-08 打卡線 2-5 休假預排第二段（老闆定：都由 2-5 做）：把打卡頁夥伴排的休假預排帶成這個月的「必休」。
 // 後台 op leavePre（生命值骨架 休假預排.gs，只讀；20 號截止後週末輪流只跑一次、結果存表，重複叫不會變）。
 // 第一順位 → 必休（pin 帶 ym＝只套那個月、帶 lpId 去重：重複按不會加出兩筆）；第二順位、週末許願只列出來參考；
-// 預排後來取消的（之前帶進來、現在不是第一順位）列出來、確定時一起拿掉；店休只提醒，v8 不自動排掉。先預覽、按確定才改。
+// 預排後來取消的（之前帶進來、現在不是第一順位）列出來、確定時一起拿掉。先預覽、按確定才改。
+// 店休：11-08 原本只提醒；11-18 老闆改成店休那天不排（記進 storeClosures，生成時用；按生成也會再讀一次最新的）。
 function lpImportReady(){const me=window.HR_ME;return !!(window.HR_CALL&&me&&(me.boss||(me.pages||[]).indexOf(3)>=0));}
 async function importLeavePre(){
   if(!lpImportReady()){alert('網頁版登入、有第 1～3 頁權限（老闆、區人資）才能帶入');return;}
@@ -3014,6 +3073,7 @@ async function importLeavePre(){
   let r;
   try{r=await window.HR_CALL('leavePre',{token:window.HR_TOKEN(),ym});}catch(e){alert('⚠️ 連不上雲端：'+e.message);return;}
   if(!r||!r.ok){alert('⚠️ '+(({login:'登入過期，請重新登入',no_right:'沒有權限（老闆、區人資才能帶入）',bad_ym:'月份看不懂'})[r&&r.reason]||(r&&r.message)||'讀不到休假預排'));return;}
+  storeClosures[ym]=r.closures||{}; // 11-18 記下這個月的門市店休（生成時店休那天不排）
   const md=x=>m+'/'+(+x.date.slice(8));
   const names=new Set(allStaff.map(s=>s.name));
   const firsts=r.items.filter(x=>x.status==='第一順位'),seconds=r.items.filter(x=>x.status==='第二順位'),wishes=r.items.filter(x=>x.status==='許願');
@@ -3038,8 +3098,8 @@ async function importLeavePre(){
   if(seconds.length)lines.push('第二順位（只參考，不會加）：\n'+seconds.map(x=>x.name+' '+md(x)).join('\n'));
   if(wishes.length)lines.push('週末還在許願（截止後才輪流）：'+wishes.length+' 筆');
   const cl=Object.keys(r.closures||{}).map(s=>{const c=r.closures[s],t=[];if(c.week&&c.week.length)t.push('每星期'+c.week.map(w=>'日一二三四五六'[w]).join('、'));if(c.dates&&c.dates.length)t.push(c.dates.map(d=>m+'/'+(+d.slice(8))).join('、'));return t.length?s+'：'+t.join('；'):'';}).filter(Boolean);
-  if(cl.length)lines.push('店休（打卡頁「門市店休」設的；v8 不會自動排掉，請確認門市規則、開店條件）：\n'+cl.join('\n'));
-  if(!add.length&&!gone.length){alert(lines.join('\n\n'));return;}
+  if(cl.length)lines.push('店休（打卡頁「門市店休」設的；生成時那天不排、店裡的人算休）：\n'+cl.join('\n'));
+  if(!add.length&&!gone.length){try{v7AutoSave();}catch(e){}alert(lines.join('\n\n'));return;}
   if(!confirm(lines.join('\n\n')+'\n\n確定帶入嗎？（加的必休只套 '+m+' 月，之後要拿掉照一般必休刪除）'))return;
   const goneSet=new Set(gone);
   pins=pins.filter(p=>!goneSet.has(p));
@@ -4205,6 +4265,7 @@ function v7CollectSaveData(){
     schedMode,fteBase,forceData,segConds,dayShifts, // 2026-11-01 時段＋人力
     skillConds, // 2026-11-07 開店條件進階：能力條件
     schedOpts, // 2026-11-01 排班技能開關
+    storeClosures, // 2026-11-18 門市店休（打卡頁設的；生成時店休那天不排）
     noteRows, // 2026-11-01 特殊日備註五格
     lastGen:generatedData?{y:generatedData.y,m:generatedData.m,scope:generatedData.scope,sched:generatedData.sched,supMap:generatedData.supMap,mandatoryOff:generatedData.mandatoryOff}:null
   };
@@ -4301,6 +4362,7 @@ function v7RestoreAutoSave(fresh){
   maxUnlocked=d.maxUnlocked||1;
   storeMode=d.storeMode||{};storeLocks=d.storeLocks||{};cellEdits=d.cellEdits||[];
   hrImport=d.hrImport||null;
+  storeClosures=d.storeClosures||{}; // 11-18 舊存檔沒有：等於沒有門市店休（人力上限 0 照樣算店休）
   noteRows=d.noteRows||null; // 舊存檔沒有：用預設五格（都沒打勾）
   // 2026-11-01 時段＋人力：舊存檔沒有這幾樣，ensureSegData 從舊的人數上限、開店條件組搬一次
   schedOpts=Object.assign({},SCHED_OPTS_DEFAULT,d.schedOpts||{});
@@ -4352,7 +4414,8 @@ v7RestoreAutoSave(true);
       'schedMode', 'fteBase', 'forceData', 'segConds', 'dayShifts',   // 11-01 排班改時段＋人力
       'noteRows',    // 11-01 特殊日備註五格
       'skillConds',  // 11-07 開店條件進階：能力條件
-      'schedOpts'],  // 11-01 排班技能開關
+      'schedOpts',   // 11-01 排班技能開關
+      'storeClosures'], // 11-18 門市店休（打卡頁設的；生成時店休那天不排）
     '薪資': ['p5HP', 'p5Route', 'p5OtherBonus', 'p5InsuranceOverride', 'p5InsuranceMap', 'p5ManualRate', 'p5Generated',
       'p5BaseSalary', 'p5BaseHourly', 'p5CrossRateOverride']
   };
