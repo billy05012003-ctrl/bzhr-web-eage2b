@@ -2439,8 +2439,8 @@ function buildCalendarWorkbookSheet(wb,sheetName,home,cal,sched,supMap,lunarMap,
   const weeks=buildWeeks(cal);
   const ws=wb.addWorksheet(sheetName.replace('店',''));
   ws.columns=Array.from({length:7},()=>({width:16}));
-  ws.views=[{state:'frozen',ySplit:1}];
-  ws.pageSetup={orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:0.3,right:0.3,top:0.4,bottom:0.4,header:0.3,footer:0.3},printTitlesRow:'1:1'};
+  ws.views=[{state:'frozen',ySplit:2}];
+  ws.pageSetup={orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:0.3,right:0.3,top:0.4,bottom:0.4,header:0.3,footer:0.3},printTitlesRow:'1:2'};
   const THIN_BORDER={style:'thin',color:{argb:'FFF0F0F0'}};
   function setCell(r,c,v,fill,fontColor,bold){
     const cell=ws.getCell(r+1,c+1);
@@ -2453,6 +2453,10 @@ function buildCalendarWorkbookSheet(wb,sheetName,home,cal,sched,supMap,lunarMap,
   // 11-13：星期標題接每週固定的好康日（原本寫死「四定食日」），日期格固定三小行
   const WDN=['一','二','三','四','五','六','日'],heads=hkWeekHeads(lunarMap,cal),hk=HK_SCHEMES[HK_SCHEME]||HK_SCHEMES.A;
   let r=0;
+  // 2026-11-17 老闆定：第 1 列寫工時制度（四週變形工時），第 2 列星期標題
+  ws.mergeCells(1,1,1,7);
+  {const tc=ws.getCell(1,1);tc.value='工時制度：四週變形工時（勞動基準法第 30 條之 1）';tc.alignment={horizontal:'left',vertical:'middle'};tc.font={name:'微軟正黑體',bold:true};}
+  r++;
   WDN.forEach((t,c)=>{
     const cell=ws.getCell(r+1,c+1);
     cell.value=t+heads[c];
