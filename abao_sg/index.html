@@ -2588,7 +2588,9 @@ function buildCalendarWorkbookSheet(wb,sheetName,home,cal,sched,supMap,lunarMap,
       week.forEach((day,c)=>{
         if(!day){setCell(r,c,'',undefined);return;}
         const isHere=(supMap[sheetName+'_'+day.d]||[]).includes(vname);
-        setCell(r,c,isHere?(isExternal?`${vname}${hrsTxt(exportHrsOf(vname,day.d))}h`:vname):'',undefined,isHere?'FF185FA5':undefined,false);
+        // 2026-11-24 老闆：計時夥伴同區支援（例：培英玳昀去忠孝）Excel 只寫名字、看不出幾小時 → 跨區或計時都寫時數（正職照舊只寫名字）
+        const showHrs=isExternal||(vstaff&&vstaff.type==='計時');
+        setCell(r,c,isHere?(showHrs?`${vname}${hrsTxt(exportHrsOf(vname,day.d))}h`:vname):'',undefined,isHere?'FF185FA5':undefined,false);
       });
       r++;
     });
